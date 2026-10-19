@@ -182,7 +182,7 @@ function revealFilteredList() {
 }
 const brand = `<div class="brand" aria-label="Shelby Gym"><span class="brand-emblem"><img src="shelby-reference.jpg" alt="" width="574" height="1280"></span><span>SHELBY<b>GYM</b></span></div>`;
 function nav(section) {
-  return `<nav class="bottomnav" aria-label="Secciones"><a href="#inicio" ${section === "inicio" ? 'aria-current="page"' : ""}><span aria-hidden="true">⌂</span>Inicio</a><a href="#actividades" ${section === "actividades" ? 'aria-current="page"' : ""}><span aria-hidden="true">◈</span>Actividades</a><a href="#clientes" ${section === "clientes" ? 'aria-current="page"' : ""}><span aria-hidden="true">☷</span>Clientes</a></nav>`;
+  return `<nav class="bottomnav" aria-label="Secciones"><a href="#inicio" ${section === "inicio" ? 'aria-current="page"' : ""}><span aria-hidden="true">⌂</span>Inicio</a><a href="#actividades" ${section === "actividades" ? 'aria-current="page"' : ""}><span aria-hidden="true">◈</span>Actividades</a><a href="#clientes" ${section === "clientes" ? 'aria-current="page"' : ""}><span aria-hidden="true">☷</span>Clientes</a><a href="#movimientos" ${section === "movimientos" ? 'aria-current="page"' : ""}><span aria-hidden="true">≡</span>Historial</a></nav>`;
 }
 function layout(content, section) {
   return `<div class="shell"><header class="topbar">${brand}<span class="demo-badge">DEMO · DATOS FICTICIOS</span></header><main id="main">${content}</main><p class="footnote">Vista previa interactiva. Los cambios se guardan únicamente en este navegador; no hay clientes reales ni cobros.</p></div>${nav(section)}`;
@@ -511,6 +511,62 @@ function historyPage(id) {
   }).join("");
   app.innerHTML = layout(`<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(id)}'">← ${escapeHtml(c.name)}</button><section class="hero"><span class="eyebrow">MOVIMIENTOS POR DÍA</span><h1>Historial.</h1><p>Alta, cuotas, abonos y saldos al vencimiento. Las cuotas mantienen el precio original aunque hoy la actividad cueste más.</p></section><div class="timeline">${rows}</div>`, "clientes");
 }
+function validLedgerDay(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value || "") &&
+    !Number.isNaN(utc(value).getTime()) &&
+    utc(value).toISOString().slice(0, 10) === value;
+}
+function allPayments() {
+  return state.customers.flatMap((customer) =>
+    [...previousPeriods(customer), periodSnapshot(customer)].flatMap((period) =>
+      period.payments.map((payment) => ({
+        ...payment,
+        customerId: customer.id,
+        customerName: customer.name,
+        activityName: period.activityName,
+        periodStart: period.start,
+        periodEnd: period.end,
+      })),
+    ),
+  );
+}
+function gymHistory(requestedDay) {
+  const payments = allPayments();
+  const latestDay = payments.map((p) => p.date).sort().at(-1) || today();
+  const day = validLedgerDay(requestedDay) ? requestedDay : latestDay;
+  const dailyPayments = payments.filter((p) => p.date === day);
+  const received = dailyPayments.reduce((sum, p) => sum + p.amount, 0);
+  const methods = ["Transferencia", "Mercado Pago", "Efectivo"];
+  const activity = [];
+  for (const customer of state.customers) {
+    const periods = [...previousPeriods(customer), periodSnapshot(customer)];
+    if ((customer.createdAt || periods[0].start) === day)
+      activity.push({ customer, title: "Perfil creado", detail: "Alta del cliente" });
+    for (const period of periods) {
+      if (period.start !== day) continue;
+      const pending = Math.max(0, period.price - period.payments.reduce((sum, p) => sum + p.amount, 0));
+      activity.push({
+        customer,
+        title: "Cuota iniciada",
+        detail: `${period.activityName} · cuota ${money.format(period.price)} · saldo actual ${money.format(pending)}`,
+      });
+    }
+    for (const event of customer.lifecycleEvents || [])
+      if (event.date === day)
+        activity.push({ customer, title: event.title, detail: event.detail });
+  }
+  app.innerHTML = layout(`<section class="hero"><span class="eyebrow">CAJA Y MOVIMIENTOS</span><h1>Historial general.</h1><p>Todo el gimnasio, día por día. Los ingresos incluyen sólo abonos recibidos.</p></section>
+    <div class="ledger-date"><div><span class="eyebrow">FECHA SELECCIONADA</span><h2>${dateLabel(day)}</h2></div><div class="ledger-date-actions"><a href="#movimientos/${shiftDays(day, -1)}" aria-label="Día anterior">←</a><form id="ledger-date-form"><label class="sr-only" for="ledger-date-input">Elegir día</label><input id="ledger-date-input" type="date" value="${day}" required><button type="submit" aria-label="Mostrar día">▦</button></form><a href="#movimientos/${shiftDays(day, 1)}" aria-label="Día siguiente">→</a>${day !== today() ? '<a class="ledger-today" href="#movimientos/' + today() + '">Hoy</a>' : ""}</div></div>
+    <section class="ledger-summary" aria-label="Ingresos del día"><div class="ledger-received"><span>INGRESÓ EN CAJA</span><strong>${money.format(received)}</strong><small>${dailyPayments.length} ${dailyPayments.length === 1 ? "abono registrado" : "abonos registrados"}</small></div><dl class="ledger-methods">${methods.map((method) => `<div><dt>${method}</dt><dd>${money.format(dailyPayments.filter((p) => p.method === method).reduce((sum, p) => sum + p.amount, 0))}</dd></div>`).join("")}</dl></section>
+    <section class="ledger-section"><div class="ledger-section-heading"><div><span class="eyebrow">DINERO RECIBIDO</span><h2>Abonos</h2></div><span>${dailyPayments.length}</span></div>${dailyPayments.length ? `<div class="ledger-entries">${dailyPayments.map((payment) => `<button class="ledger-entry" type="button" data-customer="${escapeHtml(payment.customerId)}"><span><strong>${escapeHtml(payment.customerName)}</strong><small>${escapeHtml(payment.activityName)} · ${escapeHtml(payment.method)} · cuota ${dateLabel(payment.periodStart)}–${dateLabel(payment.periodEnd)}</small></span><b>+ ${money.format(payment.amount)}</b></button>`).join("")}</div>` : '<div class="empty">No hay abonos registrados este día.</div>'}</section>
+    <section class="ledger-section"><div class="ledger-section-heading"><div><span class="eyebrow">ACTIVIDAD, NO INGRESOS</span><h2>Altas y cuotas</h2></div><span>${activity.length}</span></div><p class="ledger-note">El precio de una cuota no se suma a caja. El saldo indicado es el actual.</p>${activity.length ? `<div class="ledger-entries">${activity.map((event) => `<button class="ledger-entry" type="button" data-customer="${escapeHtml(event.customer.id)}"><span><strong>${escapeHtml(event.customer.name)}</strong><small>${escapeHtml(event.title)} · ${escapeHtml(event.detail)}</small></span><span aria-hidden="true">›</span></button>`).join("")}</div>` : '<div class="empty">No hay altas ni cuotas registradas este día.</div>'}</section>`, "movimientos");
+  document.querySelector("#ledger-date-form").onsubmit = (event) => {
+    event.preventDefault();
+    const selected = document.querySelector("#ledger-date-input").value;
+    if (validLedgerDay(selected)) location.hash = `#movimientos/${selected}`;
+  };
+  bindCustomerRows();
+}
 function pay(id, periodIndex = -1) {
   const c = state.customers.find((x) => x.id === id);
   if (!c) return void (location.hash = "#clientes");
@@ -578,6 +634,7 @@ function render() {
       regresar: () => returnCustomer(id),
       borrar: () => deleteProfile(id),
       historial: () => historyPage(id),
+      movimientos: () => gymHistory(id),
       editar: () => edit(id),
     })[path] || home
   )();
