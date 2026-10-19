@@ -60,6 +60,16 @@ function raffleReason(c, cutoff) {
   if (!ends.length || ends.at(-1) < shiftDays(cutoff, -30)) return "Cuota vencida hace más de 30 días";
   return "";
 }
+function birthdayAccountStatus(c) {
+  if (c.deletedAt) return ["Eliminado", "archived"];
+  if (c.archivedAt) return ["De baja", "archived"];
+  const ends = [...previousPeriods(c), periodSnapshot(c)].filter((period) => period.start <= today()).map((period) => period.end).sort();
+  if (!ends.length) return ["Sin cuota", "archived"];
+  const lastEnd = ends.at(-1);
+  if (lastEnd < shiftDays(today(), -30)) return [balance(c) > 0 ? "Más de 30 días sin pagar" : "Más de 30 días sin renovar", "expired"];
+  if (lastEnd <= today()) return ["Vencida", "expired"];
+  return balance(c) > 0 ? ["Pendiente", "due"] : ["Al día", "paid"];
+}
 const escapeHtml = (v) =>
   String(v ?? "").replace(
     /[&<>"']/g,
@@ -174,8 +184,8 @@ function status(c) {
     ? ["Eliminado", "archived"]
     : c.archivedAt
     ? ["De baja", "archived"]
-    : c.end <= shiftDays(today(), -30)
-      ? ["Vencida +30 días", "expired"]
+    : c.end < shiftDays(today(), -30)
+      ? ["Vencida hace más de 30 días", "expired"]
       : c.end <= today()
     ? ["Vencida", "expired"]
     : balance(c)
@@ -243,8 +253,9 @@ function customerRow(c) {
   const timing = c.deletedAt ? `Eliminado: ${dateLabel(c.deletedAt)}` : c.archivedAt ? `Baja: ${dateLabel(c.archivedAt)}` : c.end <= today() ? `Venció ${dateLabel(c.end)} · hace ${daysPast(c.end)} días` : `Vence ${dateLabel(c.end)}`;
   return `<button class="row rowbutton" type="button" data-customer="${escapeHtml(c.id)}"><span><strong>${escapeHtml(c.name)}</strong><small>${timing}</small></span><span class="activity muted">${escapeHtml(c.activityName)}</span><span class="amount"><span class="status ${type}">${label}</span><small>${balance(c) ? `${money.format(balance(c))} pendientes` : "Cuota completa"}</small></span></button>`;
 }
-function birthdayRow(c) {
-  return `<button class="row rowbutton birthday-row" type="button" data-customer="${escapeHtml(c.id)}"><span><strong>${escapeHtml(c.name)}</strong><small>${birthdayLabel(c)}</small></span><span aria-hidden="true">›</span></button>`;
+function birthdayRow(c, reason = "") {
+  const [label, type] = birthdayAccountStatus(c);
+  return `<button class="row rowbutton birthday-row" type="button" data-customer="${escapeHtml(c.id)}"><span class="birthday-person"><strong>${escapeHtml(c.name)}</strong>${reason ? `<small>${escapeHtml(reason)}</small>` : ""}</span><span class="birthday-account"><span class="status ${type}">${label}</span>${balance(c) > 0 ? `<small>Debe ${money.format(balance(c))}</small>` : ""}</span><span class="birthday-chevron" aria-hidden="true">›</span></button>`;
 }
 function bindCustomerRows() {
   document.querySelectorAll("[data-customer]").forEach((el) => {
@@ -281,7 +292,7 @@ function clients() {
       if (filter === "saldo") return balance(c) > 0;
       if (filter === "aldia") return c.end > today() && balance(c) === 0;
       if (filter === "vencidas") return c.end <= today();
-      if (filter === "mas30") return c.end <= shiftDays(today(), -30);
+      if (filter === "mas30") return c.end < shiftDays(today(), -30);
       return true;
     });
   if (filter === "cumpleanos")
@@ -291,16 +302,16 @@ function clients() {
     );
   const monthPicker =
     filter === "cumpleanos"
-      ? `<div class="month-picker"><label for="birthday-month">Mes de cumpleaños</label><select id="birthday-month">${Array.from({ length: 13 }, (_, offset) => `<option value="${offset}" ${offset === birthdayOffset ? "selected" : ""}>${birthdayMonthFmt.format(birthdayMonth(offset))}${birthdayMonth(offset).getUTCFullYear() !== new Date().getUTCFullYear() ? ` · sorteo ${birthdayMonth(offset).getUTCFullYear()}` : ""}</option>`).join("")}</select><p>El cumpleaños se guarda sólo con el mes. Cada año tiene su propio sorteo.</p><form id="raffle-form" class="raffle-form"><label for="raffle-date">Fecha del sorteo ${monthDate.getUTCFullYear()}</label><input id="raffle-date" type="date" value="${savedDraw || today()}" ${savedDraw ? "disabled" : "required"}><button class="button secondary" type="submit" ${savedDraw ? "disabled" : ""}>${savedDraw ? "Sorteo registrado" : "Registrar fecha"}</button><small>${savedDraw ? `Participantes calculados al ${dateLabel(savedDraw)}. El cierre permanece guardado.` : "Hasta registrar el sorteo, la lista es una vista previa al día de hoy."}</small></form></div>`
+      ? `<div class="month-picker"><label for="birthday-month">Mes de cumpleaños</label><select id="birthday-month">${Array.from({ length: 13 }, (_, offset) => `<option value="${offset}" ${offset === birthdayOffset ? "selected" : ""}>${birthdayMonthFmt.format(birthdayMonth(offset))}${birthdayMonth(offset).getUTCFullYear() !== new Date().getUTCFullYear() ? ` · sorteo ${birthdayMonth(offset).getUTCFullYear()}` : ""}</option>`).join("")}</select><p>Todas las personas que cumplen este mes aparecen, aunque su cumpleaños ya haya pasado.</p><form id="raffle-form" class="raffle-form"><label for="raffle-date">Fecha del sorteo ${monthDate.getUTCFullYear()}</label><input id="raffle-date" type="date" value="${savedDraw || today()}" ${savedDraw ? "disabled" : "required"}><button class="button secondary" type="submit" ${savedDraw ? "disabled" : ""}>${savedDraw ? "Sorteo registrado" : "Registrar fecha"}</button><small>${savedDraw ? `Participantes calculados al ${dateLabel(savedDraw)}. El cierre permanece guardado.` : "Hasta registrar el sorteo, la lista es una vista previa al día de hoy."}</small></form></div>`
       : "";
   const eligible = filter === "cumpleanos" ? rows.filter((c) => !raffleReason(c, cutoff)) : rows;
   const excluded = filter === "cumpleanos" ? rows.filter((c) => raffleReason(c, cutoff)) : [];
-  const content = `<section class="hero"><span class="eyebrow">TU COMUNIDAD</span><h1>Clientes.</h1><p>Todos los perfiles en un mismo lugar. Consultá cuotas o prepará el sorteo de cumpleaños.</p><div class="hero-actions"><a class="button" href="#nuevo">+ Registrar cliente</a></div></section><div class="section-title"><h2>${filter === "cumpleanos" ? `Cumpleaños de ${birthdayMonthFmt.format(monthDate)}` : "Todos los clientes"}</h2><span>${filter === "cumpleanos" ? eligible.length : rows.length} ${rows.length === 1 ? "cliente" : "clientes"}</span></div><div class="toolbar"><input id="search" class="search" type="search" aria-label="Buscar cliente" placeholder="Buscar por nombre" value="${escapeHtml(query)}">${[
+  const content = `<section class="hero"><span class="eyebrow">TU COMUNIDAD</span><h1>Clientes.</h1><p>Todos los perfiles en un mismo lugar. Consultá cuotas o prepará el sorteo de cumpleaños.</p><div class="hero-actions"><a class="button" href="#nuevo">+ Registrar cliente</a></div></section><div class="section-title"><h2>${filter === "cumpleanos" ? `Cumpleaños de ${birthdayMonthFmt.format(monthDate)}` : "Todos los clientes"}</h2><span>${rows.length} ${rows.length === 1 ? "cliente" : "clientes"}</span></div><div class="toolbar"><input id="search" class="search" type="search" aria-label="Buscar cliente" placeholder="Buscar por nombre" value="${escapeHtml(query)}">${[
     ["todos", "Todos"],
     ["saldo", "Con saldo"],
     ["aldia", "Al día"],
     ["vencidas", "Vencidas"],
-    ["mas30", "+30 días"],
+    ["mas30", "Más de 30 días"],
     ["bajas", "Bajas"],
     ["retirados", "Eliminados"],
     ["cumpleanos", "Cumpleaños"],
@@ -309,11 +320,11 @@ function clients() {
       ([id, label]) =>
         `<button class="chip" type="button" data-filter="${id}" aria-pressed="${filter === id}">${label}</button>`,
     )
-    .join("")}</div>${monthPicker}<div class="list">${
+    .join("")}</div>${monthPicker}${filter === "cumpleanos" ? `<p class="raffle-status-note">Estado de cuota de hoy. La participación se evalúa al cierre del sorteo.</p>` : ""}<div class="list">${
     (filter === "cumpleanos" ? eligible : rows).length
       ? (filter === "cumpleanos" ? eligible : rows).map(filter === "cumpleanos" ? birthdayRow : customerRow).join("")
       : `<div class="empty">${filter === "cumpleanos" ? "No hay participantes para este mes. Revisá las exclusiones o elegí otro mes." : "No hay clientes para este filtro. Probá otro o registrá uno nuevo."}</div>`
-  }</div>${filter === "cumpleanos" ? `<section class="raffle-excluded"><h3>No participan en este sorteo <span>${excluded.length}</span></h3><p>Quien se registró después del cierre puede participar el año próximo si cumple los demás requisitos.</p><div class="list">${excluded.map((c) => `<button class="row rowbutton" type="button" data-customer="${escapeHtml(c.id)}"><span><strong>${escapeHtml(c.name)}</strong><small>${birthdayLabel(c)} · ${escapeHtml(raffleReason(c, cutoff))}</small></span><span aria-hidden="true">›</span></button>`).join("")}</div></section>` : ""}`;
+  }</div>${filter === "cumpleanos" ? `<section class="raffle-excluded"><h3>No participan en este sorteo <span>${excluded.length}</span></h3><p>Quien se registró después del cierre puede participar el año próximo si cumple los demás requisitos.</p><div class="list">${excluded.map((c) => birthdayRow(c, raffleReason(c, cutoff))).join("")}</div></section>` : ""}`;
   app.innerHTML = layout(content, "clientes");
   document.querySelector("#search").oninput = (e) => {
     query = e.target.value;
@@ -459,7 +470,7 @@ function detail(id) {
     oldBalance = balance(c) - remainder,
     history = previousPeriods(c).slice().reverse();
   app.innerHTML = layout(
-    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">PERFIL DE CLIENTE</span><h1>${escapeHtml(c.name)}.</h1><p>${escapeHtml(c.activityName)} · ${dateLabel(c.start)} a ${dateLabel(c.end)}</p></section>${c.deletedAt ? `<p class="notice">Perfil eliminado el ${dateLabel(c.deletedAt)}. Cuotas y pagos conservados; podés recuperarlo si vuelve.</p>` : c.archivedAt ? `<p class="notice">Dado de baja el ${dateLabel(c.archivedAt)}. El historial y los saldos se conservan. Para volver, iniciá una cuota con el precio actual.</p>` : c.end <= shiftDays(today(), -30) ? `<p class="notice">La cuota venció hace ${daysPast(c.end)} días. El perfil sigue disponible; no se cobra automáticamente ni se borra por falta de pago.</p>` : ""}<div class="panel"><div class="detail-hero"><h2>Última cuota</h2><span class="status ${type}">${label}</span></div><div class="detail-grid"><div><span>Total acordado</span><strong>${money.format(c.price)}</strong></div><div><span>Abonado</span><strong>${money.format(paid(c))}</strong></div><div><span>Saldo pendiente</span><strong>${money.format(remainder)}</strong></div></div>${oldBalance ? `<p class="notice">Hay ${money.format(oldBalance)} pendientes de cuotas anteriores. El regreso no borra esa deuda.</p>` : ""}<div class="form-actions">${remainder ? `<a class="button" href="#abonar/${escapeHtml(c.id)}">+ Registrar abono</a>` : ""}${c.archivedAt || c.deletedAt ? `<a class="button" href="#regresar/${escapeHtml(c.id)}">Reactivar cliente</a>` : c.end <= today() ? `<a class="button secondary" href="#regresar/${escapeHtml(c.id)}">Iniciar nueva cuota</a>` : ""}<a class="button secondary" href="#editar/${escapeHtml(c.id)}">Editar perfil</a></div><hr class="divider"><div><strong>Celular:</strong> ${escapeHtml(c.phone || "Sin registrar")}</div><div><strong>Cumpleaños:</strong> ${birthdayLabel(c)}</div><hr class="divider"><h2>Abonos de esta cuota</h2><ol class="payments">${c.payments.map((p) => `<li>${dateLabel(p.date)} · ${escapeHtml(p.method)} · <strong>${money.format(p.amount)}</strong></li>`).join("")}</ol></div>${history.length ? `<section class="history"><h2>Cuotas anteriores</h2>${history.map((p, index) => `<details class="panel history-period"><summary>${escapeHtml(p.activityName)} · ${dateLabel(p.start)} a ${dateLabel(p.end)} · ${money.format(p.price)}</summary><p>Abonado: ${money.format(p.payments.reduce((n, payment) => n + payment.amount, 0))} · Pendiente: ${money.format(Math.max(0, p.price - p.payments.reduce((n, payment) => n + payment.amount, 0)))}</p>${p.price > p.payments.reduce((n, payment) => n + payment.amount, 0) ? `<a class="button secondary" href="#abonar/${escapeHtml(c.id)}/${previousPeriods(c).length - 1 - index}">Registrar abono anterior</a>` : ""}<ol class="payments">${p.payments.map((payment) => `<li>${dateLabel(payment.date)} · ${escapeHtml(payment.method)} · ${money.format(payment.amount)}</li>`).join("")}</ol></details>`).join("")}</section>` : ""}<section class="profile-management"><h2>Historial y perfil</h2><p>Las cuotas anteriores, los pagos y los saldos permanecen asociados a esta persona.</p><div class="form-actions"><a class="button secondary" href="#historial/${escapeHtml(c.id)}">Ver historial por día</a>${c.archivedAt || c.deletedAt ? "" : `<button class="button secondary" id="archive-customer" type="button">Dar de baja</button>`}${c.deletedAt ? "" : `<a class="button ghost" href="#borrar/${escapeHtml(c.id)}">Eliminar perfil…</a>`}</div></section>`,
+    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">PERFIL DE CLIENTE</span><h1>${escapeHtml(c.name)}.</h1><p>${escapeHtml(c.activityName)} · ${dateLabel(c.start)} a ${dateLabel(c.end)}</p></section>${c.deletedAt ? `<p class="notice">Perfil eliminado el ${dateLabel(c.deletedAt)}. Cuotas y pagos conservados; podés recuperarlo si vuelve.</p>` : c.archivedAt ? `<p class="notice">Dado de baja el ${dateLabel(c.archivedAt)}. El historial y los saldos se conservan. Para volver, iniciá una cuota con el precio actual.</p>` : c.end < shiftDays(today(), -30) ? `<p class="notice">La cuota venció hace ${daysPast(c.end)} días. El perfil sigue disponible; no se cobra automáticamente ni se borra por falta de pago.</p>` : ""}<div class="panel"><div class="detail-hero"><h2>Última cuota</h2><span class="status ${type}">${label}</span></div><div class="detail-grid"><div><span>Total acordado</span><strong>${money.format(c.price)}</strong></div><div><span>Abonado</span><strong>${money.format(paid(c))}</strong></div><div><span>Saldo pendiente</span><strong>${money.format(remainder)}</strong></div></div>${oldBalance ? `<p class="notice">Hay ${money.format(oldBalance)} pendientes de cuotas anteriores. El regreso no borra esa deuda.</p>` : ""}<div class="form-actions">${remainder ? `<a class="button" href="#abonar/${escapeHtml(c.id)}">+ Registrar abono</a>` : ""}${c.archivedAt || c.deletedAt ? `<a class="button" href="#regresar/${escapeHtml(c.id)}">Reactivar cliente</a>` : c.end <= today() ? `<a class="button secondary" href="#regresar/${escapeHtml(c.id)}">Iniciar nueva cuota</a>` : ""}<a class="button secondary" href="#editar/${escapeHtml(c.id)}">Editar perfil</a></div><hr class="divider"><div><strong>Celular:</strong> ${escapeHtml(c.phone || "Sin registrar")}</div><div><strong>Cumpleaños:</strong> ${birthdayLabel(c)}</div><hr class="divider"><h2>Abonos de esta cuota</h2><ol class="payments">${c.payments.map((p) => `<li>${dateLabel(p.date)} · ${escapeHtml(p.method)} · <strong>${money.format(p.amount)}</strong></li>`).join("")}</ol></div>${history.length ? `<section class="history"><h2>Cuotas anteriores</h2>${history.map((p, index) => `<details class="panel history-period"><summary>${escapeHtml(p.activityName)} · ${dateLabel(p.start)} a ${dateLabel(p.end)} · ${money.format(p.price)}</summary><p>Abonado: ${money.format(p.payments.reduce((n, payment) => n + payment.amount, 0))} · Pendiente: ${money.format(Math.max(0, p.price - p.payments.reduce((n, payment) => n + payment.amount, 0)))}</p>${p.price > p.payments.reduce((n, payment) => n + payment.amount, 0) ? `<a class="button secondary" href="#abonar/${escapeHtml(c.id)}/${previousPeriods(c).length - 1 - index}">Registrar abono anterior</a>` : ""}<ol class="payments">${p.payments.map((payment) => `<li>${dateLabel(payment.date)} · ${escapeHtml(payment.method)} · ${money.format(payment.amount)}</li>`).join("")}</ol></details>`).join("")}</section>` : ""}<section class="profile-management"><h2>Historial y perfil</h2><p>Las cuotas anteriores, los pagos y los saldos permanecen asociados a esta persona.</p><div class="form-actions"><a class="button secondary" href="#historial/${escapeHtml(c.id)}">Ver historial por día</a>${c.archivedAt || c.deletedAt ? "" : `<button class="button secondary" id="archive-customer" type="button">Dar de baja</button>`}${c.deletedAt ? "" : `<a class="button ghost" href="#borrar/${escapeHtml(c.id)}">Eliminar perfil…</a>`}</div></section>`,
     "clientes",
   );
   const archiveButton = document.querySelector("#archive-customer");

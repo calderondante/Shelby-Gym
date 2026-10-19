@@ -676,8 +676,13 @@ a {
   transform: translate(-50%, 0);
 }
 .birthday-row {
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) 16px;
+  gap: 7px 10px;
 }
+.birthday-person, .birthday-account { min-width: 0; }
+.birthday-account { text-align: right; }
+.birthday-account .status { max-width: 175px; margin: 0; white-space: normal; text-align: center; line-height: 1.25; }
+.birthday-account small { font-size: 11px; }
 .birthday-day {
   font-size: 22px;
   font-weight: 900;
@@ -688,6 +693,7 @@ a {
 .raffle-form input { min-height: 44px; border: 1px solid var(--line); border-radius: 9px; padding: 0 10px; background: var(--card); color: #fff; color-scheme: dark; }
 .raffle-form small { width: 100%; color: var(--muted); line-height: 1.4; }
 .raffle-form button:disabled { opacity: .65; cursor: default; }
+.raffle-status-note { margin: 0 0 12px; color: var(--muted); font-size: 12px; line-height: 1.45; }
 .raffle-excluded { margin-top: 32px; }
 .raffle-excluded h3 { font-size: 19px; margin: 0 0 8px; }
 .raffle-excluded h3 span, .raffle-excluded p { color: var(--muted); }
@@ -789,13 +795,14 @@ a {
   }
 }
 :where(.birthday-row) {
-  grid-template-columns: minmax(0, 1fr) 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) 16px;
 }
 @media (max-width: 640px) {
   .birthday-row {
     grid-template-columns: minmax(0, 1fr) 16px;
   }
-  .birthday-row > span:last-child {
+  .birthday-row .birthday-account { grid-column: 1; grid-row: 2; text-align: left; }
+  .birthday-row .birthday-chevron {
     grid-column: 2;
     grid-row: 1;
   }
