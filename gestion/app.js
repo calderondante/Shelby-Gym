@@ -18,6 +18,7 @@ const monthFmt = new Intl.DateTimeFormat("es-AR", {
   year: "numeric",
   timeZone: "UTC",
 });
+const birthdayMonthFmt = new Intl.DateTimeFormat("es-AR", { month: "long", timeZone: "UTC" });
 const app = document.querySelector("#app");
 let filter = "todos",
   query = "",
@@ -34,6 +35,30 @@ const dateLabel = (s) => (s ? dateFmt.format(utc(s)) : "—");
 function birthdayMonth(offset) {
   const [year, month] = today().split("-").map(Number);
   return new Date(Date.UTC(year, month - 1 + offset, 15));
+}
+function birthParts(c) {
+  const value = c.birthMonth || Number(c.birthDate?.slice(5, 7));
+  return value >= 1 && value <= 12 ? String(value).padStart(2, "0") : "";
+}
+function birthdayLabel(c) {
+  const month = birthParts(c);
+  return month ? birthdayMonthFmt.format(utc(`2000-${month}-15`)) : "Sin registrar";
+}
+function validBirthday(month) {
+  return Number.isInteger(month) && month >= 0 && month <= 12;
+}
+function birthdayFields(prefix, c = {}) {
+  const month = Number(birthParts(c));
+  return `<div class="field"><label for="${prefix}-birth-month">Mes de cumpleaños (opcional)</label><select id="${prefix}-birth-month"><option value="">Elegir mes</option>${Array.from({length: 12}, (_, i) => `<option value="${i + 1}" ${month === i + 1 ? "selected" : ""}>${birthdayMonthFmt.format(new Date(Date.UTC(2000, i, 15)))}</option>`).join("")}</select></div>`;
+}
+function raffleReason(c, cutoff) {
+  const registered = c.createdAt || [...previousPeriods(c), periodSnapshot(c)][0].start;
+  if (registered > cutoff) return "Alta posterior al sorteo";
+  const lifecycle = [...(c.lifecycleEvents || [])].filter((event) => event.date <= cutoff).at(-1);
+  if (lifecycle?.title === "Baja registrada" || lifecycle?.title === "Perfil eliminado") return "Perfil de baja o eliminado";
+  const ends = [...previousPeriods(c), periodSnapshot(c)].filter((period) => period.start <= cutoff).map((period) => period.end).sort();
+  if (!ends.length || ends.at(-1) < shiftDays(cutoff, -30)) return "Cuota vencida hace más de 30 días";
+  return "";
 }
 const escapeHtml = (v) =>
   String(v ?? "").replace(
@@ -80,23 +105,24 @@ function seed() {
     { id: "combinado", name: "Musculación + boxeo", price: 54000, months: 1 },
   ];
   const sample = [
-    ["Sofía Martínez", "musculacion", 35000, -8, 35, "1997-10-18"],
-    ["Tomás Álvarez", "boxeo", 15000, -6, 30, "1999-11-06"],
-    ["Lucía Fernández", "combinado", 54000, -19, 54, "1992-10-27"],
-    ["Valentina López", "musculacion", 20000, -27, 35, "1995-11-22"],
-    ["Nicolás Romero", "boxeo", 30000, -42, 30, "1989-03-14"],
-    ["Mateo González", "musculacion", 12000, -45, 35, "2001-08-09"],
+    ["Sofía Martínez", "musculacion", 35000, -8, 35, 10],
+    ["Tomás Álvarez", "boxeo", 15000, -6, 30, 11],
+    ["Lucía Fernández", "combinado", 54000, -19, 54, 10],
+    ["Valentina López", "musculacion", 20000, -27, 35, 11],
+    ["Nicolás Romero", "boxeo", 30000, -42, 30, 3],
+    ["Mateo González", "musculacion", 12000, -45, 35, 8],
   ];
   return {
     activities,
+    raffleDraws: {},
     customers: sample.map(
-      ([name, activityId, paid, offset, totalThousands, birthDate], i) => {
+      ([name, activityId, paid, offset, totalThousands, birthMonth], i) => {
         const start = shiftDays(now, offset);
         return {
           id: `demo-${i}`,
           name,
           phone: "",
-          birthDate,
+          birthMonth,
           activityId,
           activityName: activities.find((a) => a.id === activityId).name,
           price: totalThousands * 1000,
@@ -122,6 +148,15 @@ try {
 } catch {
   state = seed();
 }
+let cleanedBirthDates = false;
+for (const customer of state.customers) {
+  if (customer.birthDate) {
+    customer.birthMonth ||= Number(customer.birthDate.slice(5, 7)) || null;
+    delete customer.birthDate;
+    cleanedBirthDates = true;
+  }
+}
+if (cleanedBirthDates) localStorage.setItem(KEY, JSON.stringify(state));
 function save() {
   localStorage.setItem(KEY, JSON.stringify(state));
 }
@@ -209,7 +244,7 @@ function customerRow(c) {
   return `<button class="row rowbutton" type="button" data-customer="${escapeHtml(c.id)}"><span><strong>${escapeHtml(c.name)}</strong><small>${timing}</small></span><span class="activity muted">${escapeHtml(c.activityName)}</span><span class="amount"><span class="status ${type}">${label}</span><small>${balance(c) ? `${money.format(balance(c))} pendientes` : "Cuota completa"}</small></span></button>`;
 }
 function birthdayRow(c) {
-  return `<button class="row rowbutton birthday-row" type="button" data-customer="${escapeHtml(c.id)}"><span class="birthday-day">${escapeHtml(c.birthDate.slice(8))}</span><span><strong>${escapeHtml(c.name)}</strong><small>${new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "long", timeZone: "UTC" }).format(utc(c.birthDate))}</small></span><span aria-hidden="true">›</span></button>`;
+  return `<button class="row rowbutton birthday-row" type="button" data-customer="${escapeHtml(c.id)}"><span><strong>${escapeHtml(c.name)}</strong><small>${birthdayLabel(c)}</small></span><span aria-hidden="true">›</span></button>`;
 }
 function bindCustomerRows() {
   document.querySelectorAll("[data-customer]").forEach((el) => {
@@ -231,6 +266,9 @@ function clients() {
   listAnimation?.cancel();
   const monthDate = birthdayMonth(birthdayOffset);
   const month = monthDate.getUTCMonth() + 1;
+  const raffleKey = `${monthDate.getUTCFullYear()}-${String(month).padStart(2, "0")}`;
+  const savedDraw = state.raffleDraws?.[raffleKey];
+  const cutoff = savedDraw || today();
   const rows = state.customers
     .filter((c) =>
       c.name.toLocaleLowerCase("es").includes(query.toLocaleLowerCase("es")),
@@ -238,26 +276,26 @@ function clients() {
     .filter((c) => {
       if (filter === "retirados") return Boolean(c.deletedAt);
       if (filter === "bajas") return Boolean(c.archivedAt) && !c.deletedAt;
+      if (filter === "cumpleanos") return Number(birthParts(c).slice(0, 2)) === month;
       if (c.archivedAt || c.deletedAt) return false;
       if (filter === "saldo") return balance(c) > 0;
       if (filter === "aldia") return c.end > today() && balance(c) === 0;
       if (filter === "vencidas") return c.end <= today();
       if (filter === "mas30") return c.end <= shiftDays(today(), -30);
-      if (filter === "cumpleanos")
-        return c.birthDate && Number(c.birthDate.slice(5, 7)) === month;
       return true;
     });
   if (filter === "cumpleanos")
     rows.sort(
       (a, b) =>
-        a.birthDate.slice(8).localeCompare(b.birthDate.slice(8)) ||
         a.name.localeCompare(b.name, "es"),
     );
   const monthPicker =
     filter === "cumpleanos"
-      ? `<div class="month-picker"><label for="birthday-month">Mes de cumpleaños</label><select id="birthday-month">${Array.from({ length: 12 }, (_, offset) => `<option value="${offset}" ${offset === birthdayOffset ? "selected" : ""}>${monthFmt.format(birthdayMonth(offset))}</option>`).join("")}</select><p>Desde este mes y durante los próximos 12 meses.</p></div>`
+      ? `<div class="month-picker"><label for="birthday-month">Mes de cumpleaños</label><select id="birthday-month">${Array.from({ length: 13 }, (_, offset) => `<option value="${offset}" ${offset === birthdayOffset ? "selected" : ""}>${birthdayMonthFmt.format(birthdayMonth(offset))}${birthdayMonth(offset).getUTCFullYear() !== new Date().getUTCFullYear() ? ` · sorteo ${birthdayMonth(offset).getUTCFullYear()}` : ""}</option>`).join("")}</select><p>El cumpleaños se guarda sólo con el mes. Cada año tiene su propio sorteo.</p><form id="raffle-form" class="raffle-form"><label for="raffle-date">Fecha del sorteo ${monthDate.getUTCFullYear()}</label><input id="raffle-date" type="date" value="${savedDraw || today()}" ${savedDraw ? "disabled" : "required"}><button class="button secondary" type="submit" ${savedDraw ? "disabled" : ""}>${savedDraw ? "Sorteo registrado" : "Registrar fecha"}</button><small>${savedDraw ? `Participantes calculados al ${dateLabel(savedDraw)}. El cierre permanece guardado.` : "Hasta registrar el sorteo, la lista es una vista previa al día de hoy."}</small></form></div>`
       : "";
-  const content = `<section class="hero"><span class="eyebrow">TU COMUNIDAD</span><h1>Clientes.</h1><p>Todos los perfiles en un mismo lugar. Consultá cuotas o prepará el sorteo de cumpleaños.</p><div class="hero-actions"><a class="button" href="#nuevo">+ Registrar cliente</a></div></section><div class="section-title"><h2>${filter === "cumpleanos" ? `Cumpleaños de ${monthFmt.format(monthDate)}` : "Todos los clientes"}</h2><span>${rows.length} ${rows.length === 1 ? "cliente" : "clientes"}</span></div><div class="toolbar"><input id="search" class="search" type="search" aria-label="Buscar cliente" placeholder="Buscar por nombre" value="${escapeHtml(query)}">${[
+  const eligible = filter === "cumpleanos" ? rows.filter((c) => !raffleReason(c, cutoff)) : rows;
+  const excluded = filter === "cumpleanos" ? rows.filter((c) => raffleReason(c, cutoff)) : [];
+  const content = `<section class="hero"><span class="eyebrow">TU COMUNIDAD</span><h1>Clientes.</h1><p>Todos los perfiles en un mismo lugar. Consultá cuotas o prepará el sorteo de cumpleaños.</p><div class="hero-actions"><a class="button" href="#nuevo">+ Registrar cliente</a></div></section><div class="section-title"><h2>${filter === "cumpleanos" ? `Cumpleaños de ${birthdayMonthFmt.format(monthDate)}` : "Todos los clientes"}</h2><span>${filter === "cumpleanos" ? eligible.length : rows.length} ${rows.length === 1 ? "cliente" : "clientes"}</span></div><div class="toolbar"><input id="search" class="search" type="search" aria-label="Buscar cliente" placeholder="Buscar por nombre" value="${escapeHtml(query)}">${[
     ["todos", "Todos"],
     ["saldo", "Con saldo"],
     ["aldia", "Al día"],
@@ -272,10 +310,10 @@ function clients() {
         `<button class="chip" type="button" data-filter="${id}" aria-pressed="${filter === id}">${label}</button>`,
     )
     .join("")}</div>${monthPicker}<div class="list">${
-    rows.length
-      ? rows.map(filter === "cumpleanos" ? birthdayRow : customerRow).join("")
-      : `<div class="empty">${filter === "cumpleanos" ? "No hay cumpleaños registrados en este mes. Probá otro mes o completá la fecha desde el perfil." : "No hay clientes para este filtro. Probá otro o registrá uno nuevo."}</div>`
-  }</div>`;
+    (filter === "cumpleanos" ? eligible : rows).length
+      ? (filter === "cumpleanos" ? eligible : rows).map(filter === "cumpleanos" ? birthdayRow : customerRow).join("")
+      : `<div class="empty">${filter === "cumpleanos" ? "No hay participantes para este mes. Revisá las exclusiones o elegí otro mes." : "No hay clientes para este filtro. Probá otro o registrá uno nuevo."}</div>`
+  }</div>${filter === "cumpleanos" ? `<section class="raffle-excluded"><h3>No participan en este sorteo <span>${excluded.length}</span></h3><p>Quien se registró después del cierre puede participar el año próximo si cumple los demás requisitos.</p><div class="list">${excluded.map((c) => `<button class="row rowbutton" type="button" data-customer="${escapeHtml(c.id)}"><span><strong>${escapeHtml(c.name)}</strong><small>${birthdayLabel(c)} · ${escapeHtml(raffleReason(c, cutoff))}</small></span><span aria-hidden="true">›</span></button>`).join("")}</div></section>` : ""}`;
   app.innerHTML = layout(content, "clientes");
   document.querySelector("#search").oninput = (e) => {
     query = e.target.value;
@@ -304,6 +342,16 @@ function clients() {
       document.querySelector("#birthday-month").focus();
     };
   }
+  const raffleForm = document.querySelector("#raffle-form");
+  if (raffleForm) raffleForm.onsubmit = (event) => {
+    event.preventDefault();
+    if (savedDraw) return;
+    const date = document.querySelector("#raffle-date").value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > today() || !date.startsWith(String(monthDate.getUTCFullYear()))) return toast("Elegí una fecha válida de este año que no sea futura.");
+    state.raffleDraws ||= {};
+    state.raffleDraws[raffleKey] = date;
+    save(); clients(); toast("Fecha del sorteo registrada.");
+  };
   bindCustomerRows();
 }
 function activities() {
@@ -343,14 +391,14 @@ function newCustomer() {
     )
     .join("");
   app.innerHTML = layout(
-    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">ALTA EN UN SOLO PASO</span><h1>Nuevo cliente.</h1><p>Completá el perfil, elegí la actividad y anotá el primer abono. Se pueden combinar dos medios y dejar saldo pendiente.</p></section><form class="panel" id="customer-form"><div class="form-grid"><div class="field wide"><label for="customer-name">Nombre y apellido</label><input id="customer-name" required minlength="2" maxlength="120" autocomplete="name" placeholder="Ej. Clara Díaz"></div><div class="field"><label for="customer-phone">Celular (opcional)</label><input id="customer-phone" type="tel" maxlength="40" autocomplete="tel" placeholder="+54 9 11 1234 5678"></div><div class="field"><label for="customer-birth">Fecha de cumpleaños (opcional)</label><input id="customer-birth" type="date" max="${today()}" autocomplete="bday"></div><div class="field wide"><label for="customer-activity">Actividad</label><select id="customer-activity" required>${options}</select></div><div class="field"><label for="payment-1">Primer abono (ARS)</label><input id="payment-1" type="number" min="0" step="1" inputmode="numeric" value="0" required></div><div class="field"><label for="method-1">Medio</label><select id="method-1"><option>Transferencia</option><option>Efectivo</option><option>Mercado Pago</option></select></div><div class="field"><label for="payment-2">Segundo medio (ARS, opcional)</label><input id="payment-2" type="number" min="0" step="1" inputmode="numeric" value="0"></div><div class="field"><label for="method-2">Medio adicional</label><select id="method-2"><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option></select></div></div><p class="notice">La vigencia empieza con el primer abono. Si queda saldo, se ve en Clientes y puede completarse después.</p><div class="form-actions"><button class="button" type="submit">Registrar cliente</button><a class="button ghost" href="#clientes">Cancelar</a></div></form>`,
+    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">ALTA EN UN SOLO PASO</span><h1>Nuevo cliente.</h1><p>Completá el perfil, elegí la actividad y anotá el primer abono. Se pueden combinar dos medios y dejar saldo pendiente.</p></section><form class="panel" id="customer-form"><div class="form-grid"><div class="field wide"><label for="customer-name">Nombre y apellido</label><input id="customer-name" required minlength="2" maxlength="120" autocomplete="name" placeholder="Ej. Clara Díaz"></div><div class="field"><label for="customer-phone">Celular (opcional)</label><input id="customer-phone" type="tel" maxlength="40" autocomplete="tel" placeholder="+54 9 11 1234 5678"></div>${birthdayFields("customer")}<div class="field wide"><label for="customer-activity">Actividad</label><select id="customer-activity" required>${options}</select></div><div class="field"><label for="payment-1">Primer abono (ARS)</label><input id="payment-1" type="number" min="0" step="1" inputmode="numeric" value="0" required></div><div class="field"><label for="method-1">Medio</label><select id="method-1"><option>Transferencia</option><option>Efectivo</option><option>Mercado Pago</option></select></div><div class="field"><label for="payment-2">Segundo medio (ARS, opcional)</label><input id="payment-2" type="number" min="0" step="1" inputmode="numeric" value="0"></div><div class="field"><label for="method-2">Medio adicional</label><select id="method-2"><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option></select></div></div><p class="notice">La vigencia empieza con el primer abono. Si queda saldo, se ve en Clientes y puede completarse después.</p><div class="form-actions"><button class="button" type="submit">Registrar cliente</button><a class="button ghost" href="#clientes">Cancelar</a></div></form>`,
     "clientes",
   );
   document.querySelector("#customer-form").onsubmit = (e) => {
     e.preventDefault();
     const name = document.querySelector("#customer-name").value.trim(),
       phone = document.querySelector("#customer-phone").value.trim(),
-      birthDate = document.querySelector("#customer-birth").value,
+      birthMonth = Number(document.querySelector("#customer-birth-month").value),
       activityId = document.querySelector("#customer-activity").value,
       activity = state.activities.find((a) => a.id === activityId),
       p1 = Number(document.querySelector("#payment-1").value),
@@ -364,7 +412,7 @@ function newCustomer() {
       p2 < 0 ||
       p1 + p2 <= 0 ||
       p1 + p2 > activity.price ||
-      (birthDate && birthDate > today())
+      !validBirthday(birthMonth)
     )
       return toast("Revisá el abono y los datos del cliente.");
     const start = today(),
@@ -373,7 +421,7 @@ function newCustomer() {
       id,
       name,
       phone,
-      birthDate,
+      birthMonth: birthMonth || null,
       activityId,
       activityName: activity.name,
       price: activity.price,
@@ -411,7 +459,7 @@ function detail(id) {
     oldBalance = balance(c) - remainder,
     history = previousPeriods(c).slice().reverse();
   app.innerHTML = layout(
-    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">PERFIL DE CLIENTE</span><h1>${escapeHtml(c.name)}.</h1><p>${escapeHtml(c.activityName)} · ${dateLabel(c.start)} a ${dateLabel(c.end)}</p></section>${c.deletedAt ? `<p class="notice">Perfil eliminado el ${dateLabel(c.deletedAt)}. Cuotas y pagos conservados; podés recuperarlo si vuelve.</p>` : c.archivedAt ? `<p class="notice">Dado de baja el ${dateLabel(c.archivedAt)}. El historial y los saldos se conservan. Para volver, iniciá una cuota con el precio actual.</p>` : c.end <= shiftDays(today(), -30) ? `<p class="notice">La cuota venció hace ${daysPast(c.end)} días. El perfil sigue disponible; no se cobra automáticamente ni se borra por falta de pago.</p>` : ""}<div class="panel"><div class="detail-hero"><h2>Última cuota</h2><span class="status ${type}">${label}</span></div><div class="detail-grid"><div><span>Total acordado</span><strong>${money.format(c.price)}</strong></div><div><span>Abonado</span><strong>${money.format(paid(c))}</strong></div><div><span>Saldo pendiente</span><strong>${money.format(remainder)}</strong></div></div>${oldBalance ? `<p class="notice">Hay ${money.format(oldBalance)} pendientes de cuotas anteriores. El regreso no borra esa deuda.</p>` : ""}<div class="form-actions">${remainder ? `<a class="button" href="#abonar/${escapeHtml(c.id)}">+ Registrar abono</a>` : ""}${c.archivedAt || c.deletedAt ? `<a class="button" href="#regresar/${escapeHtml(c.id)}">Reactivar cliente</a>` : c.end <= today() ? `<a class="button secondary" href="#regresar/${escapeHtml(c.id)}">Iniciar nueva cuota</a>` : ""}<a class="button secondary" href="#editar/${escapeHtml(c.id)}">Editar perfil</a></div><hr class="divider"><div><strong>Celular:</strong> ${escapeHtml(c.phone || "Sin registrar")}</div><div><strong>Cumpleaños:</strong> ${dateLabel(c.birthDate)}</div><hr class="divider"><h2>Abonos de esta cuota</h2><ol class="payments">${c.payments.map((p) => `<li>${dateLabel(p.date)} · ${escapeHtml(p.method)} · <strong>${money.format(p.amount)}</strong></li>`).join("")}</ol></div>${history.length ? `<section class="history"><h2>Cuotas anteriores</h2>${history.map((p, index) => `<details class="panel history-period"><summary>${escapeHtml(p.activityName)} · ${dateLabel(p.start)} a ${dateLabel(p.end)} · ${money.format(p.price)}</summary><p>Abonado: ${money.format(p.payments.reduce((n, payment) => n + payment.amount, 0))} · Pendiente: ${money.format(Math.max(0, p.price - p.payments.reduce((n, payment) => n + payment.amount, 0)))}</p>${p.price > p.payments.reduce((n, payment) => n + payment.amount, 0) ? `<a class="button secondary" href="#abonar/${escapeHtml(c.id)}/${previousPeriods(c).length - 1 - index}">Registrar abono anterior</a>` : ""}<ol class="payments">${p.payments.map((payment) => `<li>${dateLabel(payment.date)} · ${escapeHtml(payment.method)} · ${money.format(payment.amount)}</li>`).join("")}</ol></details>`).join("")}</section>` : ""}<section class="profile-management"><h2>Historial y perfil</h2><p>Las cuotas anteriores, los pagos y los saldos permanecen asociados a esta persona.</p><div class="form-actions"><a class="button secondary" href="#historial/${escapeHtml(c.id)}">Ver historial por día</a>${c.archivedAt || c.deletedAt ? "" : `<button class="button secondary" id="archive-customer" type="button">Dar de baja</button>`}${c.deletedAt ? "" : `<a class="button ghost" href="#borrar/${escapeHtml(c.id)}">Eliminar perfil…</a>`}</div></section>`,
+    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">PERFIL DE CLIENTE</span><h1>${escapeHtml(c.name)}.</h1><p>${escapeHtml(c.activityName)} · ${dateLabel(c.start)} a ${dateLabel(c.end)}</p></section>${c.deletedAt ? `<p class="notice">Perfil eliminado el ${dateLabel(c.deletedAt)}. Cuotas y pagos conservados; podés recuperarlo si vuelve.</p>` : c.archivedAt ? `<p class="notice">Dado de baja el ${dateLabel(c.archivedAt)}. El historial y los saldos se conservan. Para volver, iniciá una cuota con el precio actual.</p>` : c.end <= shiftDays(today(), -30) ? `<p class="notice">La cuota venció hace ${daysPast(c.end)} días. El perfil sigue disponible; no se cobra automáticamente ni se borra por falta de pago.</p>` : ""}<div class="panel"><div class="detail-hero"><h2>Última cuota</h2><span class="status ${type}">${label}</span></div><div class="detail-grid"><div><span>Total acordado</span><strong>${money.format(c.price)}</strong></div><div><span>Abonado</span><strong>${money.format(paid(c))}</strong></div><div><span>Saldo pendiente</span><strong>${money.format(remainder)}</strong></div></div>${oldBalance ? `<p class="notice">Hay ${money.format(oldBalance)} pendientes de cuotas anteriores. El regreso no borra esa deuda.</p>` : ""}<div class="form-actions">${remainder ? `<a class="button" href="#abonar/${escapeHtml(c.id)}">+ Registrar abono</a>` : ""}${c.archivedAt || c.deletedAt ? `<a class="button" href="#regresar/${escapeHtml(c.id)}">Reactivar cliente</a>` : c.end <= today() ? `<a class="button secondary" href="#regresar/${escapeHtml(c.id)}">Iniciar nueva cuota</a>` : ""}<a class="button secondary" href="#editar/${escapeHtml(c.id)}">Editar perfil</a></div><hr class="divider"><div><strong>Celular:</strong> ${escapeHtml(c.phone || "Sin registrar")}</div><div><strong>Cumpleaños:</strong> ${birthdayLabel(c)}</div><hr class="divider"><h2>Abonos de esta cuota</h2><ol class="payments">${c.payments.map((p) => `<li>${dateLabel(p.date)} · ${escapeHtml(p.method)} · <strong>${money.format(p.amount)}</strong></li>`).join("")}</ol></div>${history.length ? `<section class="history"><h2>Cuotas anteriores</h2>${history.map((p, index) => `<details class="panel history-period"><summary>${escapeHtml(p.activityName)} · ${dateLabel(p.start)} a ${dateLabel(p.end)} · ${money.format(p.price)}</summary><p>Abonado: ${money.format(p.payments.reduce((n, payment) => n + payment.amount, 0))} · Pendiente: ${money.format(Math.max(0, p.price - p.payments.reduce((n, payment) => n + payment.amount, 0)))}</p>${p.price > p.payments.reduce((n, payment) => n + payment.amount, 0) ? `<a class="button secondary" href="#abonar/${escapeHtml(c.id)}/${previousPeriods(c).length - 1 - index}">Registrar abono anterior</a>` : ""}<ol class="payments">${p.payments.map((payment) => `<li>${dateLabel(payment.date)} · ${escapeHtml(payment.method)} · ${money.format(payment.amount)}</li>`).join("")}</ol></details>`).join("")}</section>` : ""}<section class="profile-management"><h2>Historial y perfil</h2><p>Las cuotas anteriores, los pagos y los saldos permanecen asociados a esta persona.</p><div class="form-actions"><a class="button secondary" href="#historial/${escapeHtml(c.id)}">Ver historial por día</a>${c.archivedAt || c.deletedAt ? "" : `<button class="button secondary" id="archive-customer" type="button">Dar de baja</button>`}${c.deletedAt ? "" : `<a class="button ghost" href="#borrar/${escapeHtml(c.id)}">Eliminar perfil…</a>`}</div></section>`,
     "clientes",
   );
   const archiveButton = document.querySelector("#archive-customer");
@@ -584,6 +632,7 @@ function gymHistory(requestedMonth, requestedDay) {
   const dailyPayments = payments.filter((p) => p.date === day);
   const received = monthPayments.reduce((sum, p) => sum + p.amount, 0);
   const pending = state.customers.reduce((sum, customer) => sum + balance(customer), 0);
+  const monthlyPending = state.customers.flatMap((customer) => [...previousPeriods(customer), periodSnapshot(customer)]).filter((period) => period.start?.startsWith(month)).reduce((sum, period) => sum + Math.max(0, period.price - period.payments.reduce((n, payment) => n + payment.amount, 0)), 0);
   const methods = ["Transferencia", "Mercado Pago", "Efectivo"];
   const activity = allActivity.filter((event) => event.date === day);
   const monthLabel = monthFmt.format(utc(`${month}-01`));
@@ -595,7 +644,7 @@ function gymHistory(requestedMonth, requestedDay) {
   }).join("");
   app.innerHTML = layout(`<section class="hero"><span class="eyebrow">CAJA Y MOVIMIENTOS</span><h1>Historial general.</h1><p>Todo el gimnasio, día por día. Los ingresos incluyen sólo abonos recibidos.</p></section>
     <div class="ledger-date"><div><span class="eyebrow">MES SELECCIONADO</span><h2>${monthHeading}</h2></div><div class="ledger-date-actions"><a href="#movimientos/${shiftLedgerMonth(month, -1)}" aria-label="Mes anterior">←</a><form id="ledger-month-form"><label class="sr-only" for="ledger-month-input">Elegir mes</label><input id="ledger-month-input" type="month" min="1900-01" max="2100-12" value="${month}" required><button type="submit">Ver mes</button></form><a href="#movimientos/${shiftLedgerMonth(month, 1)}" aria-label="Mes siguiente">→</a>${month !== today().slice(0, 7) ? '<a class="ledger-today" href="#movimientos">Mes actual</a>' : ""}</div></div>
-    <section class="ledger-summary" aria-label="Resumen financiero"><div class="ledger-received"><span>COBRADO EN ${monthLabel.toLocaleUpperCase("es-AR")}</span><strong>${money.format(received)}</strong><small>${monthPayments.length} ${monthPayments.length === 1 ? "abono registrado" : "abonos registrados"} · efectivo + transferencias + Mercado Pago</small></div><div class="ledger-pending"><span>PENDIENTE ACTUAL DEL GIMNASIO</span><strong>${money.format(pending)}</strong><small>Incluye cuotas de cualquier mes. Es el saldo de hoy, no el del mes seleccionado.</small></div><dl class="ledger-methods">${methods.map((method) => `<div><dt>${method}</dt><dd>${money.format(monthPayments.filter((p) => p.method === method).reduce((sum, p) => sum + p.amount, 0))}</dd></div>`).join("")}</dl></section>
+    <section class="ledger-summary" aria-label="Resumen financiero"><div class="ledger-received"><span>COBRADO EN ${monthLabel.toLocaleUpperCase("es-AR")}</span><strong>${money.format(received)}</strong><small>${monthPayments.length} ${monthPayments.length === 1 ? "abono registrado" : "abonos registrados"} · efectivo + transferencias + Mercado Pago</small></div><div class="ledger-pending"><span>PENDIENTE DE CUOTAS DE ${monthLabel.toLocaleUpperCase("es-AR")}</span><strong>${money.format(monthlyPending)}</strong><small>Saldo actual de cuotas iniciadas este mes.</small></div><div class="ledger-pending"><span>PENDIENTE TOTAL DEL GIMNASIO</span><strong>${money.format(pending)}</strong><small>Saldo actual de cuotas de todos los meses.</small></div><dl class="ledger-methods">${methods.map((method) => `<div><dt>${method}</dt><dd>${money.format(monthPayments.filter((p) => p.method === method).reduce((sum, p) => sum + p.amount, 0))}</dd></div>`).join("")}</dl></section>
     <section class="ledger-calendar" aria-label="Movimientos por día"><div class="ledger-calendar-heading"><div><span class="eyebrow">RECORRÉ EL MES</span><h2>Día a día</h2></div><span>Deslizá para ver más →</span></div><a class="skip-link ledger-skip-link" href="#ledger-selected-day">Saltar al detalle del día</a><nav class="ledger-day-strip" aria-label="Días del mes">${dayStrip}</nav></section>
     <div class="ledger-selected-day" id="ledger-selected-day" tabindex="-1"><div><span class="eyebrow">MOVIMIENTOS DEL DÍA</span><h2>${dateLabel(day)}</h2></div><div><span>Ingresó ese día</span><strong>${money.format(dailyPayments.reduce((sum, payment) => sum + payment.amount, 0))}</strong></div></div>
     <section class="ledger-section"><div class="ledger-section-heading"><div><span class="eyebrow">DINERO RECIBIDO</span><h2>Abonos</h2></div><span>${dailyPayments.length}</span></div>${dailyPayments.length ? `<div class="ledger-entries">${dailyPayments.map((payment) => `<button class="ledger-entry" type="button" data-customer="${escapeHtml(payment.customerId)}"><span><strong>${escapeHtml(payment.customerName)}</strong><small>${escapeHtml(payment.activityName)} · ${escapeHtml(payment.method)} · cuota ${dateLabel(payment.periodStart)}–${dateLabel(payment.periodEnd)}</small></span><b>+ ${money.format(payment.amount)}</b></button>`).join("")}</div>` : '<div class="empty">No hay abonos registrados este día.</div>'}</section>
@@ -646,16 +695,19 @@ function edit(id) {
   const c = state.customers.find((x) => x.id === id);
   if (!c) return void (location.hash = "#clientes");
   app.innerHTML = layout(
-    `<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(c.id)}'">← ${escapeHtml(c.name)}</button><section class="hero"><span class="eyebrow">PERFIL</span><h1>Editar datos.</h1></section><form class="panel" id="edit-form"><div class="form-grid"><div class="field wide"><label for="edit-name">Nombre y apellido</label><input id="edit-name" required minlength="2" maxlength="120" value="${escapeHtml(c.name)}"></div><div class="field"><label for="edit-phone">Celular</label><input id="edit-phone" type="tel" maxlength="40" value="${escapeHtml(c.phone)}"></div><div class="field"><label for="edit-birth">Fecha de cumpleaños</label><input id="edit-birth" type="date" max="${today()}" value="${escapeHtml(c.birthDate)}"></div></div><div class="form-actions"><button class="button" type="submit">Guardar perfil</button><a class="button ghost" href="#cliente/${escapeHtml(c.id)}">Cancelar</a></div></form>`,
+    `<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(c.id)}'">← ${escapeHtml(c.name)}</button><section class="hero"><span class="eyebrow">PERFIL</span><h1>Editar datos.</h1></section><form class="panel" id="edit-form"><div class="form-grid"><div class="field wide"><label for="edit-name">Nombre y apellido</label><input id="edit-name" required minlength="2" maxlength="120" value="${escapeHtml(c.name)}"></div><div class="field"><label for="edit-phone">Celular</label><input id="edit-phone" type="tel" maxlength="40" value="${escapeHtml(c.phone)}"></div>${birthdayFields("edit", c)}</div><div class="form-actions"><button class="button" type="submit">Guardar perfil</button><a class="button ghost" href="#cliente/${escapeHtml(c.id)}">Cancelar</a></div></form>`,
     "clientes",
   );
   document.querySelector("#edit-form").onsubmit = (e) => {
     e.preventDefault();
     c.name = document.querySelector("#edit-name").value.trim();
     c.phone = document.querySelector("#edit-phone").value.trim();
-    c.birthDate = document.querySelector("#edit-birth").value;
-    if (c.name.length < 2 || (c.birthDate && c.birthDate > today()))
+    const birthMonth = Number(document.querySelector("#edit-birth-month").value);
+    if (c.name.length < 2 || !validBirthday(birthMonth))
       return toast("Revisá el perfil.");
+    c.birthMonth = birthMonth || null;
+    delete c.birthDay;
+    delete c.birthDate;
     save();
     location.hash = `#cliente/${c.id}`;
     toast("Perfil actualizado.");
