@@ -3,11 +3,20 @@
 ## Historial general del gimnasio (2026-10-19)
 
 - Pestaña «Historial» para seleccionar un mes y recorrer sus días en una barra horizontal, con señal de movimiento y detalle del día elegido. Las fechas usan el horario de Argentina; el historial de cada cliente sigue disponible desde su perfil.
-- El resumen mensual muestra el total cobrado en ese mes y el desglose entre transferencia, Mercado Pago y efectivo. Muestra aparte el **pendiente actual de todo el gimnasio**, incluidas cuotas de meses anteriores y perfiles retirados; ese importe no es el saldo histórico del mes seleccionado.
+- El resumen mensual muestra el total cobrado en ese mes y el desglose entre transferencia, Mercado Pago y efectivo. Muestra aparte el **pendiente actual de cuotas iniciadas en el mes seleccionado** y el **pendiente actual de todo el gimnasio**. Ambos son saldos de hoy; no son cierres históricos congelados.
 - «Cobrado en el mes» suma exclusivamente abonos registrados, incluso pagos repartidos entre transferencia, Mercado Pago y efectivo. Una cuota creada o un saldo pendiente no son dinero recibido.
 - Cada abono muestra el cliente y la cuota original a la que se aplicó. Los pagos históricos importados se atribuyen a su fecha original y se identifican como importados; una importación antigua no infla la caja del día de carga.
 - Las cuotas registradas, su importe pactado y su **saldo actual** aparecen en un bloque distinto de los ingresos. Se muestran además las altas y cambios de estado de perfiles.
 - El saldo mostrado para un día anterior es el saldo **actual** de esa cuota; este primer historial no reconstruye un cierre contable congelado de ese día o mes. Correcciones, anulaciones, exportación y conciliación bancaria requieren definición aparte.
+
+## Cumpleaños y sorteo (2026-10-19)
+
+- El perfil guarda sólo el **mes** de cumpleaños. No se pide ni infiere día o año de nacimiento. Los perfiles anteriores de la demo con fecha completa se leen por mes.
+- En Clientes, el filtro Cumpleaños permite elegir el mes del sorteo. La lista separa participantes y excluidos, mostrando el motivo de exclusión.
+- Antes de registrar la fecha del sorteo, la lista es una vista previa calculada al día de hoy en horario argentino. El dueño registra la fecha real del sorteo; para ese mes y año queda fijada y no se sobrescribe desde la app.
+- Quien fue dado de alta **después** de esa fecha no participa en ese sorteo. Puede figurar en el sorteo del año siguiente si entonces cumple los demás requisitos.
+- Queda fuera quien, al cierre, tenía el perfil de baja/retirado o cuya última cuota iniciada hasta el cierre había vencido **más de 30 días** antes. El día 30 todavía participa; desde el día 31 no. Una cuota futura no cuenta para un sorteo pasado.
+- La lista se calcula con el historial de altas, períodos y cambios de estado. Una edición posterior del mes de cumpleaños puede cambiar la lista histórica; congelar participantes o gestionar correcciones del sorteo requerirá un flujo adicional.
 
 ## Baja, retiro y regreso (2026-10-19)
 

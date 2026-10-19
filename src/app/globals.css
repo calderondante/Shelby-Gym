@@ -1810,6 +1810,28 @@ html:not([data-input="keyboard"]) details[open] > :not(summary) {
 .ledger-month-methods > div { display: grid; gap: 4px; }
 .ledger-month-methods dt { letter-spacing: 0; font-size: 12px; }
 .ledger-month-methods dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.birthday-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.birthday-select-field { display: grid; align-content: start; gap: 7px; }
+.birthday-select-field label, .raffle-month-form label, .raffle-draw-form label { font-size: 13px; font-weight: 600; }
+.birthday-select-field select, .raffle-month-form input, .raffle-draw-form input { min-height: 44px; width: 100%; border: 1px solid var(--border); border-radius: 9px; background: var(--card); color: var(--foreground); padding: 0 12px; color-scheme: dark; }
+.birthday-select-field small, .raffle-rule, .raffle-cutoff, .raffle-empty { color: var(--muted-foreground); font-size: 13px; line-height: 1.5; }
+.raffle-section { margin: 25px 0 45px; }
+.raffle-month-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; flex-wrap: wrap; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+.raffle-month-heading h2 { font-size: clamp(23px, 3vw, 32px); letter-spacing: -.04em; text-transform: capitalize; }
+.raffle-month-form, .raffle-draw-form { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.raffle-month-form input, .raffle-draw-form input { width: auto; }
+.raffle-month-form button { min-height: 44px; padding: 0 14px; border-radius: 9px; background: var(--secondary); font-weight: 600; }
+.raffle-draw-form { padding: 10px 0; }
+.raffle-cutoff { padding: 15px 0; }
+.raffle-list-heading { display: flex; gap: 10px; align-items: baseline; margin-top: 26px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.raffle-list-heading h3 { font-size: 19px; }
+.raffle-list-heading span { color: var(--muted-foreground); }
+.raffle-client-list { list-style: none; padding: 0; margin: 0; }
+.raffle-client-list li { border-bottom: 1px solid var(--border); }
+.raffle-client-list a { min-height: 65px; display: flex; align-items: center; gap: 12px; padding: 12px 3px; }
+.raffle-client-list a strong { flex: 1; }
+.raffle-client-list a span { color: var(--muted-foreground); font-size: 13px; }
+.raffle-empty { padding: 15px 0; }
 .ledger-calendar { margin: 30px 0 26px; }
 .ledger-calendar-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 13px; }
 .ledger-calendar-heading h2 { font-size: 23px; letter-spacing: -.04em; }

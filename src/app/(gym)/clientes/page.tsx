@@ -12,6 +12,9 @@ import {
   EmptyContent,
 } from "@/components/ui/empty";
 import { getCustomers } from "@/features/gym/server/data";
+import { getBirthdayRaffle } from "@/features/gym/server/raffle";
+import { RaffleDrawForm } from "@/features/gym/components/raffle-draw-form";
+import { validMonth } from "@/features/gym/domain/ledger-calendar";
 import { requireSettings, requireStaff } from "@/features/gym/server/session";
 import { money } from "@/features/gym/domain/money";
 import { dateLabel, todayIn } from "@/features/gym/domain/dates";
@@ -19,27 +22,30 @@ export const metadata = { title: "Clientes" };
 export default async function CustomersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; estado?: string; pagina?: string }>;
+  searchParams: Promise<{ q?: string; estado?: string; pagina?: string; mes?: string }>;
 }) {
   const { staff } = await requireStaff();
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q.slice(0, 100) : "";
-  const filter = ["deuda", "aldia", "vencidas", "mas30", "bajas", "retirados"].includes(params.estado ?? "")
+  const filter = ["deuda", "aldia", "vencidas", "mas30", "bajas", "retirados", "cumpleanos"].includes(params.estado ?? "")
     ? params.estado!
     : "todos";
   const page = Math.min(
     10000,
     Math.max(1, Math.floor(Number(params.pagina) || 1)),
   );
-  const [settings, { customers, count }] = await Promise.all([
-    requireSettings(),
-    getCustomers(q, filter, page),
+  const settings = await requireSettings();
+  const today = todayIn(settings.time_zone);
+  const raffleMonth = validMonth(params.mes) && Number(params.mes.slice(0, 4)) >= 2000 ? params.mes : today.slice(0, 7);
+  const [{ customers, count }, raffle] = await Promise.all([
+    filter === "cumpleanos" ? Promise.resolve({ customers: [], count: 0 }) : getCustomers(q, filter, page),
+    filter === "cumpleanos" ? getBirthdayRaffle(raffleMonth, settings.time_zone, q) : Promise.resolve(null),
   ]);
-  const cutoff = new Date(`${todayIn(settings.time_zone)}T12:00:00Z`);
+  const cutoff = new Date(`${today}T12:00:00Z`);
   cutoff.setUTCDate(cutoff.getUTCDate() - 30);
   const thirtyDaysAgo = cutoff.toISOString().slice(0, 10);
   function href(estado: string, pagina = 1) {
-    return `/clientes?${new URLSearchParams({ q, estado, pagina: String(pagina) })}`;
+    return `/clientes?${new URLSearchParams({ q, estado, pagina: String(pagina), ...(estado === "cumpleanos" ? { mes: raffleMonth } : {}) })}`;
   }
   return (
     <>
@@ -95,6 +101,7 @@ export default async function CustomersPage({
               ["mas30", "+30 días"],
               ["bajas", "Bajas"],
               ["retirados", "Eliminados"],
+              ["cumpleanos", "Cumpleaños"],
             ].map(([value, label]) => (
               <Link
                 href={href(value)}
@@ -106,6 +113,28 @@ export default async function CustomersPage({
             ))}
           </nav>
         </div>
+        {raffle ? <section className="raffle-section" aria-label="Sorteo de cumpleaños">
+          <div className="raffle-month-heading">
+            <div><span className="eyebrow">SORTEO {raffleMonth.slice(0, 4)}</span><h2>Cumpleaños de {new Intl.DateTimeFormat("es-AR", { month: "long", timeZone: "UTC" }).format(new Date(`${raffleMonth}-15T12:00:00Z`))}</h2></div>
+            <form action="/clientes" className="raffle-month-form">
+              <input type="hidden" name="estado" value="cumpleanos" />
+              <input type="hidden" name="q" value={q} />
+              <label htmlFor="raffleMonth">Elegir mes del sorteo</label>
+              <input id="raffleMonth" name="mes" type="month" defaultValue={raffleMonth} min="2000-01" max="2100-12" required />
+              <button type="submit">Ver mes</button>
+            </form>
+          </div>
+          <p className="raffle-rule">Sólo participan quienes ya estaban registrados al cierre y cuya cuota no llevaba más de 30 días vencida. Se guarda únicamente el mes de cumpleaños.</p>
+          {raffle.drawOn ? <p className="raffle-cutoff">Sorteo registrado el {dateLabel(raffle.drawOn)}. Lista calculada para esa fecha.</p>
+            : <div className="raffle-cutoff"><p>Vista previa al {dateLabel(raffle.cutoff)}. Registrá la fecha cuando se haga el sorteo para fijar el cierre.</p>{staff.role === "owner" ? <RaffleDrawForm month={raffleMonth} today={today} /> : null}</div>}
+          <div className="raffle-list-heading"><h3>Participan</h3><span>{raffle.eligible.length}</span></div>
+          {raffle.eligible.length ? <ul className="raffle-client-list">{raffle.eligible.map((customer) => <li key={customer.id}><Link href={`/clientes/${customer.id}`}><strong>{customer.name}</strong><span>{new Intl.DateTimeFormat("es-AR", { month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(2000, (customer.birth_month ?? 1) - 1, 15)))}</span><ChevronRight size={18} aria-hidden="true" /></Link></li>)}</ul>
+            : <p className="raffle-empty">No hay participantes para este mes.</p>}
+          <div className="raffle-list-heading"><h3>No participan en este sorteo</h3><span>{raffle.excluded.length}</span></div>
+          {raffle.excluded.length ? <ul className="raffle-client-list">{raffle.excluded.map((customer) => <li key={customer.id}><Link href={`/clientes/${customer.id}`}><strong>{customer.name}</strong><span>{customer.reason}</span><ChevronRight size={18} aria-hidden="true" /></Link></li>)}</ul>
+            : <p className="raffle-empty">No hay exclusiones.</p>}
+          <p className="raffle-rule">Un alta posterior al sorteo puede participar el año próximo si cumple los requisitos entonces.</p>
+        </section> : <>
         <div className="list-meta">
           <span>
             {count} {count === 1 ? "cliente" : "clientes"}
@@ -231,6 +260,7 @@ export default async function CustomersPage({
             )}
           </nav>
         ) : null}
+        </>}
       </section>
     </>
   );

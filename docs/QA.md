@@ -9,6 +9,14 @@
 - [ ] Historial: alta, cuotas, abonos, saldos al vencimiento y cambios de estado agrupados por día.
 - [ ] Monitor no puede retirar perfiles; el dueño sí. RLS no permite escrituras directas a tablas financieras.
 
+## Sorteos e historial mensual
+
+- [ ] El resumen de un mes distingue cobrado en ese mes, saldo actual de cuotas iniciadas ese mes y saldo total de todos los meses; pagos posteriores reducen el saldo correspondiente sin cambiar el cobrado del mes de origen.
+- [ ] Cumpleaños sólo solicita mes. Clientes que cumplen ese mes aparecen en Participan o No participan, con motivo legible.
+- [ ] Alta posterior al cierre queda fuera ese año; el mismo perfil puede entrar el año siguiente con cuota válida.
+- [ ] Exactamente 30 días desde el vencimiento participa; más de 30 días queda fuera. Una renovación posterior al sorteo no altera la vigencia usada al cierre.
+- [ ] Sólo dueño registra una fecha pasada o de hoy; anónimo/monitor no pueden insertar ni cambiar sorteos, y una fecha registrada no se sobrescribe.
+
 Estado: primera aplicación implementada y verificada localmente el **2026-10-03**. El registro al final detalla lo ejecutado. Los puntos sin marcar son criterios generales de aceptación aún no acreditados completamente; no implican que todas sus partes estén sin probar. No hay aceptación de producción ni pruebas físicas en iOS/Android.
 
 ## Desktop, tablet y mobile

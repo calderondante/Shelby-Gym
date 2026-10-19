@@ -24,6 +24,11 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"raffle_draws": {
+                  Row: { "birth_year": number; "birth_month": number; "draw_on": string; "created_at": string; "created_by": string }
+                  Insert: { "birth_year": number; "birth_month": number; "draw_on": string; "created_at"?: string; "created_by": string }
+                  Update: { "birth_year"?: number; "birth_month"?: number; "draw_on"?: string; "created_at"?: string; "created_by"?: string }
+                  Relationships: [{ foreignKeyName: "raffle_draws_created_by_fkey"; columns: ["created_by"]; isOneToOne: false; referencedRelation: "staff"; referencedColumns: ["id"] }]
                 },"customer_events": {
                   Row: { "id": string,"customer_id": string,"event": string,"created_by": string,"created_at": string }
                   Insert: { "id"?: string,"customer_id": string,"event": string,"created_by": string,"created_at"?: string }
@@ -34,13 +39,13 @@ isOneToOne: false
                   ]
                 },"customers": {
                   Row: {
-                    "age_as_of": string | null,"age_years": number | null,"status": string,"status_changed_at": string,"created_at": string,"created_by": string,"email": string,"id": string,"name": string,"notes": string,"phone": string,"revision": number,"updated_at": string
+                    "age_as_of": string | null,"age_years": number | null,"birth_month": number | null,"status": string,"status_changed_at": string,"created_at": string,"created_by": string,"email": string,"id": string,"name": string,"notes": string,"phone": string,"revision": number,"updated_at": string
                   }
                   Insert: {
-                    "age_as_of"?: string | null,"age_years"?: number | null,"status"?: string,"status_changed_at"?: string,"created_at"?: string,"created_by"?: string,"email"?: string,"id"?: string,"name": string,"notes"?: string,"phone"?: string,"revision"?: number,"updated_at"?: string
+                    "age_as_of"?: string | null,"age_years"?: number | null,"birth_month"?: number | null,"status"?: string,"status_changed_at"?: string,"created_at"?: string,"created_by"?: string,"email"?: string,"id"?: string,"name": string,"notes"?: string,"phone"?: string,"revision"?: number,"updated_at"?: string
                   }
                   Update: {
-                    "age_as_of"?: string | null,"age_years"?: number | null,"status"?: string,"status_changed_at"?: string,"created_at"?: string,"created_by"?: string,"email"?: string,"id"?: string,"name"?: string,"notes"?: string,"phone"?: string,"revision"?: number,"updated_at"?: string
+                    "age_as_of"?: string | null,"age_years"?: number | null,"birth_month"?: number | null,"status"?: string,"status_changed_at"?: string,"created_at"?: string,"created_by"?: string,"email"?: string,"id"?: string,"name"?: string,"notes"?: string,"phone"?: string,"revision"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -296,6 +301,9 @@ isOneToOne: false
                            },
 "record_payment":
 { Args: { "p_entries": Json,"p_request": string,"p_subscription": string }; Returns: string
+                           },
+"record_raffle_draw":
+{ Args: { "p_year": number; "p_month": number; "p_draw_on": string }; Returns: undefined
                            },
 "save_activity":
 { Args: { "p_data": Json,"p_id": string,"p_revision": number }; Returns: string

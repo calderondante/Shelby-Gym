@@ -8,7 +8,8 @@
 - `change_customer_status`: baja/recuperación reversible. Retirar requiere rol de dueño.
 - `enroll_customer`: si el cliente regresa y se crea un período nuevo, lo reactiva en la misma transacción. Las suscripciones anteriores y sus saldos se mantienen.
 - El historial mensual agrupa por fecha argentina las altas, períodos, abonos y eventos de estado. Los abonos importados usan `occurred_on` y los nuevos, `created_at` convertido al huso del gimnasio. Cada suscripción conserva su precio original.
-- El total cobrado suma `payment_entries.amount_cents` del mes; la deuda pendiente actual suma los saldos de `subscription_balances` de todas las cuotas en la moneda del gimnasio. Ese saldo no es una foto histórica del mes elegido.
+- El total cobrado suma `payment_entries.amount_cents` del mes; la deuda pendiente actual suma los saldos de `subscription_balances` de todas las cuotas en la moneda del gimnasio. El pendiente mensual filtra esas cuotas por `starts_on` en el mes elegido. Ambos saldos son actuales, no una foto histórica del mes elegido.
+- `customers.birth_month` guarda sólo el mes (1–12), con índice para consultar sorteos. `raffle_draws` fija de forma inmutable la fecha de cierre por año y mes; el dueño registra el cierre mediante RPC. La elegibilidad reconstruye alta, última vigencia iniciada hasta esa fecha y estado según `customer_events`. El día 31 tras vencer se excluye. La lista de participantes no es una instantánea almacenada.
 
 Estado: primera implementación para **un único gimnasio**, 2026-10-03. Migración inicial en `supabase/migrations/20261003204842_initial_gym.sql`. No hay multitenancy ni cuentas de clientes finales.
 

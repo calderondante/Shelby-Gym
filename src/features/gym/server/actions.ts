@@ -46,6 +46,8 @@ function failure(message: string): ActionResult {
     CURRENCY_LOCKED:
       "Ya hay cuotas registradas. La moneda no se puede cambiar desde aquí.",
     FORBIDDEN: "Tu cuenta no tiene permiso para realizar esta acción.",
+    DRAW_ALREADY_RECORDED: "Ese sorteo ya tiene una fecha registrada. Actualizá la página.",
+    INVALID_DRAW_DATE: "Elegí una fecha válida del año del sorteo que no sea futura.",
   };
   return {
     error:
@@ -69,6 +71,7 @@ function customer(form: FormData) {
     phone: text(form, "phone"),
     email: text(form, "email"),
     notes: text(form, "notes"),
+    birthMonth: text(form, "birthMonth"),
   };
 }
 export async function enrollAction(
@@ -188,6 +191,24 @@ export async function updateCustomerAction(
   if (error) return failure(error.message);
   revalidatePath("/clientes");
   redirect(`/clientes/${id}?guardado=perfil`);
+}
+export async function recordRaffleDrawAction(
+  _previous: ActionResult,
+  form: FormData,
+): Promise<ActionResult> {
+  const { db } = await requireOwner();
+  const month = text(form, "month");
+  const drawOn = text(form, "drawOn");
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || !z.iso.date().safeParse(drawOn).success || !drawOn.startsWith(month.slice(0, 4)))
+    return { error: "Elegí una fecha válida del año del sorteo." };
+  const { error } = await db.rpc("record_raffle_draw", {
+    p_year: Number(month.slice(0, 4)),
+    p_month: Number(month.slice(5)),
+    p_draw_on: drawOn,
+  });
+  if (error) return failure(error.message);
+  revalidatePath("/clientes");
+  redirect(`/clientes?estado=cumpleanos&mes=${month}`);
 }
 export async function changeCustomerStatusAction(
   _previous: ActionResult,

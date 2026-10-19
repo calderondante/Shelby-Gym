@@ -50,7 +50,7 @@ export async function getMonthlyLedger(month: string, timeZone: string, currency
       .order("created_at", { ascending: false }).order("id")
       .range(offset, offset + 999);
   const balancePage = (offset: number) =>
-    db.from("subscription_balances").select("id,balance_cents")
+    db.from("subscription_balances").select("id,balance_cents,starts_on")
       .eq("currency", currency).order("id").range(offset, offset + 999);
 
   async function allPages<T>(
@@ -92,5 +92,6 @@ export async function getMonthlyLedger(month: string, timeZone: string, currency
     customers: customers.filter((row) => inMonth(row.created_at)),
     events: events.filter((row) => inMonth(row.created_at)),
     pendingCents: balances.reduce((sum, row) => sum + (row.balance_cents ?? 0), 0),
+    monthlyPendingCents: balances.reduce((sum, row) => sum + (row.starts_on?.startsWith(month) ? row.balance_cents ?? 0 : 0), 0),
   };
 }

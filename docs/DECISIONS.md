@@ -113,9 +113,19 @@ Registrar decisiones arquitectónicas importantes; no usar ADR para todo cambio 
 ## ADR-011 — Historial mensual y saldo pendiente
 
 - **Date:** 2026-10-19.
-- **Decision:** consultar los abonos de un mes por su fecha civil argentina, recorrer los días con movimientos y separar el saldo pendiente actual del total cobrado ese mes.
+- **Decision:** consultar los abonos de un mes por su fecha civil argentina, recorrer los días con movimientos y separar lo cobrado, lo pendiente de cuotas iniciadas en ese mes y la deuda total.
 - **Context:** el dueño necesita ver ingresos globales, medios de pago y días concretos desde celular o PC; pueden existir pagos parciales y deudas de meses anteriores.
 - **Options:** sumar precios de cuotas como ingresos, reconstruir cierres históricos, o mostrar dinero recibido y deuda actual con etiquetas explícitas.
-- **Chosen solution:** el total mensual suma sólo entradas de pago; los pagos importados usan su fecha original. El pendiente suma los saldos actuales de todas las cuotas, incluso de períodos anteriores y perfiles retirados. La barra diaria muestra el detalle sin pedir el mes completo por cada día.
+- **Chosen solution:** el total mensual suma sólo entradas de pago; los pagos importados usan su fecha original. El pendiente del mes suma saldos actuales de cuotas iniciadas allí y el total suma las de todos los meses, incluso perfiles retirados. La barra diaria muestra el detalle sin pedir el mes completo por cada día.
 - **Reason:** evita sumar una cuota dos veces y permite revisar cobros y deuda sin fingir un cierre contable histórico.
 - **Consequences:** el saldo no es una foto del fin de cada mes. Un cierre contable, anulaciones, conciliación o exportación requerirían modelos y permisos propios.
+
+## ADR-012 — Sorteo por mes de cumpleaños
+
+- **Date:** 2026-10-19.
+- **Decision:** guardar sólo el mes de cumpleaños y fijar una fecha de cierre por sorteo anual.
+- **Context:** el dueño quiere seleccionar un mes, excluir altas posteriores al sorteo y cuotas vencidas hace más de 30 días, y permitir que un alta tardía figure el año siguiente.
+- **Options:** fecha completa de nacimiento; lista sin cierre; mes de nacimiento y cierre anual con elegibilidad calculada.
+- **Chosen solution:** `customers.birth_month` opcional, sin día ni año; `raffle_draws` registra una fecha inmutable por año y mes mediante RPC de dueño. Participa quien estaba registrado y no estaba de baja ni llevaba más de 30 días sin cuota vigente al cierre. Se muestran los motivos de exclusión.
+- **Reason:** minimiza datos personales, mantiene el corte verificable y evita que una cuota posterior reescriba la situación del día del sorteo.
+- **Consequences:** una edición posterior del mes de cumpleaños puede alterar una lista histórica recalculada. Congelar participantes, corregir fechas y registrar ganadores requiere un flujo adicional si el gimnasio lo solicita.

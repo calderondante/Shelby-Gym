@@ -23,6 +23,7 @@ export const customerSchema = z.object({
   phone: z.string().trim().max(40),
   email: z.union([z.literal(""), z.email()]).default(""),
   notes: z.string().trim().max(500),
+  birthMonth: z.coerce.number().int().min(0).max(12),
 });
 export const enrollmentSchema = z.object({
   requestId: uuid,

@@ -26,6 +26,8 @@ Primera implementación local, 2026-10-03. Datos de QA sintéticos. No se ha con
 | Registrar abono recibido | Sí | Sí | No |
 | Crear/editar/desactivar plantillas comerciales | Sí | No | No |
 | Configurar moneda/zona | Sí | No | No |
+| Consultar participantes/exclusiones del sorteo | Sí | Sí | No |
+| Registrar fecha del sorteo | Sí | No | No |
 | Cambiar staff/roles | Solo provisión técnica | No | No |
 | Reescribir/borrar abonos | No implementado | No | No |
 
@@ -33,7 +35,7 @@ Alta/edición de clientes por monitor es el alcance operativo inicial documentad
 
 ## RLS y RPC
 
-RLS en las siete tablas. Acceso de lectura limitado a staff activo; vistas `security_invoker`. Sin INSERT/UPDATE/DELETE directo para usuarios normales. RPC de mutación `security definer` con `search_path=''`, rol explícito en cada entrada, objetos cualificados y validación/constraints. Helpers privados no expuestos a la Data API. Grants de funciones revocados para PUBLIC/anon y otorgados a authenticated solo en entrypoints intencionales. Ver DATA_MODEL y migraciones.
+RLS en todas las tablas públicas, incluida `raffle_draws`. Acceso de lectura limitado a staff activo; vistas `security_invoker`. Sin INSERT/UPDATE/DELETE directo para usuarios normales. RPC de mutación `security definer` con `search_path=''`, rol explícito en cada entrada, objetos cualificados y validación/constraints. Helpers privados no expuestos a la Data API. Grants de funciones revocados para PUBLIC/anon y otorgados a authenticated solo en entrypoints intencionales. Ver DATA_MODEL y migraciones.
 
 Service role aprovisiona cuentas y staff desde una herramienta server-only. Nunca la usar para consultas de la app ni como variable NEXT_PUBLIC. Revocar personal con `staff.active=false` corta acceso DB con el token anterior. Cerrar sesión elimina la sesión local; un access token robado puede seguir existiendo hasta expirar, por lo que una baja de personal también debe desactivar staff y revocar sesiones.
 
@@ -48,6 +50,8 @@ Vercel solo recibe la URL y clave pública de Supabase. Configurar por separado 
 ## Información sensible
 
 Nombre, teléfono/correo y notas de recepción se tratan como datos personales. Reducir campos a lo necesario; no registrar datos médicos/documentos/fotos/comprobantes hasta definir finalidad, acceso y retención. No enviar PII a analytics/logging ni mostrar errores SQL al usuario. No hay integración de Mercado Pago ni almacenamiento de instrumentos de pago.
+
+Para el sorteo se guarda únicamente el mes de cumpleaños, sin día ni año. El dueño fija la fecha de cierre anual; monitor y usuarios sin staff no pueden escribirla. La demo elimina fechas completas antiguas de su almacenamiento local al cargar la nueva versión.
 
 ## Antes de producción
 

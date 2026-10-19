@@ -80,6 +80,10 @@ export default async function CustomerPage({
             <dt>Correo</dt>
             <dd>{customer.email || "Sin registrar"}</dd>
           </div>
+          <div>
+            <dt>Cumpleaños</dt>
+            <dd>{customer.birth_month ? new Intl.DateTimeFormat("es-AR", { month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(2000, customer.birth_month - 1, 15))) : "Sin registrar"}</dd>
+          </div>
           {customer.age_years !== null ? (
             <div>
               <dt>Edad registrada</dt>

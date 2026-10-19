@@ -26,7 +26,7 @@ export default async function GymHistoryPage({
     : typeof params.dia === "string" && validMonth(params.dia.slice(0, 7))
       ? params.dia.slice(0, 7)
       : today.slice(0, 7);
-  const { payments, periods, names, customers, events, pendingCents } =
+  const { payments, periods, names, customers, events, pendingCents, monthlyPendingCents } =
     await getMonthlyLedger(month, settings.time_zone, settings.currency);
   const days = daysOfMonth(month);
   const activity = new Map<string, { count: number; received: number }>();
@@ -91,9 +91,14 @@ export default async function GymHistoryPage({
           <small>{payments.length} {payments.length === 1 ? "abono registrado" : "abonos registrados"} · efectivo + transferencias + Mercado Pago</small>
         </div>
         <div className="ledger-month-figure ledger-month-pending">
-          <span>PENDIENTE ACTUAL DEL GIMNASIO</span>
+          <span>PENDIENTE DE CUOTAS DE {titleMonth.toLocaleUpperCase("es-AR")}</span>
+          <strong>{money(monthlyPendingCents, settings.currency)}</strong>
+          <small>Saldo actual de las cuotas iniciadas este mes, incluso si se abonaron parcialmente después.</small>
+        </div>
+        <div className="ledger-month-figure ledger-month-pending">
+          <span>PENDIENTE TOTAL DEL GIMNASIO</span>
           <strong>{money(pendingCents, settings.currency)}</strong>
-          <small>Incluye cuotas de cualquier mes; es el saldo de hoy, no el del mes seleccionado.</small>
+          <small>Saldo actual de cuotas de todos los meses.</small>
         </div>
         <dl className="ledger-month-methods">
           {Object.entries(byMethod).map(([method, amount]) => (
