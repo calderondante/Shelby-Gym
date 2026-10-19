@@ -6,6 +6,7 @@ const money = new Intl.NumberFormat("es-AR", {
   currency: "ARS",
   maximumFractionDigits: 0,
 });
+const compactMoney = new Intl.NumberFormat("es-AR", { notation: "compact", maximumFractionDigits: 0 });
 const dateFmt = new Intl.DateTimeFormat("es-AR", {
   day: "numeric",
   month: "short",
@@ -185,7 +186,7 @@ function nav(section) {
   return `<nav class="bottomnav" aria-label="Secciones"><a href="#inicio" ${section === "inicio" ? 'aria-current="page"' : ""}><span aria-hidden="true">⌂</span>Inicio</a><a href="#actividades" ${section === "actividades" ? 'aria-current="page"' : ""}><span aria-hidden="true">◈</span>Actividades</a><a href="#clientes" ${section === "clientes" ? 'aria-current="page"' : ""}><span aria-hidden="true">☷</span>Clientes</a><a href="#movimientos" ${section === "movimientos" ? 'aria-current="page"' : ""}><span aria-hidden="true">≡</span>Historial</a></nav>`;
 }
 function layout(content, section) {
-  return `<div class="shell"><header class="topbar">${brand}<span class="demo-badge">DEMO · DATOS FICTICIOS</span></header><main id="main">${content}</main><p class="footnote">Vista previa interactiva. Los cambios se guardan únicamente en este navegador; no hay clientes reales ni cobros.</p></div>${nav(section)}`;
+  return `<div class="shell"><a class="skip-link" href="#main">Saltar al contenido</a><header class="topbar">${brand}<span class="demo-badge">DEMO · DATOS FICTICIOS</span></header>${nav(section)}<main id="main" tabindex="-1">${content}</main><footer class="footnote">Vista previa interactiva. Los cambios se guardan únicamente en este navegador; no hay clientes reales ni cobros.</footer></div>`;
 }
 function lock() {
   app.innerHTML = `<main class="lock"><div class="panel">${brand}<h1>Entrá a la demo.</h1><p>Probá las actividades, registrá clientes y revisá cuotas y cumpleaños desde tu celular.</p><p class="notice">Todos los nombres e importes son ficticios. Esta muestra no envía avisos ni cobra dinero.</p><form id="unlock"><label for="pin">Contraseña de demostración</label><input id="pin" type="password" autocomplete="off" required><button class="button" type="submit">Abrir Shelby Gym</button><span id="pin-error" role="alert"></span></form></div></main>`;
@@ -516,6 +517,20 @@ function validLedgerDay(value) {
     !Number.isNaN(utc(value).getTime()) &&
     utc(value).toISOString().slice(0, 10) === value;
 }
+function validLedgerMonth(value) {
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test(value || "") &&
+    Number(value.slice(0, 4)) >= 1900 &&
+    Number(value.slice(0, 4)) <= 2100;
+}
+function shiftLedgerMonth(month, amount) {
+  const [year, number] = month.split("-").map(Number);
+  return new Date(Date.UTC(year, number - 1 + amount, 1)).toISOString().slice(0, 7);
+}
+function ledgerDays(month) {
+  const [year, number] = month.split("-").map(Number);
+  const count = new Date(Date.UTC(year, number, 0)).getUTCDate();
+  return Array.from({ length: count }, (_, index) => `${month}-${String(index + 1).padStart(2, "0")}`);
+}
 function allPayments() {
   return state.customers.flatMap((customer) =>
     [...previousPeriods(customer), periodSnapshot(customer)].flatMap((period) =>
@@ -530,41 +545,74 @@ function allPayments() {
     ),
   );
 }
-function gymHistory(requestedDay) {
+function gymHistory(requestedMonth, requestedDay) {
   const payments = allPayments();
-  const latestDay = payments.map((p) => p.date).sort().at(-1) || today();
-  const day = validLedgerDay(requestedDay) ? requestedDay : latestDay;
-  const dailyPayments = payments.filter((p) => p.date === day);
-  const received = dailyPayments.reduce((sum, p) => sum + p.amount, 0);
-  const methods = ["Transferencia", "Mercado Pago", "Efectivo"];
-  const activity = [];
+  const month = validLedgerMonth(requestedMonth) ? requestedMonth
+    : validLedgerDay(requestedMonth) ? requestedMonth.slice(0, 7) : today().slice(0, 7);
+  const monthPayments = payments.filter((payment) => payment.date?.startsWith(month));
+  const days = ledgerDays(month);
+  const activityByDay = new Map();
+  const addActivity = (day, amount = 0) => {
+    const stats = activityByDay.get(day) || { count: 0, received: 0 };
+    activityByDay.set(day, { count: stats.count + 1, received: stats.received + amount });
+  };
+  for (const payment of monthPayments) addActivity(payment.date, payment.amount);
+  const allActivity = [];
   for (const customer of state.customers) {
     const periods = [...previousPeriods(customer), periodSnapshot(customer)];
-    if ((customer.createdAt || periods[0].start) === day)
-      activity.push({ customer, title: "Perfil creado", detail: "Alta del cliente" });
+    allActivity.push({ customer, date: customer.createdAt || periods[0].start, title: "Perfil creado", detail: "Alta del cliente" });
     for (const period of periods) {
-      if (period.start !== day) continue;
       const pending = Math.max(0, period.price - period.payments.reduce((sum, p) => sum + p.amount, 0));
-      activity.push({
+      allActivity.push({
         customer,
+        date: period.start,
         title: "Cuota iniciada",
         detail: `${period.activityName} · cuota ${money.format(period.price)} · saldo actual ${money.format(pending)}`,
       });
     }
     for (const event of customer.lifecycleEvents || [])
-      if (event.date === day)
-        activity.push({ customer, title: event.title, detail: event.detail });
+      allActivity.push({ customer, date: event.date, title: event.title, detail: event.detail });
   }
+  for (const event of allActivity)
+    if (event.date?.startsWith(month)) addActivity(event.date);
+  const available = days.filter((date) => activityByDay.has(date) && (month !== today().slice(0, 7) || date <= today()));
+  const day = validLedgerDay(requestedDay) && requestedDay.startsWith(month)
+    ? requestedDay
+    : validLedgerDay(requestedMonth) && requestedMonth.startsWith(month)
+      ? requestedMonth
+      : available.at(-1) || (month === today().slice(0, 7) ? today() : days[0]);
+  const dailyPayments = payments.filter((p) => p.date === day);
+  const received = monthPayments.reduce((sum, p) => sum + p.amount, 0);
+  const pending = state.customers.reduce((sum, customer) => sum + balance(customer), 0);
+  const methods = ["Transferencia", "Mercado Pago", "Efectivo"];
+  const activity = allActivity.filter((event) => event.date === day);
+  const monthLabel = monthFmt.format(utc(`${month}-01`));
+  const monthHeading = monthLabel[0].toLocaleUpperCase("es-AR") + monthLabel.slice(1);
+  const dayStrip = days.map((date) => {
+    const stats = activityByDay.get(date);
+    const weekday = new Intl.DateTimeFormat("es-AR", { weekday: "short", timeZone: "UTC" }).format(utc(date)).replace(".", "");
+    return `<button type="button" data-ledger-day="${date}" aria-pressed="${date === day}" aria-label="${weekday} ${Number(date.slice(-2))}: ${stats ? "con movimientos" : "sin movimientos"}"><span>${weekday}</span><strong>${Number(date.slice(-2))}</strong><small>${stats?.received ? `$ ${compactMoney.format(stats.received)}` : stats ? "●" : "—"}</small></button>`;
+  }).join("");
   app.innerHTML = layout(`<section class="hero"><span class="eyebrow">CAJA Y MOVIMIENTOS</span><h1>Historial general.</h1><p>Todo el gimnasio, día por día. Los ingresos incluyen sólo abonos recibidos.</p></section>
-    <div class="ledger-date"><div><span class="eyebrow">FECHA SELECCIONADA</span><h2>${dateLabel(day)}</h2></div><div class="ledger-date-actions"><a href="#movimientos/${shiftDays(day, -1)}" aria-label="Día anterior">←</a><form id="ledger-date-form"><label class="sr-only" for="ledger-date-input">Elegir día</label><input id="ledger-date-input" type="date" value="${day}" required><button type="submit" aria-label="Mostrar día">▦</button></form><a href="#movimientos/${shiftDays(day, 1)}" aria-label="Día siguiente">→</a>${day !== today() ? '<a class="ledger-today" href="#movimientos/' + today() + '">Hoy</a>' : ""}</div></div>
-    <section class="ledger-summary" aria-label="Ingresos del día"><div class="ledger-received"><span>INGRESÓ EN CAJA</span><strong>${money.format(received)}</strong><small>${dailyPayments.length} ${dailyPayments.length === 1 ? "abono registrado" : "abonos registrados"}</small></div><dl class="ledger-methods">${methods.map((method) => `<div><dt>${method}</dt><dd>${money.format(dailyPayments.filter((p) => p.method === method).reduce((sum, p) => sum + p.amount, 0))}</dd></div>`).join("")}</dl></section>
+    <div class="ledger-date"><div><span class="eyebrow">MES SELECCIONADO</span><h2>${monthHeading}</h2></div><div class="ledger-date-actions"><a href="#movimientos/${shiftLedgerMonth(month, -1)}" aria-label="Mes anterior">←</a><form id="ledger-month-form"><label class="sr-only" for="ledger-month-input">Elegir mes</label><input id="ledger-month-input" type="month" min="1900-01" max="2100-12" value="${month}" required><button type="submit">Ver mes</button></form><a href="#movimientos/${shiftLedgerMonth(month, 1)}" aria-label="Mes siguiente">→</a>${month !== today().slice(0, 7) ? '<a class="ledger-today" href="#movimientos">Mes actual</a>' : ""}</div></div>
+    <section class="ledger-summary" aria-label="Resumen financiero"><div class="ledger-received"><span>COBRADO EN ${monthLabel.toLocaleUpperCase("es-AR")}</span><strong>${money.format(received)}</strong><small>${monthPayments.length} ${monthPayments.length === 1 ? "abono registrado" : "abonos registrados"} · efectivo + transferencias + Mercado Pago</small></div><div class="ledger-pending"><span>PENDIENTE ACTUAL DEL GIMNASIO</span><strong>${money.format(pending)}</strong><small>Incluye cuotas de cualquier mes. Es el saldo de hoy, no el del mes seleccionado.</small></div><dl class="ledger-methods">${methods.map((method) => `<div><dt>${method}</dt><dd>${money.format(monthPayments.filter((p) => p.method === method).reduce((sum, p) => sum + p.amount, 0))}</dd></div>`).join("")}</dl></section>
+    <section class="ledger-calendar" aria-label="Movimientos por día"><div class="ledger-calendar-heading"><div><span class="eyebrow">RECORRÉ EL MES</span><h2>Día a día</h2></div><span>Deslizá para ver más →</span></div><a class="skip-link ledger-skip-link" href="#ledger-selected-day">Saltar al detalle del día</a><nav class="ledger-day-strip" aria-label="Días del mes">${dayStrip}</nav></section>
+    <div class="ledger-selected-day" id="ledger-selected-day" tabindex="-1"><div><span class="eyebrow">MOVIMIENTOS DEL DÍA</span><h2>${dateLabel(day)}</h2></div><div><span>Ingresó ese día</span><strong>${money.format(dailyPayments.reduce((sum, payment) => sum + payment.amount, 0))}</strong></div></div>
     <section class="ledger-section"><div class="ledger-section-heading"><div><span class="eyebrow">DINERO RECIBIDO</span><h2>Abonos</h2></div><span>${dailyPayments.length}</span></div>${dailyPayments.length ? `<div class="ledger-entries">${dailyPayments.map((payment) => `<button class="ledger-entry" type="button" data-customer="${escapeHtml(payment.customerId)}"><span><strong>${escapeHtml(payment.customerName)}</strong><small>${escapeHtml(payment.activityName)} · ${escapeHtml(payment.method)} · cuota ${dateLabel(payment.periodStart)}–${dateLabel(payment.periodEnd)}</small></span><b>+ ${money.format(payment.amount)}</b></button>`).join("")}</div>` : '<div class="empty">No hay abonos registrados este día.</div>'}</section>
     <section class="ledger-section"><div class="ledger-section-heading"><div><span class="eyebrow">ACTIVIDAD, NO INGRESOS</span><h2>Altas y cuotas</h2></div><span>${activity.length}</span></div><p class="ledger-note">El precio de una cuota no se suma a caja. El saldo indicado es el actual.</p>${activity.length ? `<div class="ledger-entries">${activity.map((event) => `<button class="ledger-entry" type="button" data-customer="${escapeHtml(event.customer.id)}"><span><strong>${escapeHtml(event.customer.name)}</strong><small>${escapeHtml(event.title)} · ${escapeHtml(event.detail)}</small></span><span aria-hidden="true">›</span></button>`).join("")}</div>` : '<div class="empty">No hay altas ni cuotas registradas este día.</div>'}</section>`, "movimientos");
-  document.querySelector("#ledger-date-form").onsubmit = (event) => {
+  document.querySelector("#ledger-month-form").onsubmit = (event) => {
     event.preventDefault();
-    const selected = document.querySelector("#ledger-date-input").value;
-    if (validLedgerDay(selected)) location.hash = `#movimientos/${selected}`;
+    const selected = document.querySelector("#ledger-month-input").value;
+    if (validLedgerMonth(selected)) location.hash = `#movimientos/${selected}`;
   };
+  const strip = document.querySelector(".ledger-day-strip");
+  const selectedLink = strip.querySelector('[aria-pressed="true"]');
+  requestAnimationFrame(() => {
+    strip.scrollLeft = selectedLink.offsetLeft - (strip.clientWidth - selectedLink.clientWidth) / 2;
+  });
+  strip.querySelectorAll("[data-ledger-day]").forEach((button) => {
+    button.onclick = () => (location.hash = `#movimientos/${month}/${button.dataset.ledgerDay}`);
+  });
   bindCustomerRows();
 }
 function pay(id, periodIndex = -1) {
@@ -613,9 +661,11 @@ function edit(id) {
     toast("Perfil actualizado.");
   };
 }
+let lastHistoryMonth = null;
 function render() {
   if (sessionStorage.getItem(UNLOCK) !== "yes") return lock();
   const [path, id, period] = (location.hash.slice(1) || "inicio").split("/");
+  const changingHistoryDay = path === "movimientos" && validLedgerMonth(id) && id === lastHistoryMonth && validLedgerDay(period);
   if (path === "cumpleanos") {
     filter = "cumpleanos";
     birthdayOffset = 0;
@@ -634,13 +684,20 @@ function render() {
       regresar: () => returnCustomer(id),
       borrar: () => deleteProfile(id),
       historial: () => historyPage(id),
-      movimientos: () => gymHistory(id),
+      movimientos: () => gymHistory(id, period),
       editar: () => edit(id),
     })[path] || home
   )();
-  window.scrollTo({ top: 0, behavior: "instant" });
+  if (!changingHistoryDay) window.scrollTo({ top: 0, behavior: "instant" });
+  lastHistoryMonth = path === "movimientos" && validLedgerMonth(id) ? id : null;
 }
 window.addEventListener("hashchange", render);
+document.addEventListener("click", (event) => {
+  const link = event.target.closest(".skip-link, .ledger-skip-link");
+  if (!link) return;
+  event.preventDefault();
+  document.querySelector(link.getAttribute("href"))?.focus();
+});
 let pressed;
 document.addEventListener("pointerdown", (event) => {
   if (!event.isPrimary || event.button !== 0 || reducedMotion.matches) return;
