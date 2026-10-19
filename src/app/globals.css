@@ -1747,3 +1747,89 @@ html:not([data-input="keyboard"]) details[open] > :not(summary) {
     text-align: center;
   }
 }
+.daily-date-bar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.daily-date-bar h2 {
+  font-size: 21px;
+  text-transform: capitalize;
+  letter-spacing: -.03em;
+}
+.daily-date-actions,
+.daily-date-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.daily-date-actions > a,
+.daily-date-form button,
+.daily-date-form input {
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--card);
+  color: var(--foreground);
+}
+.daily-date-actions > a,
+.daily-date-form button {
+  min-width: 44px;
+  display: grid;
+  place-items: center;
+}
+.daily-date-form input {
+  padding: 0 10px;
+  max-width: 155px;
+  color-scheme: dark;
+}
+.daily-date-actions .daily-today {
+  padding: 0 13px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.daily-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+  gap: 24px;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding: 32px 0;
+}
+.daily-received { display: grid; gap: 4px; }
+.daily-received > span,
+.daily-methods dt { color: var(--muted-foreground); font-size: 11px; letter-spacing: .08em; }
+.daily-received strong { font-size: clamp(32px, 5vw, 52px); letter-spacing: -.06em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.daily-received small { color: var(--muted-foreground); }
+.daily-methods { display: grid; gap: 5px; margin: 0; }
+.daily-methods > div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.daily-methods dt { letter-spacing: 0; font-size: 13px; }
+.daily-methods dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.daily-section { margin: 38px 0; }
+.daily-section-heading { display: flex; align-items: end; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.daily-section-heading h2 { font-size: 23px; letter-spacing: -.04em; }
+.daily-section-heading > span { color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.daily-section-note { color: var(--muted-foreground); font-size: 13px; margin: 12px 0; }
+.daily-list { list-style: none; margin: 0; padding: 0; }
+.daily-list li { border-bottom: 1px solid var(--border); }
+.daily-list a { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 82px; padding: 14px 3px; }
+.daily-list a:hover { color: var(--foreground); background: var(--secondary); }
+.daily-entry-main { display: grid; gap: 2px; min-width: 0; }
+.daily-entry-main strong { font-size: 15px; }
+.daily-entry-main span, .daily-entry-main small { color: var(--muted-foreground); font-size: 12px; overflow-wrap: anywhere; }
+.daily-entry-amount { white-space: nowrap; color: #8ee5a3; font-variant-numeric: tabular-nums; }
+.daily-period-balance { color: var(--muted-foreground); text-align: right; white-space: nowrap; font-size: 11px; }
+.daily-period-balance strong { color: var(--foreground); font-size: 14px; font-variant-numeric: tabular-nums; }
+.daily-empty { display: flex; align-items: center; gap: 11px; color: var(--muted-foreground); padding: 30px 3px; }
+@media (max-width: 640px) {
+  .daily-summary { grid-template-columns: 1fr; gap: 20px; }
+  .daily-date-actions { width: 100%; }
+  .daily-date-form { flex: 1; }
+  .daily-date-form input { width: 100%; max-width: none; }
+  .daily-entry-amount { font-size: 13px; }
+}

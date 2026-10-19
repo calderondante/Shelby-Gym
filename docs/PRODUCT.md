@@ -1,5 +1,13 @@
 # Producto
 
+## Historial general del gimnasio (2026-10-19)
+
+- Pestaña «Historial» para consultar la actividad de todo el gimnasio por fecha en horario de Argentina; el historial de cada cliente sigue disponible desde su perfil.
+- «Ingresó en caja» suma exclusivamente abonos registrados, incluso pagos repartidos entre transferencia, Mercado Pago y efectivo. Una cuota creada o un saldo pendiente no son dinero recibido.
+- Cada abono muestra el cliente y la cuota original a la que se aplicó. Los pagos históricos importados se atribuyen a su fecha original y se identifican como importados; una importación antigua no infla la caja del día de carga.
+- Las cuotas registradas, su importe pactado y su **saldo actual** aparecen en un bloque distinto de los ingresos. Se muestran además las altas y cambios de estado de perfiles.
+- El saldo mostrado para un día anterior es el saldo **actual** de esa cuota; este primer historial no reconstruye un cierre contable congelado de ese día. Correcciones, anulaciones, exportación y conciliación bancaria requieren definición aparte.
+
 ## Baja, retiro y regreso (2026-10-19)
 
 - Una cuota vencida, incluso por más de 30 días, **no** elimina ni da de baja automáticamente al cliente. El filtro «+30 días» ayuda a revisar esos casos.
