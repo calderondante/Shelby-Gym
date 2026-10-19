@@ -1828,10 +1828,23 @@ html:not([data-input="keyboard"]) details[open] > :not(summary) {
 .raffle-list-heading span { color: var(--muted-foreground); }
 .raffle-client-list { list-style: none; padding: 0; margin: 0; }
 .raffle-client-list li { border-bottom: 1px solid var(--border); }
-.raffle-client-list a { min-height: 65px; display: flex; align-items: center; gap: 12px; padding: 12px 3px; }
-.raffle-client-list a strong { flex: 1; }
-.raffle-client-list a span { color: var(--muted-foreground); font-size: 13px; }
+.raffle-client-list a { min-height: 70px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, auto) 18px; align-items: center; gap: 12px; padding: 13px 3px; }
+.raffle-client-main, .raffle-account { display: grid; gap: 3px; min-width: 0; }
+.raffle-client-main strong { font-size: 14px; }
+.raffle-client-main small, .raffle-account small { color: var(--muted-foreground); font-size: 12px; line-height: 1.4; }
+.raffle-account { justify-items: end; text-align: right; }
+.raffle-account-label { display: inline-block; max-width: 185px; border-radius: 99px; padding: 5px 9px; font-size: 11px; font-weight: 700; line-height: 1.25; text-align: center; }
+.raffle-account-paid { background: #173826; color: #a2edbd; }
+.raffle-account-due { background: #422d19; color: #ffd396; }
+.raffle-account-expired { background: #40292e; color: #ffadb4; }
+.raffle-account-long-expired { background: #4a2029; color: #ffc4c8; }
+.raffle-account-inactive { background: var(--secondary); color: var(--muted-foreground); }
 .raffle-empty { padding: 15px 0; }
+@media (max-width: 640px) {
+  .raffle-client-list a { grid-template-columns: minmax(0, 1fr) 18px; gap: 7px 12px; }
+  .raffle-client-list a > svg { grid-column: 2; grid-row: 1; }
+  .raffle-account { grid-column: 1; grid-row: 2; justify-items: start; text-align: left; }
+}
 .ledger-calendar { margin: 30px 0 26px; }
 .ledger-calendar-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 13px; }
 .ledger-calendar-heading h2 { font-size: 23px; letter-spacing: -.04em; }

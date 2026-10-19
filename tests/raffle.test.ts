@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { raffleExclusion } from "@/features/gym/domain/raffle";
+import { birthdayAccountStatus, raffleExclusion } from "@/features/gym/domain/raffle";
 
 const cutoff = "2026-10-19";
 const base = { cutoff, registeredOn: "2026-01-10", latestEnd: "2026-10-01", inactive: false };
@@ -18,5 +18,15 @@ describe("reglas del sorteo de cumpleaños", () => {
   it("excluye perfiles de baja o sin cuota previa al sorteo", () => {
     expect(raffleExclusion({ ...base, inactive: true })).toBe("Perfil de baja o eliminado");
     expect(raffleExclusion({ ...base, latestEnd: undefined })).toBe("Cuota vencida hace más de 30 días");
+  });
+
+  it("muestra el estado de cuota de hoy sin confundir vencimiento con saldo", () => {
+    const current = { customerStatus: "active", latestEnd: "2026-11-19", balanceCents: 0, today: cutoff };
+    expect(birthdayAccountStatus(current).label).toBe("Al día");
+    expect(birthdayAccountStatus({ ...current, balanceCents: 5000 }).label).toBe("Pendiente");
+    expect(birthdayAccountStatus({ ...current, latestEnd: "2026-09-19" }).label).toBe("Vencida");
+    expect(birthdayAccountStatus({ ...current, latestEnd: "2026-09-18", balanceCents: 5000 }).label).toBe("Más de 30 días sin pagar");
+    expect(birthdayAccountStatus({ ...current, latestEnd: "2026-09-18" }).label).toBe("Más de 30 días sin renovar");
+    expect(birthdayAccountStatus({ ...current, customerStatus: "inactive" }).label).toBe("De baja");
   });
 });

@@ -43,7 +43,7 @@ export async function getCustomers(
   if (filter === "mas30") {
     const cutoff = new Date(`${todayIn(settings.time_zone)}T12:00:00Z`);
     cutoff.setUTCDate(cutoff.getUTCDate() - 30);
-    query = query.lte("last_end", cutoff.toISOString().slice(0, 10));
+    query = query.lt("last_end", cutoff.toISOString().slice(0, 10));
   }
   const { data, error, count } = await query
     .order("name")

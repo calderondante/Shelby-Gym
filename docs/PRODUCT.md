@@ -12,6 +12,8 @@
 ## Cumpleaños y sorteo (2026-10-19)
 
 - El perfil guarda sólo el **mes** de cumpleaños. No se pide ni infiere día o año de nacimiento. Los perfiles anteriores de la demo con fecha completa se leen por mes.
+- El filtro incluye a **todas** las personas que cumplen en el mes elegido, hayan cumplido ya o no. La lista separa participantes y excluidos; el contador del mes incluye ambos grupos.
+- Cada persona muestra su **estado de cuota actual**: al día, pendiente (con importe), vencida, o más de 30 días sin pagar/renovar. Baja, retirada y ausencia de cuota conservan estados propios. El estado actual no altera retroactivamente la elegibilidad al cierre del sorteo.
 - En Clientes, el filtro Cumpleaños permite elegir el mes del sorteo. La lista separa participantes y excluidos, mostrando el motivo de exclusión.
 - Antes de registrar la fecha del sorteo, la lista es una vista previa calculada al día de hoy en horario argentino. El dueño registra la fecha real del sorteo; para ese mes y año queda fijada y no se sobrescribe desde la app.
 - Quien fue dado de alta **después** de esa fecha no participa en ese sorteo. Puede figurar en el sorteo del año siguiente si entonces cumple los demás requisitos.

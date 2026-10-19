@@ -126,6 +126,6 @@ Registrar decisiones arquitectónicas importantes; no usar ADR para todo cambio 
 - **Decision:** guardar sólo el mes de cumpleaños y fijar una fecha de cierre por sorteo anual.
 - **Context:** el dueño quiere seleccionar un mes, excluir altas posteriores al sorteo y cuotas vencidas hace más de 30 días, y permitir que un alta tardía figure el año siguiente.
 - **Options:** fecha completa de nacimiento; lista sin cierre; mes de nacimiento y cierre anual con elegibilidad calculada.
-- **Chosen solution:** `customers.birth_month` opcional, sin día ni año; `raffle_draws` registra una fecha inmutable por año y mes mediante RPC de dueño. Participa quien estaba registrado y no estaba de baja ni llevaba más de 30 días sin cuota vigente al cierre. Se muestran los motivos de exclusión.
+- **Chosen solution:** `customers.birth_month` opcional, sin día ni año; `raffle_draws` registra una fecha inmutable por año y mes mediante RPC de dueño. Se muestran todas las personas del mes, hayan cumplido o no, separadas por elegibilidad al cierre. Cada fila muestra además el estado de cuota de hoy y su saldo pendiente, que es independiente de la elegibilidad histórica.
 - **Reason:** minimiza datos personales, mantiene el corte verificable y evita que una cuota posterior reescriba la situación del día del sorteo.
 - **Consequences:** una edición posterior del mes de cumpleaños puede alterar una lista histórica recalculada. Congelar participantes, corregir fechas y registrar ganadores requiere un flujo adicional si el gimnasio lo solicita.

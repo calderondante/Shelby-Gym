@@ -19,6 +19,22 @@ import { requireSettings, requireStaff } from "@/features/gym/server/session";
 import { money } from "@/features/gym/domain/money";
 import { dateLabel, todayIn } from "@/features/gym/domain/dates";
 export const metadata = { title: "Clientes" };
+type BirthdayCustomer = Awaited<ReturnType<typeof getBirthdayRaffle>>["eligible"][number];
+function BirthdayClientRow({ customer, currency }: { customer: BirthdayCustomer; currency: string }) {
+  return <li>
+    <Link href={`/clientes/${customer.id}`}>
+      <span className="raffle-client-main">
+        <strong>{customer.name}</strong>
+        {customer.reason ? <small>{customer.reason}</small> : null}
+      </span>
+      <span className="raffle-account">
+        <span className={`raffle-account-label raffle-account-${customer.accountStatus.tone}`}>{customer.accountStatus.label}</span>
+        {customer.balanceCents > 0 ? <small>Debe {money(customer.balanceCents, currency)}</small> : null}
+      </span>
+      <ChevronRight size={18} aria-hidden="true" />
+    </Link>
+  </li>;
+}
 export default async function CustomersPage({
   searchParams,
 }: {
@@ -88,6 +104,7 @@ export default async function CustomersPage({
               maxLength={100}
             />
             <input type="hidden" name="estado" value={filter} />
+            {filter === "cumpleanos" ? <input type="hidden" name="mes" value={raffleMonth} /> : null}
             <Button type="submit" variant="secondary" aria-label="Buscar">
               <Search data-icon="inline-start" />
             </Button>
@@ -98,7 +115,7 @@ export default async function CustomersPage({
               ["deuda", "Con saldo"],
               ["aldia", "Al día"],
               ["vencidas", "Vencidas"],
-              ["mas30", "+30 días"],
+              ["mas30", "Más de 30 días"],
               ["bajas", "Bajas"],
               ["retirados", "Eliminados"],
               ["cumpleanos", "Cumpleaños"],
@@ -124,14 +141,15 @@ export default async function CustomersPage({
               <button type="submit">Ver mes</button>
             </form>
           </div>
-          <p className="raffle-rule">Sólo participan quienes ya estaban registrados al cierre y cuya cuota no llevaba más de 30 días vencida. Se guarda únicamente el mes de cumpleaños.</p>
+          <p className="raffle-rule">Aparecen todas las personas que cumplen en el mes, aunque su cumpleaños ya haya pasado. Sólo participan quienes estaban registrados al cierre y cuya cuota no llevaba más de 30 días vencida.</p>
           {raffle.drawOn ? <p className="raffle-cutoff">Sorteo registrado el {dateLabel(raffle.drawOn)}. Lista calculada para esa fecha.</p>
             : <div className="raffle-cutoff"><p>Vista previa al {dateLabel(raffle.cutoff)}. Registrá la fecha cuando se haga el sorteo para fijar el cierre.</p>{staff.role === "owner" ? <RaffleDrawForm month={raffleMonth} today={today} /> : null}</div>}
-          <div className="raffle-list-heading"><h3>Participan</h3><span>{raffle.eligible.length}</span></div>
-          {raffle.eligible.length ? <ul className="raffle-client-list">{raffle.eligible.map((customer) => <li key={customer.id}><Link href={`/clientes/${customer.id}`}><strong>{customer.name}</strong><span>{new Intl.DateTimeFormat("es-AR", { month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(2000, (customer.birth_month ?? 1) - 1, 15)))}</span><ChevronRight size={18} aria-hidden="true" /></Link></li>)}</ul>
+          <p className="raffle-rule">El estado de cuota que aparece junto a cada nombre es el de hoy; la participación se evalúa a la fecha del sorteo.</p>
+          <div className="raffle-list-heading"><h3>Participan</h3><span>{raffle.eligible.length} de {raffle.eligible.length + raffle.excluded.length}</span></div>
+          {raffle.eligible.length ? <ul className="raffle-client-list">{raffle.eligible.map((customer) => <BirthdayClientRow key={customer.id} customer={customer} currency={settings.currency} />)}</ul>
             : <p className="raffle-empty">No hay participantes para este mes.</p>}
           <div className="raffle-list-heading"><h3>No participan en este sorteo</h3><span>{raffle.excluded.length}</span></div>
-          {raffle.excluded.length ? <ul className="raffle-client-list">{raffle.excluded.map((customer) => <li key={customer.id}><Link href={`/clientes/${customer.id}`}><strong>{customer.name}</strong><span>{customer.reason}</span><ChevronRight size={18} aria-hidden="true" /></Link></li>)}</ul>
+          {raffle.excluded.length ? <ul className="raffle-client-list">{raffle.excluded.map((customer) => <BirthdayClientRow key={customer.id} customer={customer} currency={settings.currency} />)}</ul>
             : <p className="raffle-empty">No hay exclusiones.</p>}
           <p className="raffle-rule">Un alta posterior al sorteo puede participar el año próximo si cumple los requisitos entonces.</p>
         </section> : <>
@@ -173,7 +191,7 @@ export default async function CustomersPage({
                         {c.status === "retired" ? "Eliminado" : c.status === "inactive" ? "De baja" : c.has_active
                           ? "Vigente"
                           : c.last_end
-                            ? c.last_end <= thirtyDaysAgo ? "Vencida +30 días" : "Vencida"
+                            ? c.last_end < thirtyDaysAgo ? "Vencida hace más de 30 días" : "Vencida"
                             : "Sin actividad"}
                       </Badge>
                       <small>

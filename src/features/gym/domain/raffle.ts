@@ -17,3 +17,20 @@ export function raffleExclusion(input: {
     return "Cuota vencida hace más de 30 días";
   return null;
 }
+
+/** Current account state for the birthday list; draw eligibility uses its own cutoff. */
+export function birthdayAccountStatus(input: {
+  customerStatus: string;
+  latestEnd?: string;
+  balanceCents: number;
+  today: string;
+}) {
+  if (input.customerStatus === "retired") return { label: "Eliminado", tone: "inactive" } as const;
+  if (input.customerStatus === "inactive") return { label: "De baja", tone: "inactive" } as const;
+  if (!input.latestEnd) return { label: "Sin cuota", tone: "inactive" } as const;
+  if (input.latestEnd < shiftDay(input.today, -30))
+    return { label: input.balanceCents > 0 ? "Más de 30 días sin pagar" : "Más de 30 días sin renovar", tone: "long-expired" } as const;
+  if (input.latestEnd <= input.today) return { label: "Vencida", tone: "expired" } as const;
+  if (input.balanceCents > 0) return { label: "Pendiente", tone: "due" } as const;
+  return { label: "Al día", tone: "paid" } as const;
+}
