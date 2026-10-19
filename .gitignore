@@ -1,0 +1,44 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.npmrc
+.netrc
+
+# Dependencies and generated output
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+.turbo/
+.vercel/
+*.tsbuildinfo
+*.log
+playwright-report/
+test-results/
+
+# Supabase local state; migrations and config remain versionable
+supabase/.temp/
+supabase/.branches/
+
+# OS/editor noise; project instructions and skills ARE versioned
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+*.swp
+*.swo
+*~
+
+# Existing execution-environment directories (not project artifacts)
+/library-files/
+/scratch/
+/shared/

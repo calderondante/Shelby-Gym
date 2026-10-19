@@ -1,0 +1,48 @@
+{
+  "durationSeconds": 55,
+  "resolution": [
+    1920,
+    1080
+  ],
+  "fps": 30,
+  "language": "es-AR",
+  "syntheticData": true,
+  "originalSoundtrack": true,
+  "scenes": [
+    {
+      "scene": "00-intro",
+      "start": 0,
+      "duration": 4
+    },
+    {
+      "scene": "01-plan",
+      "start": 4,
+      "duration": 7
+    },
+    {
+      "scene": "02-alta",
+      "start": 11,
+      "duration": 11
+    },
+    {
+      "scene": "03-pagos",
+      "start": 22,
+      "duration": 9
+    },
+    {
+      "scene": "04-excel",
+      "start": 31,
+      "duration": 12
+    },
+    {
+      "scene": "05-movil",
+      "start": 43,
+      "duration": 7
+    },
+    {
+      "scene": "06-outro",
+      "start": 50,
+      "duration": 5
+    }
+  ]
+}

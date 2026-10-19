@@ -1,0 +1,29 @@
+import { PageHeading } from "@/components/shared/page-heading";
+import { SettingsForm } from "@/features/gym/components/settings-form";
+import { requireStaff } from "@/features/gym/server/session";
+export default async function SettingsPage() {
+  const { db, staff } = await requireStaff();
+  const { data, error } = await db
+    .from("gym_settings")
+    .select("currency,time_zone")
+    .eq("id", true)
+    .maybeSingle();
+  if (error) throw new Error("No pudimos cargar la configuración.");
+  return (
+    <>
+      <PageHeading
+        eyebrow="SHELBY GYM"
+        title={data ? "Ajustes" : "Antes de empezar"}
+        description="La moneda y las fechas con las que trabaja tu gimnasio."
+      />
+      {staff.role === "owner" ? (
+        <SettingsForm settings={data} />
+      ) : (
+        <p>
+          El dueño debe confirmar la configuración inicial antes de registrar
+          clientes.
+        </p>
+      )}
+    </>
+  );
+}
