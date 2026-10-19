@@ -62,15 +62,15 @@ export function CustomerLifecycle({
           <StatusForm id={id} revision={revision} status="inactive" label="Dar de baja" />
           {canRetire ? (
             <details>
-              <summary>Retirar de la lista</summary>
-              <p>El perfil quedará en Retirados y podrás recuperarlo. Se conservan las cuotas y los pagos.</p>
-              <StatusForm id={id} revision={revision} status="retired" label="Retirar perfil" name={name} />
+              <summary>Eliminar perfil (recuperable)</summary>
+              <p>El perfil quedará en Eliminados y podrás recuperarlo. Se conservan las cuotas y los pagos.</p>
+              <StatusForm id={id} revision={revision} status="retired" label="Eliminar perfil" name={name} />
             </details>
           ) : null}
         </>
       ) : (
         <>
-          <p>{status === "retired" ? "Perfil retirado. Los movimientos siguen guardados." : "Cliente dado de baja. Sus cuotas y pagos siguen disponibles."}</p>
+          <p>{status === "retired" ? "Perfil eliminado de la lista. Los movimientos siguen guardados y se puede recuperar." : "Cliente dado de baja. Sus cuotas y pagos siguen disponibles."}</p>
           <StatusForm id={id} revision={revision} status="active" label="Recuperar perfil" />
           {!currentPeriod ? (
             <Link href={`/clientes/${id}/inscribir`}>O iniciar una cuota nueva desde el regreso →</Link>

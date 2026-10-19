@@ -27,7 +27,7 @@ Ver [Desarrollo y operación](docs/DEVELOPMENT.md) para setup, permisos, pruebas
 - Acceso de dueño/monitor con permisos en servidor y DB.
 - Plantillas de actividad o combinación con precio, duración y oferta manual.
 - Alta con datos, actividad y primer abono en el mismo formulario.
-- Lista global buscable y paginada, con filtros de saldo, vencimientos, bajas y perfiles retirados.
+- Lista global buscable y paginada, con filtros de saldo, vencimientos, bajas y perfiles eliminados de la lista.
 - Perfil con períodos, deuda y desglose de pagos; completar una cuota no cambia su vencimiento.
 - Baja y retiro reversibles, regreso con cuota desde el nuevo primer abono e historial diario de movimientos.
 - Abonos transaccionales, idempotentes y protegidos contra sobrepagos concurrentes.

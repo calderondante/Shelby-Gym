@@ -50,7 +50,7 @@ export default async function CustomerHistoryPage({ params }: { params: Promise<
   for (const event of events) {
     entries.push({
       id: `status-${event.id}`, date: civilDate(event.created_at),
-      title: event.event === "retired" ? "Perfil retirado" : event.event === "inactive" ? "Baja registrada" : "Cliente reactivado",
+      title: event.event === "retired" ? "Perfil eliminado de la lista" : event.event === "inactive" ? "Baja registrada" : "Cliente reactivado",
       detail: `Registrado por ${event.staff?.name ?? "Personal"}`,
     });
   }

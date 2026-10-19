@@ -94,7 +94,7 @@ export default async function CustomersPage({
               ["vencidas", "Vencidas"],
               ["mas30", "+30 días"],
               ["bajas", "Bajas"],
-              ["retirados", "Retirados"],
+              ["retirados", "Eliminados"],
             ].map(([value, label]) => (
               <Link
                 href={href(value)}
@@ -141,7 +141,7 @@ export default async function CustomersPage({
                     </div>
                     <div className="customer-validity">
                       <Badge variant={c.has_active ? "secondary" : "outline"}>
-                        {c.status === "retired" ? "Retirado" : c.status === "inactive" ? "De baja" : c.has_active
+                        {c.status === "retired" ? "Eliminado" : c.status === "inactive" ? "De baja" : c.has_active
                           ? "Vigente"
                           : c.last_end
                             ? c.last_end <= thirtyDaysAgo ? "Vencida +30 días" : "Vencida"

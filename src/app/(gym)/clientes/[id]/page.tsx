@@ -98,7 +98,7 @@ export default async function CustomerPage({
       </div>
       {customer.status !== "active" ? (
         <Alert className="mb-6">
-          <AlertTitle>{customer.status === "retired" ? "Perfil retirado" : "Cliente dado de baja"}</AlertTitle>
+          <AlertTitle>{customer.status === "retired" ? "Perfil eliminado de la lista" : "Cliente dado de baja"}</AlertTitle>
           <AlertDescription>Los pagos y saldos anteriores permanecen en el historial. Al volver, la cuota nueva comienza con el primer abono de ese día.</AlertDescription>
         </Alert>
       ) : null}
