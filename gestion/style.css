@@ -316,6 +316,10 @@ a {
   background: #4c2028;
   color: #ff8d9a;
 }
+.status.archived {
+  background: #303036;
+  color: #d2d2d9;
+}
 .rowbutton {
   appearance: none;
   width: 100%;
@@ -424,6 +428,55 @@ a {
   padding-left: 20px;
   line-height: 1.9;
   color: #d6d6db;
+}
+.history,
+.profile-management {
+  margin-top: 28px;
+}
+.history h2,
+.profile-management h2 {
+  font-size: 20px;
+  letter-spacing: -0.03em;
+}
+.history-period {
+  margin-top: 10px;
+}
+.history-period summary {
+  cursor: pointer;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.history-period p,
+.profile-management p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+.danger-button {
+  background: #a82030;
+  color: white;
+}
+.timeline {
+  border-left: 1px solid #5a3137;
+  margin-left: 8px;
+  padding-left: 20px;
+}
+.timeline h2 {
+  font-size: 14px;
+  color: #ff9ba3;
+  margin: 23px 0 10px;
+}
+.timeline-event {
+  display: grid;
+  gap: 4px;
+  padding: 13px 16px;
+  margin: 8px 0;
+  background: #202024;
+  border: 1px solid #35353a;
+  border-radius: 11px;
+}
+.timeline-event span {
+  color: var(--muted);
+  line-height: 1.45;
 }
 .tabs {
   display: flex;

@@ -54,6 +54,23 @@ function shiftDays(s, days) {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+const daysPast = (s) => Math.max(0, Math.floor((utc(today()) - utc(s)) / 86400000));
+const currentCustomers = () => state.customers.filter((c) => !c.archivedAt && !c.deletedAt);
+function previousPeriods(c) {
+  return Array.isArray(c.history) ? c.history : [];
+}
+function periodSnapshot(c) {
+  return {
+    activityName: c.activityName,
+    price: c.price,
+    start: c.start,
+    end: c.end,
+    payments: c.payments.map((p) => ({ ...p })),
+  };
+}
+function logLifecycle(c, title, detail) {
+  c.lifecycleEvents = [...(c.lifecycleEvents || []), { date: today(), title, detail }];
+}
 function seed() {
   const now = today();
   const activities = [
@@ -110,11 +127,20 @@ function save() {
 function paid(c) {
   return c.payments.reduce((sum, p) => sum + p.amount, 0);
 }
-function balance(c) {
+function currentBalance(c) {
   return Math.max(0, c.price - paid(c));
 }
+function balance(c) {
+  return currentBalance(c) + previousPeriods(c).reduce((sum, p) => sum + Math.max(0, p.price - p.payments.reduce((n, payment) => n + payment.amount, 0)), 0);
+}
 function status(c) {
-  return c.end <= today()
+  return c.deletedAt
+    ? ["Retirado", "archived"]
+    : c.archivedAt
+    ? ["De baja", "archived"]
+    : c.end <= shiftDays(today(), -30)
+      ? ["Vencida +30 días", "expired"]
+      : c.end <= today()
     ? ["Vencida", "expired"]
     : balance(c)
       ? ["Con saldo", "due"]
@@ -178,7 +204,8 @@ function lock() {
 }
 function customerRow(c) {
   const [label, type] = status(c);
-  return `<button class="row rowbutton" type="button" data-customer="${escapeHtml(c.id)}"><span><strong>${escapeHtml(c.name)}</strong><small>Vence ${dateLabel(c.end)}</small></span><span class="activity muted">${escapeHtml(c.activityName)}</span><span class="amount"><span class="status ${type}">${label}</span><small>${balance(c) ? `${money.format(balance(c))} pendientes` : "Cuota completa"}</small></span></button>`;
+  const timing = c.deletedAt ? `Retirado: ${dateLabel(c.deletedAt)}` : c.archivedAt ? `Baja: ${dateLabel(c.archivedAt)}` : c.end <= today() ? `Venció ${dateLabel(c.end)} · hace ${daysPast(c.end)} días` : `Vence ${dateLabel(c.end)}`;
+  return `<button class="row rowbutton" type="button" data-customer="${escapeHtml(c.id)}"><span><strong>${escapeHtml(c.name)}</strong><small>${timing}</small></span><span class="activity muted">${escapeHtml(c.activityName)}</span><span class="amount"><span class="status ${type}">${label}</span><small>${balance(c) ? `${money.format(balance(c))} pendientes` : "Cuota completa"}</small></span></button>`;
 }
 function birthdayRow(c) {
   return `<button class="row rowbutton birthday-row" type="button" data-customer="${escapeHtml(c.id)}"><span class="birthday-day">${escapeHtml(c.birthDate.slice(8))}</span><span><strong>${escapeHtml(c.name)}</strong><small>${new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "long", timeZone: "UTC" }).format(utc(c.birthDate))}</small></span><span aria-hidden="true">›</span></button>`;
@@ -189,12 +216,13 @@ function bindCustomerRows() {
   });
 }
 function home() {
-  const overdue = state.customers.filter((c) => c.end <= today()).length;
-  const owing = state.customers.filter((c) => balance(c) > 0).length;
-  const recent = [...state.customers]
+  const active = currentCustomers();
+  const overdue = active.filter((c) => c.end <= today()).length;
+  const owing = active.filter((c) => balance(c) > 0).length;
+  const recent = [...active]
     .sort((a, b) => b.start.localeCompare(a.start))
     .slice(0, 3);
-  const content = `<section class="hero"><span class="eyebrow">RECEPCIÓN · SHELBY GYM</span><h1>Todo en orden,<br>de un vistazo.</h1><p>Quién está al día, quién tiene saldo y a quién se le venció la cuota.</p><div class="hero-actions"><a class="button" href="#nuevo">+ Registrar cliente</a><a class="button secondary" href="#clientes">Ver todos los clientes</a></div></section><div class="metrics"><div class="metric"><strong>${state.customers.length}</strong><span>Clientes</span></div><div class="metric alert"><strong>${owing}</strong><span>Con saldo</span></div><div class="metric alert"><strong>${overdue}</strong><span>Vencidos</span></div></div><div class="section-title"><h2>Últimos registros</h2><a class="section-link" href="#clientes">Ver lista completa →</a></div><div class="list">${recent.length ? recent.map(customerRow).join("") : '<div class="empty">Todavía no hay clientes. Empezá por crear una actividad y registrar a la primera persona.</div>'}</div>`;
+  const content = `<section class="hero"><span class="eyebrow">RECEPCIÓN · SHELBY GYM</span><h1>Todo en orden,<br>de un vistazo.</h1><p>Quién está al día, quién tiene saldo y a quién se le venció la cuota.</p><div class="hero-actions"><a class="button" href="#nuevo">+ Registrar cliente</a><a class="button secondary" href="#clientes">Ver todos los clientes</a></div></section><div class="metrics"><div class="metric"><strong>${active.length}</strong><span>Clientes activos</span></div><div class="metric alert"><strong>${owing}</strong><span>Con saldo</span></div><div class="metric alert"><strong>${overdue}</strong><span>Vencidos</span></div></div><div class="section-title"><h2>Últimos registros</h2><a class="section-link" href="#clientes">Ver lista completa →</a></div><div class="list">${recent.length ? recent.map(customerRow).join("") : '<div class="empty">Todavía no hay clientes activos. Podés registrar o reactivar a una persona.</div>'}</div>`;
   app.innerHTML = layout(content, "inicio");
   bindCustomerRows();
 }
@@ -207,9 +235,13 @@ function clients() {
       c.name.toLocaleLowerCase("es").includes(query.toLocaleLowerCase("es")),
     )
     .filter((c) => {
+      if (filter === "retirados") return Boolean(c.deletedAt);
+      if (filter === "bajas") return Boolean(c.archivedAt) && !c.deletedAt;
+      if (c.archivedAt || c.deletedAt) return false;
       if (filter === "saldo") return balance(c) > 0;
       if (filter === "aldia") return c.end > today() && balance(c) === 0;
       if (filter === "vencidas") return c.end <= today();
+      if (filter === "mas30") return c.end <= shiftDays(today(), -30);
       if (filter === "cumpleanos")
         return c.birthDate && Number(c.birthDate.slice(5, 7)) === month;
       return true;
@@ -229,6 +261,9 @@ function clients() {
     ["saldo", "Con saldo"],
     ["aldia", "Al día"],
     ["vencidas", "Vencidas"],
+    ["mas30", "+30 días"],
+    ["bajas", "Bajas"],
+    ["retirados", "Retirados"],
     ["cumpleanos", "Cumpleaños"],
   ]
     .map(
@@ -353,6 +388,11 @@ function newCustomer() {
           method: document.querySelector(`#${key}`).value,
           date: start,
         })),
+      history: [],
+      archivedAt: null,
+      deletedAt: null,
+      createdAt: start,
+      lifecycleEvents: [],
     });
     save();
     location.hash = `#cliente/${id}`;
@@ -366,26 +406,129 @@ function detail(id) {
     return;
   }
   const [label, type] = status(c),
-    remainder = balance(c);
+    remainder = currentBalance(c),
+    oldBalance = balance(c) - remainder,
+    history = previousPeriods(c).slice().reverse();
   app.innerHTML = layout(
-    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">PERFIL DE CLIENTE</span><h1>${escapeHtml(c.name)}.</h1><p>${escapeHtml(c.activityName)} · ${dateLabel(c.start)} a ${dateLabel(c.end)}</p></section><div class="panel"><div class="detail-hero"><h2>Cuota actual</h2><span class="status ${type}">${label}</span></div><div class="detail-grid"><div><span>Total acordado</span><strong>${money.format(c.price)}</strong></div><div><span>Abonado</span><strong>${money.format(paid(c))}</strong></div><div><span>Saldo pendiente</span><strong>${money.format(remainder)}</strong></div></div><div class="form-actions">${remainder ? `<a class="button" href="#abonar/${escapeHtml(c.id)}">+ Registrar abono</a>` : ""}<a class="button secondary" href="#editar/${escapeHtml(c.id)}">Editar perfil</a></div><hr class="divider"><div><strong>Celular:</strong> ${escapeHtml(c.phone || "Sin registrar")}</div><div><strong>Cumpleaños:</strong> ${dateLabel(c.birthDate)}</div><hr class="divider"><h2>Abonos registrados</h2><ol class="payments">${c.payments.map((p) => `<li>${dateLabel(p.date)} · ${escapeHtml(p.method)} · <strong>${money.format(p.amount)}</strong></li>`).join("")}</ol></div>`,
+    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">PERFIL DE CLIENTE</span><h1>${escapeHtml(c.name)}.</h1><p>${escapeHtml(c.activityName)} · ${dateLabel(c.start)} a ${dateLabel(c.end)}</p></section>${c.deletedAt ? `<p class="notice">Perfil retirado el ${dateLabel(c.deletedAt)}. Cuotas y pagos conservados; podés recuperarlo si vuelve.</p>` : c.archivedAt ? `<p class="notice">Dado de baja el ${dateLabel(c.archivedAt)}. El historial y los saldos se conservan. Para volver, iniciá una cuota con el precio actual.</p>` : c.end <= shiftDays(today(), -30) ? `<p class="notice">La cuota venció hace ${daysPast(c.end)} días. El perfil sigue disponible; no se cobra automáticamente ni se borra por falta de pago.</p>` : ""}<div class="panel"><div class="detail-hero"><h2>Última cuota</h2><span class="status ${type}">${label}</span></div><div class="detail-grid"><div><span>Total acordado</span><strong>${money.format(c.price)}</strong></div><div><span>Abonado</span><strong>${money.format(paid(c))}</strong></div><div><span>Saldo pendiente</span><strong>${money.format(remainder)}</strong></div></div>${oldBalance ? `<p class="notice">Hay ${money.format(oldBalance)} pendientes de cuotas anteriores. El regreso no borra esa deuda.</p>` : ""}<div class="form-actions">${remainder ? `<a class="button" href="#abonar/${escapeHtml(c.id)}">+ Registrar abono</a>` : ""}${c.archivedAt || c.deletedAt ? `<a class="button" href="#regresar/${escapeHtml(c.id)}">Reactivar cliente</a>` : c.end <= today() ? `<a class="button secondary" href="#regresar/${escapeHtml(c.id)}">Iniciar nueva cuota</a>` : ""}<a class="button secondary" href="#editar/${escapeHtml(c.id)}">Editar perfil</a></div><hr class="divider"><div><strong>Celular:</strong> ${escapeHtml(c.phone || "Sin registrar")}</div><div><strong>Cumpleaños:</strong> ${dateLabel(c.birthDate)}</div><hr class="divider"><h2>Abonos de esta cuota</h2><ol class="payments">${c.payments.map((p) => `<li>${dateLabel(p.date)} · ${escapeHtml(p.method)} · <strong>${money.format(p.amount)}</strong></li>`).join("")}</ol></div>${history.length ? `<section class="history"><h2>Cuotas anteriores</h2>${history.map((p, index) => `<details class="panel history-period"><summary>${escapeHtml(p.activityName)} · ${dateLabel(p.start)} a ${dateLabel(p.end)} · ${money.format(p.price)}</summary><p>Abonado: ${money.format(p.payments.reduce((n, payment) => n + payment.amount, 0))} · Pendiente: ${money.format(Math.max(0, p.price - p.payments.reduce((n, payment) => n + payment.amount, 0)))}</p>${p.price > p.payments.reduce((n, payment) => n + payment.amount, 0) ? `<a class="button secondary" href="#abonar/${escapeHtml(c.id)}/${previousPeriods(c).length - 1 - index}">Registrar abono anterior</a>` : ""}<ol class="payments">${p.payments.map((payment) => `<li>${dateLabel(payment.date)} · ${escapeHtml(payment.method)} · ${money.format(payment.amount)}</li>`).join("")}</ol></details>`).join("")}</section>` : ""}<section class="profile-management"><h2>Historial y perfil</h2><p>Las cuotas anteriores, los pagos y los saldos permanecen asociados a esta persona.</p><div class="form-actions"><a class="button secondary" href="#historial/${escapeHtml(c.id)}">Ver historial por día</a>${c.archivedAt || c.deletedAt ? "" : `<button class="button secondary" id="archive-customer" type="button">Dar de baja</button>`}${c.deletedAt ? "" : `<a class="button ghost" href="#borrar/${escapeHtml(c.id)}">Retirar perfil…</a>`}</div></section>`,
     "clientes",
   );
+  const archiveButton = document.querySelector("#archive-customer");
+  if (archiveButton) archiveButton.onclick = () => {
+    if (!window.confirm(`¿Dar de baja a ${c.name}? Sus cuotas y pagos se conservarán.`)) return;
+    c.archivedAt = today();
+    logLifecycle(c, "Baja registrada", "El perfil y sus pagos se conservaron");
+    save();
+    detail(id);
+    toast("Cliente dado de baja. Su historial sigue disponible.");
+  };
 }
-function pay(id) {
+function returnCustomer(id) {
   const c = state.customers.find((x) => x.id === id);
   if (!c) return void (location.hash = "#clientes");
-  const remainder = balance(c);
+  if ((c.archivedAt || c.deletedAt) && c.end > today()) {
+    app.innerHTML = layout(`<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(id)}'">← Perfil</button><section class="hero"><span class="eyebrow">REGRESO</span><h1>Reactivar a ${escapeHtml(c.name)}.</h1><p>La cuota actual sigue vigente hasta ${dateLabel(c.end)}. Podés volver a mostrar al cliente como activo sin cobrar una cuota nueva.</p></section><div class="panel"><button class="button" id="resume-active" type="button">Reactivar sin nueva cuota</button></div>`, "clientes");
+    document.querySelector("#resume-active").onclick = () => {
+      c.archivedAt = null;
+      c.deletedAt = null;
+      logLifecycle(c, "Cliente reactivado", "Continúa con la cuota que seguía vigente");
+      save();
+      location.hash = `#cliente/${id}`;
+      toast("Cliente reactivado.");
+    };
+    return;
+  }
+  const options = state.activities.map((a) => `<option value="${escapeHtml(a.id)}" ${a.id === c.activityId ? "selected" : ""}>${escapeHtml(a.name)} · ${money.format(a.price)} / ${a.months} ${a.months === 1 ? "mes" : "meses"}</option>`).join("");
+  app.innerHTML = layout(`<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(id)}'">← Perfil</button><section class="hero"><span class="eyebrow">${c.archivedAt || c.deletedAt ? "REGRESO AL GIMNASIO" : "RENOVACIÓN"}</span><h1>Nueva cuota para ${escapeHtml(c.name)}.</h1><p>Empieza hoy, ${dateLabel(today())}, con el primer abono. Se aplica el precio vigente de la actividad elegida, aunque las cuotas anteriores hayan tenido otro monto.</p></section><form class="panel" id="return-form"><div class="form-grid"><div class="field wide"><label for="return-activity">Actividad</label><select id="return-activity" required>${options}</select></div><div class="field"><label for="return-amount">Primer abono (ARS)</label><input id="return-amount" type="number" min="1" step="1" inputmode="numeric" required></div><div class="field"><label for="return-method">Medio de pago</label><select id="return-method"><option>Transferencia</option><option>Efectivo</option><option>Mercado Pago</option></select></div></div><p class="notice">Las cuotas y deudas anteriores se conservan separadas. No se cobran automáticamente los meses que estuvo fuera.</p><div class="form-actions"><button class="button" type="submit">Confirmar nueva cuota</button><a class="button ghost" href="#cliente/${escapeHtml(id)}">Cancelar</a></div></form>`, "clientes");
+  const amountInput = document.querySelector("#return-amount");
+  const select = document.querySelector("#return-activity");
+  const updateMaximum = () => {
+    const activity = state.activities.find((a) => a.id === select.value);
+    amountInput.max = String(activity?.price ?? 0);
+    amountInput.placeholder = `Hasta ${money.format(activity?.price ?? 0)}`;
+  };
+  select.onchange = updateMaximum;
+  updateMaximum();
+  document.querySelector("#return-form").onsubmit = (e) => {
+    e.preventDefault();
+    const activity = state.activities.find((a) => a.id === select.value);
+    const amount = Number(amountInput.value);
+    if (!activity || !Number.isInteger(amount) || amount < 1 || amount > activity.price)
+      return toast("Revisá el importe y la actividad.");
+    const wasInactive = Boolean(c.archivedAt || c.deletedAt);
+    c.history = [...previousPeriods(c), periodSnapshot(c)];
+    c.activityId = activity.id;
+    c.activityName = activity.name;
+    c.price = activity.price;
+    c.start = today();
+    c.end = addMonths(c.start, activity.months);
+    c.payments = [{ amount, method: document.querySelector("#return-method").value, date: c.start }];
+    c.archivedAt = null;
+    c.deletedAt = null;
+    if (wasInactive) logLifecycle(c, "Cliente reactivado", "Comienza una cuota nueva desde el regreso");
+    save();
+    location.hash = `#cliente/${id}`;
+    toast("Nueva cuota registrada. Historial conservado.");
+  };
+}
+function deleteProfile(id) {
+  const c = state.customers.find((x) => x.id === id);
+  if (!c) return void (location.hash = "#clientes");
+  app.innerHTML = layout(`<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(id)}'">← Perfil</button><section class="hero"><span class="eyebrow">RETIRAR DE LA LISTA</span><h1>Eliminar perfil.</h1><p>${escapeHtml(c.name)} dejará de aparecer entre los clientes activos. Sus cuotas y pagos quedarán disponibles en Retirados y podrás recuperarlo si vuelve.</p></section><form class="panel" id="delete-form"><div class="field"><label for="confirm-name">Escribí el nombre completo para confirmar</label><input id="confirm-name" autocomplete="off" required placeholder="${escapeHtml(c.name)}"></div><div class="form-actions"><button class="button danger-button" type="submit">Retirar perfil</button><a class="button secondary" href="#cliente/${escapeHtml(id)}">Conservar perfil</a></div></form>`, "clientes");
+  document.querySelector("#delete-form").onsubmit = (e) => {
+    e.preventDefault();
+    if (document.querySelector("#confirm-name").value.trim() !== c.name) return toast("El nombre no coincide.");
+    c.deletedAt = today();
+    c.archivedAt = null;
+    logLifecycle(c, "Perfil retirado", "Se conserva para recuperarlo si vuelve");
+    save();
+    location.hash = "#clientes";
+    toast("Perfil retirado. Podés recuperarlo desde Clientes.");
+  };
+}
+function historyPage(id) {
+  const c = state.customers.find((x) => x.id === id);
+  if (!c) return void (location.hash = "#clientes");
+  const periods = [...previousPeriods(c), periodSnapshot(c)];
+  const events = [{ date: c.createdAt || periods[0].start, title: "Perfil creado", detail: "Alta del cliente en Shelby Gym" }];
+  for (const period of periods) {
+    events.push({ date: period.start, title: "Cuota iniciada", detail: `${period.activityName} · ${money.format(period.price)} · vence ${dateLabel(period.end)}` });
+    for (const payment of period.payments)
+      events.push({ date: payment.date, title: "Abono recibido", detail: `${payment.method} · ${money.format(payment.amount)} · ${period.activityName}` });
+    if (period.end <= today()) {
+      const paidByEnd = period.payments.filter((p) => p.date <= period.end).reduce((sum, p) => sum + p.amount, 0);
+      const due = Math.max(0, period.price - paidByEnd);
+      events.push({ date: period.end, title: due ? "Cuota vencida con saldo" : "Cuota finalizada", detail: due ? `${money.format(due)} pendientes al vencimiento · ${period.activityName}` : `${period.activityName} · sin saldo al vencimiento` });
+    }
+  }
+  events.push(...(c.lifecycleEvents || []));
+  events.sort((a, b) => b.date.localeCompare(a.date));
+  let lastDate = "";
+  const rows = events.map((event) => {
+    const heading = event.date !== lastDate ? `<h2>${dateLabel(event.date)}</h2>` : "";
+    lastDate = event.date;
+    return `${heading}<div class="timeline-event"><strong>${escapeHtml(event.title)}</strong><span>${escapeHtml(event.detail)}</span></div>`;
+  }).join("");
+  app.innerHTML = layout(`<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(id)}'">← ${escapeHtml(c.name)}</button><section class="hero"><span class="eyebrow">MOVIMIENTOS POR DÍA</span><h1>Historial.</h1><p>Alta, cuotas, abonos y saldos al vencimiento. Las cuotas mantienen el precio original aunque hoy la actividad cueste más.</p></section><div class="timeline">${rows}</div>`, "clientes");
+}
+function pay(id, periodIndex = -1) {
+  const c = state.customers.find((x) => x.id === id);
+  if (!c) return void (location.hash = "#clientes");
+  const period = periodIndex >= 0 ? previousPeriods(c)[periodIndex] : c;
+  if (!period || !Number.isInteger(periodIndex)) return void (location.hash = `#cliente/${id}`);
+  const periodBalance = () => Math.max(0, period.price - period.payments.reduce((sum, p) => sum + p.amount, 0));
+  const remainder = periodBalance();
+  if (!remainder) return void (location.hash = `#cliente/${c.id}`);
   app.innerHTML = layout(
-    `<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(c.id)}'">← ${escapeHtml(c.name)}</button><section class="hero"><span class="eyebrow">CUOTA PENDIENTE</span><h1>Registrar abono.</h1><p>Quedan ${money.format(remainder)}. Este pago no cambia la fecha de vencimiento.</p></section><form class="panel" id="pay-form"><div class="form-grid"><div class="field"><label for="pay-amount">Importe recibido (ARS)</label><input id="pay-amount" type="number" min="1" max="${remainder}" step="1" inputmode="numeric" required></div><div class="field"><label for="pay-method">Medio de pago</label><select id="pay-method"><option>Transferencia</option><option>Efectivo</option><option>Mercado Pago</option></select></div></div><div class="form-actions"><button class="button" type="submit">Guardar abono</button><a class="button ghost" href="#cliente/${escapeHtml(c.id)}">Cancelar</a></div></form>`,
+    `<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(c.id)}'">← ${escapeHtml(c.name)}</button><section class="hero"><span class="eyebrow">${periodIndex >= 0 ? "CUOTA ANTERIOR" : "CUOTA PENDIENTE"}</span><h1>Registrar abono.</h1><p>Quedan ${money.format(remainder)} de la cuota ${dateLabel(period.start)} a ${dateLabel(period.end)}. Este pago no cambia el vencimiento.</p></section><form class="panel" id="pay-form"><div class="form-grid"><div class="field"><label for="pay-amount">Importe recibido (ARS)</label><input id="pay-amount" type="number" min="1" max="${remainder}" step="1" inputmode="numeric" required></div><div class="field"><label for="pay-method">Medio de pago</label><select id="pay-method"><option>Transferencia</option><option>Efectivo</option><option>Mercado Pago</option></select></div></div><div class="form-actions"><button class="button" type="submit">Guardar abono</button><a class="button ghost" href="#cliente/${escapeHtml(c.id)}">Cancelar</a></div></form>`,
     "clientes",
   );
   document.querySelector("#pay-form").onsubmit = (e) => {
     e.preventDefault();
     const amount = Number(document.querySelector("#pay-amount").value);
-    if (!Number.isInteger(amount) || amount <= 0 || amount > balance(c))
+    if (!Number.isInteger(amount) || amount <= 0 || amount > periodBalance())
       return toast("El importe debe estar dentro del saldo.");
-    c.payments.push({
+    period.payments.push({
       amount,
       method: document.querySelector("#pay-method").value,
       date: today(),
@@ -416,7 +559,7 @@ function edit(id) {
 }
 function render() {
   if (sessionStorage.getItem(UNLOCK) !== "yes") return lock();
-  const [path, id] = (location.hash.slice(1) || "inicio").split("/");
+  const [path, id, period] = (location.hash.slice(1) || "inicio").split("/");
   if (path === "cumpleanos") {
     filter = "cumpleanos";
     birthdayOffset = 0;
@@ -431,7 +574,10 @@ function render() {
       "actividad-nueva": activityNew,
       nuevo: newCustomer,
       cliente: () => detail(id),
-      abonar: () => pay(id),
+      abonar: () => pay(id, period === undefined ? -1 : Number(period)),
+      regresar: () => returnCustomer(id),
+      borrar: () => deleteProfile(id),
+      historial: () => historyPage(id),
       editar: () => edit(id),
     })[path] || home
   )();
