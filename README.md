@@ -2,7 +2,7 @@
 
 Aplicación de gestión de clientes, actividades, suscripciones y cuotas para PC, tablet y celular. Identidad negra, roja y blanca, basada en el diseño revisado con el usuario.
 
-Primera versión implementada en Next.js, React, TypeScript strict, Tailwind, shadcn/ui y Supabase. La aplicación con datos reales requiere configurar Supabase y hosting; todavía no está conectada a producción. No cobra dinero: registra abonos externos por transferencia, Mercado Pago y efectivo, también parciales o repartidos. La [demo móvil](https://shelby-gym-demo-movil.fizzydrake7.chatgpt.site) usa únicamente datos ficticios guardados en el navegador.
+Primera versión implementada en Next.js, React, TypeScript strict, Tailwind, shadcn/ui y Supabase. La aplicación con datos reales requiere configurar Supabase y hosting; todavía no está conectada a producción. No cobra dinero: registra abonos externos por transferencia, Mercado Pago y efectivo, también parciales o repartidos. La [demo móvil en GitHub Pages](https://calderondante.github.io/Shelby-Gym/gestion/) usa únicamente datos ficticios guardados en el navegador.
 
 ## Empezar
 
@@ -29,7 +29,7 @@ Ver [Desarrollo y operación](docs/DEVELOPMENT.md) para setup, permisos, pruebas
 - Alta con datos, actividad y primer abono en el mismo formulario.
 - Lista global buscable y paginada, con filtros de saldo, vencimientos, bajas y perfiles eliminados de la lista.
 - Perfil con períodos, deuda y desglose de pagos; completar una cuota no cambia su vencimiento.
-- Baja y retiro reversibles, regreso con cuota desde el nuevo primer abono e historial diario de movimientos.
+- Baja y retiro reversibles, regreso con cuota desde el nuevo primer abono e historial mensual con recorrido diario de movimientos.
 - Abonos transaccionales, idempotentes y protegidos contra sobrepagos concurrentes.
 
 La renovación anticipada, pausas, corrección/anulación de abonos y gestión visual del personal no forman parte de esta primera entrega. Ver reglas y pendientes en [Producto](docs/PRODUCT.md).

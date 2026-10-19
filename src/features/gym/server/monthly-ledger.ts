@@ -2,7 +2,7 @@ import "server-only";
 import { requireStaff } from "./session";
 import { todayIn } from "../domain/dates";
 
-/** Search a wider UTC window, then select the gym's calendar day. */
+/** Search a wider UTC window, then select the gym's calendar dates. */
 function utcWindow(day: string) {
   const center = new Date(`${day}T12:00:00Z`).getTime();
   return {
@@ -11,11 +11,17 @@ function utcWindow(day: string) {
   };
 }
 
-export async function getDailyLedger(day: string, timeZone: string) {
+export async function getMonthlyLedger(month: string, timeZone: string, currency: string) {
   const { db } = await requireStaff();
-  const { from, until } = utcWindow(day);
+  const [year, number] = month.split("-").map(Number);
+  const firstDay = `${month}-01`;
+  const lastDay = new Date(Date.UTC(year, number, 0)).toISOString().slice(0, 10);
+  const nextMonth = new Date(Date.UTC(year, number, 1)).toISOString().slice(0, 10);
+  const { from } = utcWindow(firstDay);
+  const { until } = utcWindow(lastDay);
+  const inMonth = (timestamp: string) => todayIn(timeZone, new Date(timestamp)).startsWith(month);
   const paymentSelection =
-    "id,created_at,occurred_on,import_batch_id,staff(name),payment_entries(method,amount_cents),subscriptions!payment_batches_subscription_id_fkey(customer_id,activity_name,currency,starts_on,ends_on,customers!subscriptions_customer_id_fkey(name))";
+    "id,created_at,occurred_on,import_batch_id,payment_entries(method,amount_cents),subscriptions!payment_batches_subscription_id_fkey(customer_id,activity_name,currency,starts_on,ends_on,customers!subscriptions_customer_id_fkey(name))";
   const livePaymentPage = (offset: number) =>
     db.from("payment_batches").select(paymentSelection)
       .is("occurred_on", null).gte("created_at", from).lt("created_at", until)
@@ -23,7 +29,8 @@ export async function getDailyLedger(day: string, timeZone: string) {
       .range(offset, offset + 999);
   const importedPaymentPage = (offset: number) =>
     db.from("payment_batches").select(paymentSelection)
-      .eq("occurred_on", day).order("created_at", { ascending: false }).order("id")
+      .gte("occurred_on", firstDay).lt("occurred_on", nextMonth)
+      .order("occurred_on", { ascending: false }).order("id")
       .range(offset, offset + 999);
   const periodPage = (offset: number) =>
     db.from("subscription_balances")
@@ -42,6 +49,9 @@ export async function getDailyLedger(day: string, timeZone: string) {
       .gte("created_at", from).lt("created_at", until)
       .order("created_at", { ascending: false }).order("id")
       .range(offset, offset + 999);
+  const balancePage = (offset: number) =>
+    db.from("subscription_balances").select("id,balance_cents")
+      .eq("currency", currency).order("id").range(offset, offset + 999);
 
   async function allPages<T>(
     fetchPage: (offset: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
@@ -50,23 +60,24 @@ export async function getDailyLedger(day: string, timeZone: string) {
     for (;;) {
       const result = await fetchPage(items.length);
       if (result.error || !result.data)
-        throw new Error("No pudimos cargar el historial diario.");
+        throw new Error("No pudimos cargar el historial mensual.");
       items.push(...result.data);
       if (result.data.length < 1000) return items;
     }
   }
 
-  const [live, imported, periods, customers, events] = await Promise.all([
+  const [live, imported, periods, customers, events, balances] = await Promise.all([
     allPages(livePaymentPage),
     allPages(importedPaymentPage),
     allPages(periodPage),
     allPages(customerPage),
     allPages(eventPage),
+    allPages(balancePage),
   ]);
-  const payments = [...live.filter((row) => todayIn(timeZone, new Date(row.created_at)) === day), ...imported]
-    .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
-  const dailyPeriods = periods.filter((row) => row.created_at && todayIn(timeZone, new Date(row.created_at)) === day);
-  const customerIds = [...new Set(dailyPeriods.map((row) => row.customer_id).filter((id): id is string => !!id))];
+  const payments = [...live.filter((row) => inMonth(row.created_at)), ...imported]
+    .sort((a, b) => (b.occurred_on ?? b.created_at).localeCompare(a.occurred_on ?? a.created_at) || b.id.localeCompare(a.id));
+  const monthlyPeriods = periods.filter((row) => row.created_at && inMonth(row.created_at));
+  const customerIds = [...new Set(monthlyPeriods.map((row) => row.customer_id).filter((id): id is string => !!id))];
   const names = new Map<string, string>();
   for (let index = 0; index < customerIds.length; index += 100) {
     const { data, error } = await db.from("customers").select("id,name")
@@ -76,9 +87,10 @@ export async function getDailyLedger(day: string, timeZone: string) {
   }
   return {
     payments,
-    periods: dailyPeriods,
+    periods: monthlyPeriods,
     names,
-    customers: customers.filter((row) => todayIn(timeZone, new Date(row.created_at)) === day),
-    events: events.filter((row) => todayIn(timeZone, new Date(row.created_at)) === day),
+    customers: customers.filter((row) => inMonth(row.created_at)),
+    events: events.filter((row) => inMonth(row.created_at)),
+    pendingCents: balances.reduce((sum, row) => sum + (row.balance_cents ?? 0), 0),
   };
 }

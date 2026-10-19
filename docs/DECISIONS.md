@@ -109,3 +109,13 @@ Registrar decisiones arquitectónicas importantes; no usar ADR para todo cambio 
 - **Chosen solution:** `pnpm demo:local --host IP` valida una IP privada de la PC, mantiene `.env.local` y pasa al proceso Next una URL de la LAN `http://IP:54321`. Next acepta ese origen solo durante la demo y oculta su indicador de desarrollo. Un sembrador separado crea tres actividades y tres clientes ficticios mediante las RPC y permisos existentes, sin duplicarlos al repetirlo.
 - **Reason:** muestra acciones y persistencia reales en la app actual, sin incorporar un servicio o un frontend alternativo.
 - **Consequences:** requiere Docker/Node/pnpm en una PC de la misma red, acceso a los puertos 3000 y 54321 y una cuenta de dueño local. Se usa únicamente en Wi-Fi privada con datos ficticios. El cloud de Codex no está automáticamente en la LAN del teléfono; las pruebas automatizadas de viewport no acreditan Safari/Android físicos. Instrucciones en [DEMO_LOCAL.md](DEMO_LOCAL.md).
+
+## ADR-011 — Historial mensual y saldo pendiente
+
+- **Date:** 2026-10-19.
+- **Decision:** consultar los abonos de un mes por su fecha civil argentina, recorrer los días con movimientos y separar el saldo pendiente actual del total cobrado ese mes.
+- **Context:** el dueño necesita ver ingresos globales, medios de pago y días concretos desde celular o PC; pueden existir pagos parciales y deudas de meses anteriores.
+- **Options:** sumar precios de cuotas como ingresos, reconstruir cierres históricos, o mostrar dinero recibido y deuda actual con etiquetas explícitas.
+- **Chosen solution:** el total mensual suma sólo entradas de pago; los pagos importados usan su fecha original. El pendiente suma los saldos actuales de todas las cuotas, incluso de períodos anteriores y perfiles retirados. La barra diaria muestra el detalle sin pedir el mes completo por cada día.
+- **Reason:** evita sumar una cuota dos veces y permite revisar cobros y deuda sin fingir un cierre contable histórico.
+- **Consequences:** el saldo no es una foto del fin de cada mes. Un cierre contable, anulaciones, conciliación o exportación requerirían modelos y permisos propios.

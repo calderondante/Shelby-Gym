@@ -1,74 +1,101 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CalendarDays, ReceiptText } from "lucide-react";
+import { ArrowLeft, ArrowRight, ReceiptText } from "lucide-react";
 import { PageHeading } from "@/components/shared/page-heading";
-import { getDailyLedger } from "@/features/gym/server/daily-ledger";
+import { LedgerDayRail, type LedgerDay } from "@/features/gym/components/ledger-day-rail";
+import { getMonthlyLedger } from "@/features/gym/server/monthly-ledger";
 import { requireSettings } from "@/features/gym/server/session";
 import { dateLabel, todayIn } from "@/features/gym/domain/dates";
+import { daysOfMonth, paymentDay, shiftMonth, sumMethods, validMonth } from "@/features/gym/domain/ledger-calendar";
 import { money } from "@/features/gym/domain/money";
 import { paymentMethods } from "@/features/gym/validation/contracts";
 
 export const metadata = { title: "Historial general" };
 
-function shifted(day: string, amount: number) {
-  const date = new Date(`${day}T12:00:00Z`);
-  date.setUTCDate(date.getUTCDate() + amount);
-  return date.toISOString().slice(0, 10);
-}
-
-function validDay(value: unknown): value is string {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value))
-    return false;
-  const date = new Date(`${value}T12:00:00Z`);
-  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
-}
+const weekday = new Intl.DateTimeFormat("es-AR", { weekday: "short", timeZone: "UTC" });
+const monthName = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric", timeZone: "UTC" });
 
 export default async function GymHistoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ dia?: string }>;
+  searchParams: Promise<{ mes?: string; dia?: string }>;
 }) {
   const settings = await requireSettings();
   const today = todayIn(settings.time_zone);
-  const requestedDay = (await searchParams).dia;
-  const day = validDay(requestedDay) ? requestedDay : today;
-  const { payments, periods, names, customers, events } = await getDailyLedger(day, settings.time_zone);
-  const byMethod = { transfer: 0, mercado_pago: 0, cash: 0 };
-  for (const batch of payments)
-    for (const entry of batch.payment_entries)
-      if (entry.method in byMethod)
-        byMethod[entry.method as keyof typeof byMethod] += entry.amount_cents;
+  const params = await searchParams;
+  const month = validMonth(params.mes) ? params.mes
+    : typeof params.dia === "string" && validMonth(params.dia.slice(0, 7))
+      ? params.dia.slice(0, 7)
+      : today.slice(0, 7);
+  const { payments, periods, names, customers, events, pendingCents } =
+    await getMonthlyLedger(month, settings.time_zone, settings.currency);
+  const days = daysOfMonth(month);
+  const activity = new Map<string, { count: number; received: number }>();
+  function mark(day: string, received = 0) {
+    const previous = activity.get(day) ?? { count: 0, received: 0 };
+    activity.set(day, { count: previous.count + 1, received: previous.received + received });
+  }
+  for (const payment of payments)
+    mark(paymentDay(payment, settings.time_zone), payment.payment_entries.reduce((sum, line) => sum + line.amount_cents, 0));
+  for (const period of periods)
+    if (period.created_at) mark(todayIn(settings.time_zone, new Date(period.created_at)));
+  for (const customer of customers) mark(todayIn(settings.time_zone, new Date(customer.created_at)));
+  for (const event of events) mark(todayIn(settings.time_zone, new Date(event.created_at)));
+  const available = days.filter((date) => activity.has(date) && (month !== today.slice(0, 7) || date <= today));
+  const selectedDay = typeof params.dia === "string" && days.includes(params.dia)
+    ? params.dia
+    : available.at(-1) ?? (month === today.slice(0, 7) ? today : days[0]);
+  const railDays: LedgerDay[] = days.map((date) => ({
+    date,
+    number: Number(date.slice(-2)),
+    weekday: weekday.format(new Date(`${date}T12:00:00Z`)).replace(".", ""),
+    received: activity.get(date)?.received ?? 0,
+    hasMovement: activity.has(date),
+  }));
+  const byMethod = sumMethods(payments);
   const received = Object.values(byMethod).reduce((sum, value) => sum + value, 0);
+  const dailyPayments = payments.filter((batch) => paymentDay(batch, settings.time_zone) === selectedDay);
+  const dailyPeriods = periods.filter((period) => period.created_at && todayIn(settings.time_zone, new Date(period.created_at)) === selectedDay);
+  const dailyCustomers = customers.filter((customer) => todayIn(settings.time_zone, new Date(customer.created_at)) === selectedDay);
+  const dailyEvents = events.filter((event) => todayIn(settings.time_zone, new Date(event.created_at)) === selectedDay);
+  const dailyReceived = activity.get(selectedDay)?.received ?? 0;
+  const titleMonth = monthName.format(new Date(`${month}-01T12:00:00Z`));
+  const headingMonth = titleMonth[0].toLocaleUpperCase("es-AR") + titleMonth.slice(1);
 
   return (
     <>
       <PageHeading
         eyebrow="CAJA Y MOVIMIENTOS"
         title="Historial general"
-        description="Toda la actividad del gimnasio, día por día. Los ingresos incluyen sólo pagos registrados."
+        description="Elegí un mes y recorré sus días. Las cuotas y las deudas se muestran aparte del dinero cobrado."
       />
-      <div className="daily-date-bar">
+      <section className="ledger-month-bar" aria-label="Seleccionar mes">
         <div>
-          <span className="eyebrow">FECHA SELECCIONADA</span>
-          <h2>{dateLabel(day)}</h2>
+          <span className="eyebrow">MES SELECCIONADO</span>
+          <h2>{headingMonth}</h2>
         </div>
-        <div className="daily-date-actions">
-          <Link href={`/historial?dia=${shifted(day, -1)}`} aria-label="Día anterior"><ArrowLeft size={18} /></Link>
-          <form action="/historial" className="daily-date-form">
-            <label className="sr-only" htmlFor="ledger-day">Elegir día</label>
-            <input id="ledger-day" name="dia" type="date" defaultValue={day} />
-            <button type="submit" aria-label="Mostrar día"><CalendarDays size={17} /></button>
+        <div className="ledger-month-actions">
+          <Link href={`/historial?mes=${shiftMonth(month, -1)}`} aria-label="Mes anterior"><ArrowLeft size={18} /></Link>
+          <form action="/historial" className="ledger-month-form">
+            <label className="sr-only" htmlFor="ledger-month">Elegir mes</label>
+            <input id="ledger-month" name="mes" type="month" defaultValue={month} min="1900-01" max="2100-12" required />
+            <button type="submit">Ver mes</button>
           </form>
-          <Link href={`/historial?dia=${shifted(day, 1)}`} aria-label="Día siguiente"><ArrowRight size={18} /></Link>
-          {day !== today && <Link className="daily-today" href="/historial">Hoy</Link>}
+          <Link href={`/historial?mes=${shiftMonth(month, 1)}`} aria-label="Mes siguiente"><ArrowRight size={18} /></Link>
+          {month !== today.slice(0, 7) && <Link className="daily-today" href="/historial">Mes actual</Link>}
         </div>
-      </div>
-      <section className="daily-summary" aria-label="Ingresos del día">
-        <div className="daily-received">
-          <span>INGRESÓ EN CAJA</span>
+      </section>
+      <section className="ledger-month-summary" aria-label="Resumen financiero">
+        <div className="ledger-month-figure">
+          <span>COBRADO EN {titleMonth.toLocaleUpperCase("es-AR")}</span>
           <strong>{money(received, settings.currency)}</strong>
-          <small>{payments.length} {payments.length === 1 ? "abono registrado" : "abonos registrados"}</small>
+          <small>{payments.length} {payments.length === 1 ? "abono registrado" : "abonos registrados"} · efectivo + transferencias + Mercado Pago</small>
         </div>
-        <dl className="daily-methods">
+        <div className="ledger-month-figure ledger-month-pending">
+          <span>PENDIENTE ACTUAL DEL GIMNASIO</span>
+          <strong>{money(pendingCents, settings.currency)}</strong>
+          <small>Incluye cuotas de cualquier mes; es el saldo de hoy, no el del mes seleccionado.</small>
+        </div>
+        <dl className="ledger-month-methods">
           {Object.entries(byMethod).map(([method, amount]) => (
             <div key={method}>
               <dt>{paymentMethods[method as keyof typeof paymentMethods]}</dt>
@@ -77,14 +104,29 @@ export default async function GymHistoryPage({
           ))}
         </dl>
       </section>
+      <section className="ledger-calendar" aria-label="Movimientos por día">
+        <div className="ledger-calendar-heading">
+          <div><span className="eyebrow">RECORRÉ EL MES</span><h2>Día a día</h2></div>
+          <span>Deslizá para ver más →</span>
+        </div>
+        <a className="ledger-skip-link" href="#ledger-selected-day">Saltar al detalle del día</a>
+        <LedgerDayRail days={railDays} month={month} selected={selectedDay} />
+      </section>
+      <section className="ledger-selected-day" id="ledger-selected-day" tabIndex={-1} aria-label="Detalle del día seleccionado">
+        <div>
+          <span className="eyebrow">MOVIMIENTOS DEL DÍA</span>
+          <h2>{dateLabel(selectedDay)}</h2>
+        </div>
+        <div><span>Ingresó ese día</span><strong>{money(dailyReceived, settings.currency)}</strong></div>
+      </section>
       <section className="daily-section" aria-labelledby="daily-payments">
         <div className="daily-section-heading">
           <div><span className="eyebrow">DINERO RECIBIDO</span><h2 id="daily-payments">Abonos</h2></div>
-          <span>{payments.length}</span>
+          <span>{dailyPayments.length}</span>
         </div>
-        {payments.length ? (
+        {dailyPayments.length ? (
           <ol className="daily-list">
-            {payments.map((batch) => {
+            {dailyPayments.map((batch) => {
               const total = batch.payment_entries.reduce((sum, entry) => sum + entry.amount_cents, 0);
               const subscription = batch.subscriptions;
               return <li key={batch.id}>
@@ -104,12 +146,12 @@ export default async function GymHistoryPage({
       <section className="daily-section" aria-labelledby="daily-periods">
         <div className="daily-section-heading">
           <div><span className="eyebrow">ACTIVIDAD, NO INGRESOS</span><h2 id="daily-periods">Cuotas registradas</h2></div>
-          <span>{periods.length}</span>
+          <span>{dailyPeriods.length}</span>
         </div>
-        <p className="daily-section-note">El precio de una cuota no se suma a caja. Su saldo indica lo que falta cobrar hoy.</p>
-        {periods.length ? (
+        <p className="daily-section-note">El precio de la cuota no se suma a caja. Su saldo indica lo que falta cobrar hoy.</p>
+        {dailyPeriods.length ? (
           <ol className="daily-list">
-            {periods.map((period) => <li key={period.id}>
+            {dailyPeriods.map((period) => <li key={period.id}>
               <Link href={`/clientes/${period.customer_id}`}>
                 <div className="daily-entry-main">
                   <strong>{names.get(period.customer_id ?? "") ?? "Cliente"}</strong>
@@ -125,16 +167,16 @@ export default async function GymHistoryPage({
       <section className="daily-section" aria-labelledby="daily-profiles">
         <div className="daily-section-heading">
           <div><span className="eyebrow">CAMBIOS DEL PADRÓN</span><h2 id="daily-profiles">Perfiles</h2></div>
-          <span>{customers.length + events.length}</span>
+          <span>{dailyCustomers.length + dailyEvents.length}</span>
         </div>
-        {customers.length || events.length ? (
+        {dailyCustomers.length || dailyEvents.length ? (
           <ol className="daily-list">
-            {customers.map((customer) => <li key={customer.id}>
+            {dailyCustomers.map((customer) => <li key={customer.id}>
               <Link href={`/clientes/${customer.id}/historial`}>
                 <div className="daily-entry-main"><strong>{customer.name}</strong><span>Perfil creado</span></div>
               </Link>
             </li>)}
-            {events.map((event) => <li key={event.id}>
+            {dailyEvents.map((event) => <li key={event.id}>
               <Link href={`/clientes/${event.customer_id}/historial`}>
                 <div className="daily-entry-main"><strong>{event.customers?.name ?? "Cliente"}</strong><span>{event.event === "retired" ? "Perfil retirado" : event.event === "inactive" ? "Baja registrada" : "Cliente reactivado"}</span></div>
               </Link>

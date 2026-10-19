@@ -1747,7 +1747,7 @@ html:not([data-input="keyboard"]) details[open] > :not(summary) {
     text-align: center;
   }
 }
-.daily-date-bar {
+.ledger-month-bar {
   display: flex;
   align-items: end;
   justify-content: space-between;
@@ -1757,59 +1757,76 @@ html:not([data-input="keyboard"]) details[open] > :not(summary) {
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
-.daily-date-bar h2 {
+.ledger-month-bar h2 {
   font-size: 21px;
-  text-transform: capitalize;
   letter-spacing: -.03em;
 }
-.daily-date-actions,
-.daily-date-form {
+.ledger-month-actions,
+.ledger-month-form {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.daily-date-actions > a,
-.daily-date-form button,
-.daily-date-form input {
+.ledger-month-actions { flex-wrap: wrap; }
+.ledger-month-actions > a,
+.ledger-month-form button,
+.ledger-month-form input {
   min-height: 44px;
   border: 1px solid var(--border);
   border-radius: 9px;
   background: var(--card);
   color: var(--foreground);
 }
-.daily-date-actions > a,
-.daily-date-form button {
+.ledger-month-actions > a {
   min-width: 44px;
   display: grid;
   place-items: center;
 }
-.daily-date-form input {
+.ledger-month-form button { padding: 0 12px; font-size: 13px; font-weight: 600; }
+.ledger-month-form input {
   padding: 0 10px;
-  max-width: 155px;
+  width: 152px;
   color-scheme: dark;
 }
-.daily-date-actions .daily-today {
+.ledger-month-actions .daily-today {
   padding: 0 13px;
   font-size: 13px;
   font-weight: 600;
 }
-.daily-summary {
+.ledger-month-summary {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
-  gap: 24px;
-  align-items: center;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 36px;
   border-bottom: 1px solid var(--border);
-  padding: 32px 0;
+  padding: 27px 0 20px;
 }
-.daily-received { display: grid; gap: 4px; }
-.daily-received > span,
-.daily-methods dt { color: var(--muted-foreground); font-size: 11px; letter-spacing: .08em; }
-.daily-received strong { font-size: clamp(32px, 5vw, 52px); letter-spacing: -.06em; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.daily-received small { color: var(--muted-foreground); }
-.daily-methods { display: grid; gap: 5px; margin: 0; }
-.daily-methods > div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
-.daily-methods dt { letter-spacing: 0; font-size: 13px; }
-.daily-methods dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ledger-month-figure { display: grid; align-content: start; gap: 4px; min-width: 0; padding-bottom: 25px; }
+.ledger-month-figure > span,
+.ledger-month-methods dt { color: var(--muted-foreground); font-size: 11px; letter-spacing: .08em; }
+.ledger-month-figure strong { font-size: clamp(29px, 4vw, 45px); letter-spacing: -.06em; line-height: 1.1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.ledger-month-figure small { color: var(--muted-foreground); font-size: 12px; line-height: 1.4; max-width: 40ch; }
+.ledger-month-pending strong { color: var(--foreground); }
+.ledger-month-methods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; grid-column: 1 / -1; margin: 0; border-top: 1px solid var(--border); padding-top: 16px; }
+.ledger-month-methods > div { display: grid; gap: 4px; }
+.ledger-month-methods dt { letter-spacing: 0; font-size: 12px; }
+.ledger-month-methods dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ledger-calendar { margin: 30px 0 26px; }
+.ledger-calendar-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 13px; }
+.ledger-calendar-heading h2 { font-size: 23px; letter-spacing: -.04em; }
+.ledger-calendar-heading > span { color: var(--muted-foreground); font-size: 12px; white-space: nowrap; }
+.ledger-skip-link { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.ledger-skip-link:focus { position: static; width: auto; height: auto; clip-path: none; display: inline-block; margin-bottom: 10px; color: var(--foreground); text-decoration: underline; }
+.ledger-day-rail { position: relative; display: flex; gap: 7px; max-width: 100%; overflow-x: auto; padding: 3px 1px 12px; scroll-snap-type: x proximity; scrollbar-width: thin; }
+.ledger-day-rail > a { display: grid; justify-items: center; align-content: center; flex: 0 0 72px; min-height: 86px; gap: 1px; border: 1px solid var(--border); border-radius: 11px; background: var(--card); color: var(--muted-foreground); scroll-snap-align: center; }
+.ledger-day-rail > a[aria-current] { border-color: #d92332; background: #3b1c22; color: var(--foreground); }
+.ledger-day-weekday { font-size: 11px; text-transform: capitalize; }
+.ledger-day-rail strong { font-size: 23px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.ledger-day-rail small { font-size: 10px; min-height: 15px; color: #ff8c96; font-weight: 700; }
+.ledger-selected-day { display: flex; align-items: end; justify-content: space-between; gap: 18px; padding: 20px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.ledger-selected-day h2 { font-size: 23px; letter-spacing: -.04em; }
+.ledger-selected-day > div:last-child { display: grid; text-align: right; gap: 2px; }
+.ledger-selected-day > div:last-child span { font-size: 11px; color: var(--muted-foreground); }
+.ledger-selected-day > div:last-child strong { color: #8ee5a3; font-size: 20px; font-variant-numeric: tabular-nums; }
 .daily-section { margin: 38px 0; }
 .daily-section-heading { display: flex; align-items: end; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
 .daily-section-heading h2 { font-size: 23px; letter-spacing: -.04em; }
@@ -1827,9 +1844,15 @@ html:not([data-input="keyboard"]) details[open] > :not(summary) {
 .daily-period-balance strong { color: var(--foreground); font-size: 14px; font-variant-numeric: tabular-nums; }
 .daily-empty { display: flex; align-items: center; gap: 11px; color: var(--muted-foreground); padding: 30px 3px; }
 @media (max-width: 640px) {
-  .daily-summary { grid-template-columns: 1fr; gap: 20px; }
-  .daily-date-actions { width: 100%; }
-  .daily-date-form { flex: 1; }
-  .daily-date-form input { width: 100%; max-width: none; }
+  .ledger-month-actions { width: 100%; }
+  .ledger-month-form { flex: 1; }
+  .ledger-month-form input { width: 100%; min-width: 0; }
+  .ledger-month-summary { grid-template-columns: 1fr; }
+  .ledger-month-figure { padding: 12px 0 20px; }
+  .ledger-month-pending { border-top: 1px solid var(--border); padding-top: 20px; }
+  .ledger-month-methods { gap: 8px; }
+  .ledger-month-methods dd { font-size: 13px; }
+  .ledger-selected-day h2 { font-size: 20px; }
+  .ledger-selected-day > div:last-child strong { font-size: 16px; }
   .daily-entry-amount { font-size: 13px; }
 }
