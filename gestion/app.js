@@ -4,9 +4,12 @@ const UNLOCK = "shelby-gym-demo-unlocked";
 const money = new Intl.NumberFormat("es-AR", {
   style: "currency",
   currency: "ARS",
+  maximumFractionDigits: 2,
+});
+const compactMoney = new Intl.NumberFormat("es-AR", {
+  notation: "compact",
   maximumFractionDigits: 0,
 });
-const compactMoney = new Intl.NumberFormat("es-AR", { notation: "compact", maximumFractionDigits: 0 });
 const dateFmt = new Intl.DateTimeFormat("es-AR", {
   day: "numeric",
   month: "short",
@@ -18,7 +21,10 @@ const monthFmt = new Intl.DateTimeFormat("es-AR", {
   year: "numeric",
   timeZone: "UTC",
 });
-const birthdayMonthFmt = new Intl.DateTimeFormat("es-AR", { month: "long", timeZone: "UTC" });
+const birthdayMonthFmt = new Intl.DateTimeFormat("es-AR", {
+  month: "long",
+  timeZone: "UTC",
+});
 const app = document.querySelector("#app");
 let filter = "todos",
   query = "",
@@ -42,31 +48,41 @@ function birthParts(c) {
 }
 function birthdayLabel(c) {
   const month = birthParts(c);
-  return month ? birthdayMonthFmt.format(utc(`2000-${month}-15`)) : "Sin registrar";
+  return month
+    ? birthdayMonthFmt.format(utc(`2000-${month}-15`))
+    : "Sin registrar";
 }
 function validBirthday(month) {
   return Number.isInteger(month) && month >= 0 && month <= 12;
 }
 function birthdayFields(prefix, c = {}) {
   const month = Number(birthParts(c));
-  return `<div class="field"><label for="${prefix}-birth-month">Mes de cumpleaños (opcional)</label><select id="${prefix}-birth-month"><option value="">Elegir mes</option>${Array.from({length: 12}, (_, i) => `<option value="${i + 1}" ${month === i + 1 ? "selected" : ""}>${birthdayMonthFmt.format(new Date(Date.UTC(2000, i, 15)))}</option>`).join("")}</select></div>`;
+  return `<div class="field"><label for="${prefix}-birth-month">Mes de cumpleaños (opcional)</label><select id="${prefix}-birth-month"><option value="">Elegir mes</option>${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}" ${month === i + 1 ? "selected" : ""}>${birthdayMonthFmt.format(new Date(Date.UTC(2000, i, 15)))}</option>`).join("")}</select></div>`;
 }
 function raffleReason(c, cutoff) {
-  const registered = c.createdAt || [...previousPeriods(c), periodSnapshot(c)][0].start;
+  const registered = c.createdAt || allPeriods(c)[0].start;
   if (registered > cutoff) return "Alta posterior al sorteo";
-  const lifecycle = [...(c.lifecycleEvents || [])].filter((event) => event.date <= cutoff).at(-1);
-  if (lifecycle?.title === "Baja registrada" || lifecycle?.title === "Perfil eliminado") return "Perfil de baja o eliminado";
-  const ends = [...previousPeriods(c), periodSnapshot(c)].filter((period) => period.start <= cutoff).map((period) => period.end).sort();
-  if (!ends.length || ends.at(-1) < shiftDays(cutoff, -30)) return "Cuota vencida hace más de 30 días";
-  return "";
+  const lifecycle = [...(c.lifecycleEvents || [])]
+    .filter((event) => event.date <= cutoff)
+    .at(-1);
+  if (
+    lifecycle?.title === "Baja registrada" ||
+    lifecycle?.title === "Perfil eliminado"
+  )
+    return "Perfil de baja o eliminado";
+  const lastEnd = membershipEnd(c, cutoff);
+  if (!lastEnd) return "Sin cuota de socio";
+  return lastEnd < shiftDays(cutoff, -30)
+    ? "Cuota vencida hace más de 30 días"
+    : "";
 }
 function birthdayAccountStatus(c) {
   if (c.deletedAt) return ["Eliminado", "archived"];
   if (c.archivedAt) return ["De baja", "archived"];
-  const ends = [...previousPeriods(c), periodSnapshot(c)].filter((period) => period.start <= today()).map((period) => period.end).sort();
-  if (!ends.length) return ["Sin cuota", "archived"];
-  const lastEnd = ends.at(-1);
-  if (lastEnd < shiftDays(today(), -30)) return [balance(c) > 0 ? "Más de 30 días sin pagar" : "Más de 30 días sin renovar", "expired"];
+  const lastEnd = membershipEnd(c);
+  if (!lastEnd) return ["Sin cuota de socio", "archived"];
+  if (lastEnd < shiftDays(today(), -30))
+    return ["Vencida hace más de 30 días", "expired"];
   if (lastEnd <= today()) return ["Vencida", "expired"];
   return balance(c) > 0 ? ["Pendiente", "due"] : ["Al día", "paid"];
 }
@@ -90,8 +106,10 @@ function shiftDays(s, days) {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
-const daysPast = (s) => Math.max(0, Math.floor((utc(today()) - utc(s)) / 86400000));
-const currentCustomers = () => state.customers.filter((c) => !c.archivedAt && !c.deletedAt);
+const daysPast = (s) =>
+  Math.max(0, Math.floor((utc(today()) - utc(s)) / 86400000));
+const currentCustomers = () =>
+  state.customers.filter((c) => !c.archivedAt && !c.deletedAt);
 function previousPeriods(c) {
   return Array.isArray(c.history) ? c.history : [];
 }
@@ -102,10 +120,18 @@ function periodSnapshot(c) {
     start: c.start,
     end: c.end,
     payments: c.payments.map((p) => ({ ...p })),
+    unit: c.unit || "months",
+    count: c.count || 1,
+    activityId: c.activityId,
+    sessionEvents: structuredClone(c.sessionEvents || []),
+    startedAt: c.startedAt,
   };
 }
 function logLifecycle(c, title, detail) {
-  c.lifecycleEvents = [...(c.lifecycleEvents || []), { date: today(), title, detail }];
+  c.lifecycleEvents = [
+    ...(c.lifecycleEvents || []),
+    { date: today(), title, detail },
+  ];
 }
 function seed() {
   const now = today();
@@ -167,30 +193,45 @@ for (const customer of state.customers) {
   }
 }
 if (cleanedBirthDates) localStorage.setItem(KEY, JSON.stringify(state));
+upgradeOperationsState();
 function save() {
   localStorage.setItem(KEY, JSON.stringify(state));
 }
 function paid(c) {
-  return c.payments.reduce((sum, p) => sum + p.amount, 0);
+  return roundMoney(c.payments.reduce((sum, p) => sum + p.amount, 0));
 }
 function currentBalance(c) {
-  return Math.max(0, c.price - paid(c));
+  return roundMoney(Math.max(0, c.price - paid(c)));
 }
 function balance(c) {
-  return currentBalance(c) + previousPeriods(c).reduce((sum, p) => sum + Math.max(0, p.price - p.payments.reduce((n, payment) => n + payment.amount, 0)), 0);
+  return (
+    currentBalance(c) +
+    previousPeriods(c).reduce(
+      (sum, p) =>
+        sum +
+        Math.max(
+          0,
+          p.price - p.payments.reduce((n, payment) => n + payment.amount, 0),
+        ),
+      0,
+    )
+  );
 }
 function status(c) {
-  return c.deletedAt
-    ? ["Eliminado", "archived"]
-    : c.archivedAt
-    ? ["De baja", "archived"]
-    : c.end < shiftDays(today(), -30)
-      ? ["Vencida hace más de 30 días", "expired"]
-      : c.end <= today()
-    ? ["Vencida", "expired"]
-    : balance(c)
-      ? ["Con saldo", "due"]
-      : ["Al día", "paid"];
+  if (c.deletedAt) return ["Eliminado", "archived"];
+  if (c.archivedAt) return ["De baja", "archived"];
+  const end = membershipEnd(c),
+    classes = allPeriods(c)
+      .filter((p) => p.unit === "sessions")
+      .reduce((n, p) => n + remainingClasses(p), 0);
+  if (end > today())
+    return balance(c) ? ["Con saldo", "due"] : ["Al día", "paid"];
+  if (classes > 0)
+    return balance(c) ? ["Con saldo", "due"] : ["Clases disponibles", "paid"];
+  if (end && end < shiftDays(today(), -30))
+    return ["Vencida hace más de 30 días", "expired"];
+  if (end && end <= today()) return ["Vencida", "expired"];
+  return ["Pack utilizado", "archived"];
 }
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 let activeToast;
@@ -250,7 +291,21 @@ function lock() {
 }
 function customerRow(c) {
   const [label, type] = status(c);
-  const timing = c.deletedAt ? `Eliminado: ${dateLabel(c.deletedAt)}` : c.archivedAt ? `Baja: ${dateLabel(c.archivedAt)}` : c.end <= today() ? `Venció ${dateLabel(c.end)} · hace ${daysPast(c.end)} días` : `Vence ${dateLabel(c.end)}`;
+  const end = membershipEnd(c),
+    classes = allPeriods(c)
+      .filter((p) => p.unit === "sessions")
+      .reduce((n, p) => n + remainingClasses(p), 0);
+  const timing = c.deletedAt
+    ? `Eliminado: ${dateLabel(c.deletedAt)}`
+    : c.archivedAt
+      ? `Baja: ${dateLabel(c.archivedAt)}`
+      : end > today()
+        ? `Vence ${dateLabel(end)}${classes ? ` · ${classes} clases disponibles` : ""}`
+        : classes > 0
+          ? `${classes} clases disponibles · sin vencimiento`
+          : end
+            ? `Venció ${dateLabel(end)} · hace ${daysPast(end)} días`
+            : "Sin clases disponibles";
   return `<button class="row rowbutton" type="button" data-customer="${escapeHtml(c.id)}"><span><strong>${escapeHtml(c.name)}</strong><small>${timing}</small></span><span class="activity muted">${escapeHtml(c.activityName)}</span><span class="amount"><span class="status ${type}">${label}</span><small>${balance(c) ? `${money.format(balance(c))} pendientes` : "Cuota completa"}</small></span></button>`;
 }
 function birthdayRow(c, reason = "") {
@@ -264,12 +319,14 @@ function bindCustomerRows() {
 }
 function home() {
   const active = currentCustomers();
-  const overdue = active.filter((c) => c.end <= today()).length;
+  const overdue = active.filter(
+    (c) => membershipEnd(c) && membershipEnd(c) <= today(),
+  ).length;
   const owing = active.filter((c) => balance(c) > 0).length;
   const recent = [...active]
     .sort((a, b) => b.start.localeCompare(a.start))
     .slice(0, 3);
-  const content = `<section class="hero"><span class="eyebrow">RECEPCIÓN · SHELBY GYM</span><h1>Todo en orden,<br>de un vistazo.</h1><p>Quién está al día, quién tiene saldo y a quién se le venció la cuota.</p><div class="hero-actions"><a class="button" href="#nuevo">+ Registrar cliente</a><a class="button secondary" href="#clientes">Ver todos los clientes</a></div></section><div class="metrics"><div class="metric"><strong>${active.length}</strong><span>Clientes activos</span></div><div class="metric alert"><strong>${owing}</strong><span>Con saldo</span></div><div class="metric alert"><strong>${overdue}</strong><span>Vencidos</span></div></div><div class="section-title"><h2>Últimos registros</h2><a class="section-link" href="#clientes">Ver lista completa →</a></div><div class="list">${recent.length ? recent.map(customerRow).join("") : '<div class="empty">Todavía no hay clientes activos. Podés registrar o reactivar a una persona.</div>'}</div>`;
+  const content = `<section class="hero"><span class="eyebrow">RECEPCIÓN · SHELBY GYM</span><h1>Todo en orden,<br>de un vistazo.</h1><p>Quién está al día, quién tiene saldo y a quién se le venció la cuota.</p><div class="hero-actions"><a class="button" href="#nuevo">+ Registrar cliente</a><a class="button secondary" href="#clientes">Ver todos los clientes</a><a class="button ghost" href="#campanas">Campañas de regreso</a></div></section><div class="metrics"><div class="metric"><strong>${active.length}</strong><span>Clientes activos</span></div><div class="metric alert"><strong>${owing}</strong><span>Con saldo</span></div><div class="metric alert"><strong>${overdue}</strong><span>Vencidos</span></div></div><div class="section-title"><h2>Últimos registros</h2><a class="section-link" href="#clientes">Ver lista completa →</a></div><div class="list">${recent.length ? recent.map(customerRow).join("") : '<div class="empty">Todavía no hay clientes activos. Podés registrar o reactivar a una persona.</div>'}</div>`;
   app.innerHTML = layout(content, "inicio");
   bindCustomerRows();
 }
@@ -279,7 +336,19 @@ function clients() {
   const month = monthDate.getUTCMonth() + 1;
   const raffleKey = `${monthDate.getUTCFullYear()}-${String(month).padStart(2, "0")}`;
   const savedDraw = state.raffleDraws?.[raffleKey];
-  const cutoff = savedDraw || today();
+  const cutoff =
+    typeof savedDraw === "string" ? savedDraw : savedDraw?.date || today();
+  const frozenEntries = new Map(
+    (savedDraw?.entries || []).map((entry) => [entry.id, entry]),
+  );
+  const drawReason = (c) =>
+    savedDraw?.entries
+      ? frozenEntries.has(c.id)
+        ? frozenEntries.get(c.id).reason
+        : c.registeredAt && c.registeredAt > savedDraw.closedAt
+          ? "Alta posterior al sorteo"
+          : "No figuraba en el cierre"
+      : raffleReason(c, cutoff);
   const rows = state.customers
     .filter((c) =>
       c.name.toLocaleLowerCase("es").includes(query.toLocaleLowerCase("es")),
@@ -287,25 +356,36 @@ function clients() {
     .filter((c) => {
       if (filter === "retirados") return Boolean(c.deletedAt);
       if (filter === "bajas") return Boolean(c.archivedAt) && !c.deletedAt;
-      if (filter === "cumpleanos") return Number(birthParts(c).slice(0, 2)) === month;
+      if (filter === "cumpleanos")
+        return (
+          Number(birthParts(c).slice(0, 2)) === month || frozenEntries.has(c.id)
+        );
       if (c.archivedAt || c.deletedAt) return false;
       if (filter === "saldo") return balance(c) > 0;
-      if (filter === "aldia") return c.end > today() && balance(c) === 0;
-      if (filter === "vencidas") return c.end <= today();
-      if (filter === "mas30") return c.end < shiftDays(today(), -30);
+      if (filter === "aldia")
+        return (
+          (membershipEnd(c) > today() ||
+            allPeriods(c).some(
+              (p) => p.unit === "sessions" && remainingClasses(p) > 0,
+            )) &&
+          balance(c) === 0
+        );
+      if (filter === "vencidas")
+        return membershipEnd(c) && membershipEnd(c) <= today();
+      if (filter === "mas30")
+        return membershipEnd(c) && membershipEnd(c) < shiftDays(today(), -30);
       return true;
     });
   if (filter === "cumpleanos")
-    rows.sort(
-      (a, b) =>
-        a.name.localeCompare(b.name, "es"),
-    );
+    rows.sort((a, b) => a.name.localeCompare(b.name, "es"));
   const monthPicker =
     filter === "cumpleanos"
-      ? `<div class="month-picker"><label for="birthday-month">Mes de cumpleaños</label><select id="birthday-month">${Array.from({ length: 13 }, (_, offset) => `<option value="${offset}" ${offset === birthdayOffset ? "selected" : ""}>${birthdayMonthFmt.format(birthdayMonth(offset))}${birthdayMonth(offset).getUTCFullYear() !== new Date().getUTCFullYear() ? ` · sorteo ${birthdayMonth(offset).getUTCFullYear()}` : ""}</option>`).join("")}</select><p>Todas las personas que cumplen este mes aparecen, aunque su cumpleaños ya haya pasado.</p><form id="raffle-form" class="raffle-form"><label for="raffle-date">Fecha del sorteo ${monthDate.getUTCFullYear()}</label><input id="raffle-date" type="date" value="${savedDraw || today()}" ${savedDraw ? "disabled" : "required"}><button class="button secondary" type="submit" ${savedDraw ? "disabled" : ""}>${savedDraw ? "Sorteo registrado" : "Registrar fecha"}</button><small>${savedDraw ? `Participantes calculados al ${dateLabel(savedDraw)}. El cierre permanece guardado.` : "Hasta registrar el sorteo, la lista es una vista previa al día de hoy."}</small></form></div>`
+      ? `<div class="month-picker"><label for="birthday-month">Mes de cumpleaños</label><select id="birthday-month">${Array.from({ length: 13 }, (_, offset) => `<option value="${offset}" ${offset === birthdayOffset ? "selected" : ""}>${birthdayMonthFmt.format(birthdayMonth(offset))}${birthdayMonth(offset).getUTCFullYear() !== new Date().getUTCFullYear() ? ` · sorteo ${birthdayMonth(offset).getUTCFullYear()}` : ""}</option>`).join("")}</select><p>Todas las personas que cumplen este mes aparecen. Solo participan socios con cuota; los packs de clases no habilitan el sorteo.</p><form id="raffle-form" class="raffle-form"><label for="raffle-date">Fecha del sorteo ${monthDate.getUTCFullYear()}</label><input id="raffle-date" type="date" value="${cutoff}" ${savedDraw ? "disabled" : "required"}><button class="button secondary" type="submit" ${savedDraw ? "disabled" : ""}>${savedDraw ? "Sorteo registrado" : "Cerrar sorteo"}</button><small>${savedDraw ? `${savedDraw?.entries ? "Participantes conservados al cierre" : "Cierre histórico por fecha"} · ${dateLabel(cutoff)}.` : "Hasta registrar el sorteo, la lista es una vista previa al día de hoy."}</small></form></div>`
       : "";
-  const eligible = filter === "cumpleanos" ? rows.filter((c) => !raffleReason(c, cutoff)) : rows;
-  const excluded = filter === "cumpleanos" ? rows.filter((c) => raffleReason(c, cutoff)) : [];
+  const eligible =
+    filter === "cumpleanos" ? rows.filter((c) => !drawReason(c)) : rows;
+  const excluded =
+    filter === "cumpleanos" ? rows.filter((c) => drawReason(c)) : [];
   const content = `<section class="hero"><span class="eyebrow">TU COMUNIDAD</span><h1>Clientes.</h1><p>Todos los perfiles en un mismo lugar. Consultá cuotas o prepará el sorteo de cumpleaños.</p><div class="hero-actions"><a class="button" href="#nuevo">+ Registrar cliente</a></div></section><div class="section-title"><h2>${filter === "cumpleanos" ? `Cumpleaños de ${birthdayMonthFmt.format(monthDate)}` : "Todos los clientes"}</h2><span>${rows.length} ${rows.length === 1 ? "cliente" : "clientes"}</span></div><div class="toolbar"><input id="search" class="search" type="search" aria-label="Buscar cliente" placeholder="Buscar por nombre" value="${escapeHtml(query)}">${[
     ["todos", "Todos"],
     ["saldo", "Con saldo"],
@@ -320,11 +400,23 @@ function clients() {
       ([id, label]) =>
         `<button class="chip" type="button" data-filter="${id}" aria-pressed="${filter === id}">${label}</button>`,
     )
-    .join("")}</div>${monthPicker}${filter === "cumpleanos" ? `<p class="raffle-status-note">Estado de cuota de hoy. La participación se evalúa al cierre del sorteo.</p>` : ""}<div class="list">${
+    .join(
+      "",
+    )}</div>${monthPicker}${filter === "cumpleanos" ? `<p class="raffle-status-note">Estado de cuota de hoy. La participación se evalúa al cierre del sorteo.</p>` : ""}<div class="list">${
     (filter === "cumpleanos" ? eligible : rows).length
-      ? (filter === "cumpleanos" ? eligible : rows).map(filter === "cumpleanos" ? birthdayRow : customerRow).join("")
+      ? (filter === "cumpleanos" ? eligible : rows)
+          .map((c) =>
+            filter === "cumpleanos"
+              ? birthdayRow(
+                  frozenEntries.has(c.id)
+                    ? { ...c, name: frozenEntries.get(c.id).name }
+                    : c,
+                )
+              : customerRow(c),
+          )
+          .join("")
       : `<div class="empty">${filter === "cumpleanos" ? "No hay participantes para este mes. Revisá las exclusiones o elegí otro mes." : "No hay clientes para este filtro. Probá otro o registrá uno nuevo."}</div>`
-  }</div>${filter === "cumpleanos" ? `<section class="raffle-excluded"><h3>No participan en este sorteo <span>${excluded.length}</span></h3><p>Quien se registró después del cierre puede participar el año próximo si cumple los demás requisitos.</p><div class="list">${excluded.map((c) => birthdayRow(c, raffleReason(c, cutoff))).join("")}</div></section>` : ""}`;
+  }</div>${filter === "cumpleanos" ? `<section class="raffle-excluded"><h3>No participan en este sorteo <span>${excluded.length}</span></h3><p>Quien se registró después del cierre puede participar el año próximo si cumple los demás requisitos.</p><div class="list">${excluded.map((c) => birthdayRow(frozenEntries.has(c.id) ? { ...c, name: frozenEntries.get(c.id).name } : c, drawReason(c))).join("")}</div></section>` : ""}`;
   app.innerHTML = layout(content, "clientes");
   document.querySelector("#search").oninput = (e) => {
     query = e.target.value;
@@ -341,7 +433,9 @@ function clients() {
       if (filter === "cumpleanos") birthdayOffset = 0;
       clients();
       if (event.detail === 0)
-        document.querySelector(`[data-filter="${filter}"]`)?.focus({ preventScroll: true });
+        document
+          .querySelector(`[data-filter="${filter}"]`)
+          ?.focus({ preventScroll: true });
       else revealFilteredList();
     };
   });
@@ -354,41 +448,92 @@ function clients() {
     };
   }
   const raffleForm = document.querySelector("#raffle-form");
-  if (raffleForm) raffleForm.onsubmit = (event) => {
-    event.preventDefault();
-    if (savedDraw) return;
-    const date = document.querySelector("#raffle-date").value;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > today() || !date.startsWith(String(monthDate.getUTCFullYear()))) return toast("Elegí una fecha válida de este año que no sea futura.");
-    state.raffleDraws ||= {};
-    state.raffleDraws[raffleKey] = date;
-    save(); clients(); toast("Fecha del sorteo registrada.");
-  };
+  if (raffleForm)
+    raffleForm.onsubmit = (event) => {
+      event.preventDefault();
+      if (savedDraw) return;
+      const date = document.querySelector("#raffle-date").value;
+      if (
+        !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+        date > today() ||
+        !date.startsWith(String(monthDate.getUTCFullYear()))
+      )
+        return toast("Elegí una fecha válida de este año que no sea futura.");
+      state.raffleDraws ||= {};
+      if (
+        !window.confirm(
+          "¿Cerrar el sorteo y conservar esta lista? Las ediciones posteriores no cambiarán sus participantes.",
+        )
+      )
+        return;
+      const closedAt = new Date().toISOString();
+      state.raffleDraws[raffleKey] = {
+        date,
+        closedAt,
+        entries: state.customers
+          .filter((c) => Number(birthParts(c)) === month)
+          .map((c) => ({
+            id: c.id,
+            name: c.name,
+            reason: raffleReason(c, date),
+          })),
+      };
+      save();
+      clients();
+      toast("Sorteo cerrado. Participantes conservados.");
+    };
   bindCustomerRows();
 }
 function activities() {
-  const content = `<section class="hero"><span class="eyebrow">CONFIGURACIÓN COMERCIAL</span><h1>Actividades.</h1><p>El dueño define aquí el precio y duración. Al registrar a una persona, estas opciones ya están disponibles.</p><div class="hero-actions"><a class="button" href="#actividad-nueva">+ Nueva actividad</a></div></section><div class="list">${state.activities.map((a) => `<div class="row"><span><strong>${escapeHtml(a.name)}</strong><small>Plantilla activa</small></span><span class="muted">${a.months} ${a.months === 1 ? "mes" : "meses"}</span><span class="amount">${money.format(a.price)}</span></div>`).join("")}</div><p class="notice">Cada cuota conserva el precio con el que fue registrada, aunque después cambie el de una actividad.</p>`;
+  const content = `<section class="hero"><span class="eyebrow">CONFIGURACIÓN COMERCIAL</span><h1>Actividades.</h1><p>El dueño define aquí el precio y duración. Al registrar a una persona, estas opciones ya están disponibles.</p><div class="hero-actions"><a class="button" href="#actividad-nueva">+ Nueva actividad</a></div></section><div class="list">${state.activities.map((a) => `<div class="row"><span><strong>${escapeHtml(a.name)}</strong><small>Plantilla activa${a.offerLabel ? ` · ${escapeHtml(a.offerLabel)}` : ""}</small></span><span class="muted">${activityDuration(a)}</span><span class="amount">${money.format(a.price)}<a class="section-link" href="#actividad-nueva/${escapeHtml(a.id)}">Editar</a></span></div>`).join("")}</div><p class="notice">Cada cuota conserva el precio con el que fue registrada, aunque después cambie el de una actividad.</p>`;
   app.innerHTML = layout(content, "actividades");
 }
-function activityNew() {
+function activityNew(id) {
+  const existingActivity = state.activities.find((a) => a.id === id);
   app.innerHTML = layout(
-    `<button class="nav-back" onclick="location.hash='#actividades'">← Actividades</button><section class="hero"><span class="eyebrow">NUEVA PLANTILLA</span><h1>Crear actividad.</h1><p>Una actividad puede combinar varias disciplinas y tener su propio precio.</p></section><form class="panel" id="activity-form"><div class="form-grid"><div class="field wide"><label for="activity-name">Nombre de la actividad</label><input id="activity-name" required maxlength="80" placeholder="Ej. Musculación + kickboxing"></div><div class="field"><label for="activity-price">Precio mensual (ARS)</label><input id="activity-price" required type="number" min="1" max="100000000" step="1" inputmode="numeric" placeholder="45000"></div><div class="field"><label for="activity-months">Duración en meses</label><input id="activity-months" required type="number" min="1" max="24" value="1" step="1" inputmode="numeric"></div></div><div class="form-actions"><button class="button" type="submit">Guardar actividad</button><a class="button ghost" href="#actividades">Cancelar</a></div></form>`,
+    `<button class="nav-back" onclick="location.hash='#actividades'">← Actividades</button><section class="hero"><span class="eyebrow">NUEVA PLANTILLA</span><h1>Crear actividad.</h1><p>Una actividad puede combinar varias disciplinas y tener su propio precio.</p></section><form class="panel" id="activity-form"><div class="form-grid"><div class="field wide"><label for="activity-name">Nombre de la actividad</label><input id="activity-name" required maxlength="80" value="${escapeHtml(existingActivity?.name || "")}" placeholder="Ej. Musculación + kickboxing"></div><div class="field"><label for="activity-price">Precio del plan o pack (ARS)</label><input id="activity-price" required type="number" min="0.01" max="1000000" step="0.01" inputmode="numeric" value="${existingActivity?.basePrice || existingActivity?.price || ""}" placeholder="45000"></div><div class="field"><label for="activity-unit">Duración en</label><select id="activity-unit"><option value="months">Meses</option><option value="sessions" ${existingActivity?.unit === "sessions" ? "selected" : ""}>Clases · sin vencimiento</option></select></div><div class="field"><label for="activity-months">Cantidad</label><input id="activity-months" required type="number" min="1" max="365" value="${existingActivity?.count || existingActivity?.months || 1}" step="1" inputmode="numeric"></div><div class="field"><label for="activity-offer">Precio de oferta (opcional)</label><input id="activity-offer" type="number" min="0.01" step="0.01" max="1000000" value="${existingActivity?.offerPrice || ""}"></div><div class="field"><label for="activity-offer-label">Nombre de la oferta</label><input id="activity-offer-label" maxlength="100" value="${escapeHtml(existingActivity?.offerLabel || "")}"></div></div><div class="form-actions"><button class="button" type="submit">Guardar actividad</button><a class="button ghost" href="#actividades">Cancelar</a></div></form>`,
     "actividades",
   );
   document.querySelector("#activity-form").onsubmit = (e) => {
     e.preventDefault();
     const name = document.querySelector("#activity-name").value.trim(),
       price = Number(document.querySelector("#activity-price").value),
-      months = Number(document.querySelector("#activity-months").value);
+      months = Number(document.querySelector("#activity-months").value),
+      unit = document.querySelector("#activity-unit").value;
     if (
       !name ||
-      !Number.isInteger(price) ||
+      !validMoney(price) ||
       price <= 0 ||
       !Number.isInteger(months) ||
       months < 1 ||
-      months > 24
+      months > (unit === "sessions" ? 365 : 24)
     )
       return toast("Revisá los datos de la actividad.");
-    state.activities.push({ id: crypto.randomUUID(), name, price, months });
+    const offerValue = document.querySelector("#activity-offer").value,
+      offerPrice = offerValue ? Number(offerValue) : null,
+      offerLabel = document.querySelector("#activity-offer-label").value.trim();
+    if (
+      offerPrice !== null &&
+      (!validMoney(offerPrice) ||
+        offerPrice <= 0 ||
+        offerPrice >= price ||
+        !offerLabel)
+    )
+      return toast(
+        "La oferta necesita un nombre y un precio menor al habitual.",
+      );
+    const updated = {
+      name,
+      price: offerPrice ?? price,
+      basePrice: price,
+      offerPrice,
+      offerLabel,
+      months,
+      unit,
+      count: months,
+    };
+    if (existingActivity) Object.assign(existingActivity, updated);
+    else state.activities.push({ id: crypto.randomUUID(), ...updated });
     save();
     location.hash = "#actividades";
     toast("Actividad creada.");
@@ -398,18 +543,24 @@ function newCustomer() {
   const options = state.activities
     .map(
       (a) =>
-        `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)} · ${money.format(a.price)} / ${a.months} ${a.months === 1 ? "mes" : "meses"}</option>`,
+        `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)} · ${money.format(a.price)} / ${activityDuration(a)}</option>`,
     )
     .join("");
   app.innerHTML = layout(
-    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">ALTA EN UN SOLO PASO</span><h1>Nuevo cliente.</h1><p>Completá el perfil, elegí la actividad y anotá el primer abono. Se pueden combinar dos medios y dejar saldo pendiente.</p></section><form class="panel" id="customer-form"><div class="form-grid"><div class="field wide"><label for="customer-name">Nombre y apellido</label><input id="customer-name" required minlength="2" maxlength="120" autocomplete="name" placeholder="Ej. Clara Díaz"></div><div class="field"><label for="customer-phone">Celular (opcional)</label><input id="customer-phone" type="tel" maxlength="40" autocomplete="tel" placeholder="+54 9 11 1234 5678"></div>${birthdayFields("customer")}<div class="field wide"><label for="customer-activity">Actividad</label><select id="customer-activity" required>${options}</select></div><div class="field"><label for="payment-1">Primer abono (ARS)</label><input id="payment-1" type="number" min="0" step="1" inputmode="numeric" value="0" required></div><div class="field"><label for="method-1">Medio</label><select id="method-1"><option>Transferencia</option><option>Efectivo</option><option>Mercado Pago</option></select></div><div class="field"><label for="payment-2">Segundo medio (ARS, opcional)</label><input id="payment-2" type="number" min="0" step="1" inputmode="numeric" value="0"></div><div class="field"><label for="method-2">Medio adicional</label><select id="method-2"><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option></select></div></div><p class="notice">La vigencia empieza con el primer abono. Si queda saldo, se ve en Clientes y puede completarse después.</p><div class="form-actions"><button class="button" type="submit">Registrar cliente</button><a class="button ghost" href="#clientes">Cancelar</a></div></form>`,
+    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">ALTA EN UN SOLO PASO</span><h1>Nuevo cliente.</h1><p>Completá el perfil, elegí la actividad y anotá el primer abono. Se pueden combinar dos medios y dejar saldo pendiente.</p></section><form class="panel" id="customer-form"><div class="form-grid"><div class="field wide"><label for="customer-name">Nombre y apellido</label><input id="customer-name" required minlength="2" maxlength="120" autocomplete="name" placeholder="Ej. Clara Díaz"></div><div class="field"><label for="customer-phone">Celular (opcional)</label><input id="customer-phone" type="tel" maxlength="40" autocomplete="tel" placeholder="+54 9 11 1234 5678"></div>${instagramFields("customer")}${birthdayFields("customer")}<div class="field wide"><label for="customer-activity">Actividad</label><select id="customer-activity" required>${options}</select></div><div class="field"><label for="payment-1">Primer abono (ARS)</label><input id="payment-1" type="number" min="0" step="0.01" inputmode="numeric" value="0" required></div><div class="field"><label for="method-1">Medio</label><select id="method-1"><option>Transferencia</option><option>Efectivo</option><option>Mercado Pago</option></select></div><div class="field"><label for="payment-2">Segundo medio (ARS, opcional)</label><input id="payment-2" type="number" min="0" step="0.01" inputmode="numeric" value="0"></div><div class="field"><label for="method-2">Medio adicional</label><select id="method-2"><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option></select></div></div><p class="notice">La vigencia empieza con el primer abono. Si queda saldo, se ve en Clientes y puede completarse después.</p><div class="form-actions"><button class="button" type="submit">Registrar cliente</button><a class="button ghost" href="#clientes">Cancelar</a></div></form>`,
     "clientes",
   );
   document.querySelector("#customer-form").onsubmit = (e) => {
     e.preventDefault();
     const name = document.querySelector("#customer-name").value.trim(),
       phone = document.querySelector("#customer-phone").value.trim(),
-      birthMonth = Number(document.querySelector("#customer-birth-month").value),
+      instagram = normalizeInstagram(
+        document.querySelector("#customer-instagram").value,
+      ),
+      marketingOptIn = document.querySelector("#customer-marketing").checked,
+      birthMonth = Number(
+        document.querySelector("#customer-birth-month").value,
+      ),
       activityId = document.querySelector("#customer-activity").value,
       activity = state.activities.find((a) => a.id === activityId),
       p1 = Number(document.querySelector("#payment-1").value),
@@ -417,13 +568,14 @@ function newCustomer() {
     if (
       !name ||
       !activity ||
-      !Number.isFinite(p1) ||
-      !Number.isFinite(p2) ||
+      !validMoney(p1) ||
+      !validMoney(p2) ||
       p1 < 0 ||
       p2 < 0 ||
       p1 + p2 <= 0 ||
-      p1 + p2 > activity.price ||
-      !validBirthday(birthMonth)
+      roundMoney(p1 + p2) > activity.price ||
+      !validBirthday(birthMonth) ||
+      !validInstagram(instagram)
     )
       return toast("Revisá el abono y los datos del cliente.");
     const start = today(),
@@ -432,12 +584,20 @@ function newCustomer() {
       id,
       name,
       phone,
+      instagram,
+      marketingOptIn,
       birthMonth: birthMonth || null,
       activityId,
       activityName: activity.name,
       price: activity.price,
       start,
-      end: addMonths(start, activity.months),
+      end:
+        activity.unit === "sessions" ? null : addMonths(start, activity.months),
+      unit: activity.unit || "months",
+      count: activity.count || activity.months,
+      sessionEvents: [],
+      startedAt: new Date().toISOString(),
+      registeredAt: new Date().toISOString(),
       payments: [
         [p1, "method-1"],
         [p2, "method-2"],
@@ -470,36 +630,64 @@ function detail(id) {
     oldBalance = balance(c) - remainder,
     history = previousPeriods(c).slice().reverse();
   app.innerHTML = layout(
-    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">PERFIL DE CLIENTE</span><h1>${escapeHtml(c.name)}.</h1><p>${escapeHtml(c.activityName)} · ${dateLabel(c.start)} a ${dateLabel(c.end)}</p></section>${c.deletedAt ? `<p class="notice">Perfil eliminado el ${dateLabel(c.deletedAt)}. Cuotas y pagos conservados; podés recuperarlo si vuelve.</p>` : c.archivedAt ? `<p class="notice">Dado de baja el ${dateLabel(c.archivedAt)}. El historial y los saldos se conservan. Para volver, iniciá una cuota con el precio actual.</p>` : c.end < shiftDays(today(), -30) ? `<p class="notice">La cuota venció hace ${daysPast(c.end)} días. El perfil sigue disponible; no se cobra automáticamente ni se borra por falta de pago.</p>` : ""}<div class="panel"><div class="detail-hero"><h2>Última cuota</h2><span class="status ${type}">${label}</span></div><div class="detail-grid"><div><span>Total acordado</span><strong>${money.format(c.price)}</strong></div><div><span>Abonado</span><strong>${money.format(paid(c))}</strong></div><div><span>Saldo pendiente</span><strong>${money.format(remainder)}</strong></div></div>${oldBalance ? `<p class="notice">Hay ${money.format(oldBalance)} pendientes de cuotas anteriores. El regreso no borra esa deuda.</p>` : ""}<div class="form-actions">${remainder ? `<a class="button" href="#abonar/${escapeHtml(c.id)}">+ Registrar abono</a>` : ""}${c.archivedAt || c.deletedAt ? `<a class="button" href="#regresar/${escapeHtml(c.id)}">Reactivar cliente</a>` : c.end <= today() ? `<a class="button secondary" href="#regresar/${escapeHtml(c.id)}">Iniciar nueva cuota</a>` : ""}<a class="button secondary" href="#editar/${escapeHtml(c.id)}">Editar perfil</a></div><hr class="divider"><div><strong>Celular:</strong> ${escapeHtml(c.phone || "Sin registrar")}</div><div><strong>Cumpleaños:</strong> ${birthdayLabel(c)}</div><hr class="divider"><h2>Abonos de esta cuota</h2><ol class="payments">${c.payments.map((p) => `<li>${dateLabel(p.date)} · ${escapeHtml(p.method)} · <strong>${money.format(p.amount)}</strong></li>`).join("")}</ol></div>${history.length ? `<section class="history"><h2>Cuotas anteriores</h2>${history.map((p, index) => `<details class="panel history-period"><summary>${escapeHtml(p.activityName)} · ${dateLabel(p.start)} a ${dateLabel(p.end)} · ${money.format(p.price)}</summary><p>Abonado: ${money.format(p.payments.reduce((n, payment) => n + payment.amount, 0))} · Pendiente: ${money.format(Math.max(0, p.price - p.payments.reduce((n, payment) => n + payment.amount, 0)))}</p>${p.price > p.payments.reduce((n, payment) => n + payment.amount, 0) ? `<a class="button secondary" href="#abonar/${escapeHtml(c.id)}/${previousPeriods(c).length - 1 - index}">Registrar abono anterior</a>` : ""}<ol class="payments">${p.payments.map((payment) => `<li>${dateLabel(payment.date)} · ${escapeHtml(payment.method)} · ${money.format(payment.amount)}</li>`).join("")}</ol></details>`).join("")}</section>` : ""}<section class="profile-management"><h2>Historial y perfil</h2><p>Las cuotas anteriores, los pagos y los saldos permanecen asociados a esta persona.</p><div class="form-actions"><a class="button secondary" href="#historial/${escapeHtml(c.id)}">Ver historial por día</a>${c.archivedAt || c.deletedAt ? "" : `<button class="button secondary" id="archive-customer" type="button">Dar de baja</button>`}${c.deletedAt ? "" : `<a class="button ghost" href="#borrar/${escapeHtml(c.id)}">Eliminar perfil…</a>`}</div></section>`,
+    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">PERFIL DE CLIENTE</span><h1>${escapeHtml(c.name)}.</h1><p>${escapeHtml(c.activityName)} · ${periodTiming(c)}</p></section>${c.deletedAt ? `<p class="notice">Perfil eliminado el ${dateLabel(c.deletedAt)}. Cuotas y pagos conservados; podés recuperarlo si vuelve.</p>` : c.archivedAt ? `<p class="notice">Dado de baja el ${dateLabel(c.archivedAt)}. El historial y los saldos se conservan. Para volver, iniciá una cuota con el precio actual.</p>` : c.end && c.end < shiftDays(today(), -30) ? `<p class="notice">La cuota venció hace ${daysPast(c.end)} días. El perfil sigue disponible; no se cobra automáticamente ni se borra por falta de pago.</p>` : ""}<div class="panel"><div class="detail-hero"><h2>${c.unit === "sessions" ? "Último pack" : "Última cuota"}</h2><span class="status ${type}">${label}</span></div><div class="detail-grid"><div><span>Total acordado</span><strong>${money.format(c.price)}</strong></div><div><span>Abonado</span><strong>${money.format(paid(c))}</strong></div><div><span>Saldo pendiente</span><strong>${money.format(remainder)}</strong></div></div>${oldBalance ? `<p class="notice">Hay ${money.format(oldBalance)} pendientes de cuotas anteriores. El regreso no borra esa deuda.</p>` : ""}<div class="form-actions">${remainder ? `<a class="button" href="#abonar/${escapeHtml(c.id)}">+ Registrar abono</a>` : ""}${c.archivedAt || c.deletedAt ? `<a class="button" href="#regresar/${escapeHtml(c.id)}">Reactivar cliente</a>` : c.end && c.end <= today() ? `<a class="button secondary" href="#regresar/${escapeHtml(c.id)}">Iniciar nueva cuota</a>` : ""}<a class="button secondary" href="#editar/${escapeHtml(c.id)}">Editar perfil</a><a class="button secondary" href="#regresar/${escapeHtml(c.id)}">Agregar actividad o pack</a></div><hr class="divider"><div><strong>Celular:</strong> ${escapeHtml(c.phone || "Sin registrar")}</div><div><strong>Instagram:</strong> ${c.instagram ? `<a href="https://www.instagram.com/${escapeHtml(c.instagram.slice(1))}/" target="_blank" rel="noopener noreferrer">${escapeHtml(c.instagram)}</a>` : "Sin registrar"}</div><div><strong>Cumpleaños:</strong> ${birthdayLabel(c)}</div><hr class="divider"><h2>Abonos de esta cuota</h2><ol class="payments">${c.payments.map((p) => `<li>${dateLabel(p.date)} · ${escapeHtml(p.method)} · <strong>${money.format(p.amount)}</strong></li>`).join("")}</ol></div>${history.length ? `<section class="history"><h2>Cuotas anteriores</h2>${history.map((p, index) => `<details class="panel history-period"><summary>${escapeHtml(p.activityName)} · ${dateLabel(p.start)} · ${p.unit === "sessions" ? `${remainingClasses(p)} de ${p.count} clases` : `a ${dateLabel(p.end)}`} · ${money.format(p.price)}</summary><p>Abonado: ${money.format(p.payments.reduce((n, payment) => n + payment.amount, 0))} · Pendiente: ${money.format(Math.max(0, p.price - p.payments.reduce((n, payment) => n + payment.amount, 0)))}</p>${p.price > p.payments.reduce((n, payment) => n + payment.amount, 0) ? `<a class="button secondary" href="#abonar/${escapeHtml(c.id)}/${previousPeriods(c).length - 1 - index}">Registrar abono anterior</a>` : ""}<ol class="payments">${p.payments.map((payment) => `<li>${dateLabel(payment.date)} · ${escapeHtml(payment.method)} · ${money.format(payment.amount)}</li>`).join("")}</ol></details>`).join("")}</section>` : ""}${packControls(c)}<section class="profile-management"><h2>Historial y perfil</h2><p>Las cuotas anteriores, los pagos y los saldos permanecen asociados a esta persona.</p><div class="form-actions"><a class="button secondary" href="#historial/${escapeHtml(c.id)}">Ver historial por día</a>${c.archivedAt || c.deletedAt ? "" : `<button class="button secondary" id="archive-customer" type="button">Dar de baja</button>`}${c.deletedAt ? "" : `<a class="button ghost" href="#borrar/${escapeHtml(c.id)}">Eliminar perfil…</a>`}</div></section>`,
     "clientes",
   );
   const archiveButton = document.querySelector("#archive-customer");
-  if (archiveButton) archiveButton.onclick = () => {
-    if (!window.confirm(`¿Dar de baja a ${c.name}? Sus cuotas y pagos se conservarán.`)) return;
-    c.archivedAt = today();
-    logLifecycle(c, "Baja registrada", "El perfil y sus pagos se conservaron");
-    save();
-    detail(id);
-    toast("Cliente dado de baja. Su historial sigue disponible.");
-  };
+  if (archiveButton)
+    archiveButton.onclick = () => {
+      if (
+        !window.confirm(
+          `¿Dar de baja a ${c.name}? Sus cuotas y pagos se conservarán.`,
+        )
+      )
+        return;
+      c.archivedAt = today();
+      logLifecycle(
+        c,
+        "Baja registrada",
+        "El perfil y sus pagos se conservaron",
+      );
+      save();
+      detail(id);
+      toast("Cliente dado de baja. Su historial sigue disponible.");
+    };
 }
 function returnCustomer(id) {
   const c = state.customers.find((x) => x.id === id);
   if (!c) return void (location.hash = "#clientes");
-  if ((c.archivedAt || c.deletedAt) && c.end > today()) {
-    app.innerHTML = layout(`<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(id)}'">← Perfil</button><section class="hero"><span class="eyebrow">REGRESO</span><h1>Reactivar a ${escapeHtml(c.name)}.</h1><p>La cuota actual sigue vigente hasta ${dateLabel(c.end)}. Podés volver a mostrar al cliente como activo sin cobrar una cuota nueva.</p></section><div class="panel"><button class="button" id="resume-active" type="button">Reactivar sin nueva cuota</button></div>`, "clientes");
+  if (
+    (c.archivedAt || c.deletedAt) &&
+    (c.end > today() || (c.unit === "sessions" && remainingClasses(c) > 0))
+  ) {
+    app.innerHTML = layout(
+      `<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(id)}'">← Perfil</button><section class="hero"><span class="eyebrow">REGRESO</span><h1>Reactivar a ${escapeHtml(c.name)}.</h1><p>${c.unit === "sessions" ? `El pack conserva ${remainingClasses(c)} clases disponibles, sin vencimiento. Podés reactivar el perfil sin comprar otro pack.` : `La cuota actual sigue vigente hasta ${dateLabel(c.end)}. Podés volver a mostrar al cliente como activo sin cobrar una cuota nueva.`}</p></section><div class="panel"><button class="button" id="resume-active" type="button">Reactivar sin nueva cuota</button></div>`,
+      "clientes",
+    );
     document.querySelector("#resume-active").onclick = () => {
       c.archivedAt = null;
       c.deletedAt = null;
-      logLifecycle(c, "Cliente reactivado", "Continúa con la cuota que seguía vigente");
+      logLifecycle(
+        c,
+        "Cliente reactivado",
+        "Continúa con la cuota que seguía vigente",
+      );
       save();
       location.hash = `#cliente/${id}`;
       toast("Cliente reactivado.");
     };
     return;
   }
-  const options = state.activities.map((a) => `<option value="${escapeHtml(a.id)}" ${a.id === c.activityId ? "selected" : ""}>${escapeHtml(a.name)} · ${money.format(a.price)} / ${a.months} ${a.months === 1 ? "mes" : "meses"}</option>`).join("");
-  app.innerHTML = layout(`<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(id)}'">← Perfil</button><section class="hero"><span class="eyebrow">${c.archivedAt || c.deletedAt ? "REGRESO AL GIMNASIO" : "RENOVACIÓN"}</span><h1>Nueva cuota para ${escapeHtml(c.name)}.</h1><p>Empieza hoy, ${dateLabel(today())}, con el primer abono. Se aplica el precio vigente de la actividad elegida, aunque las cuotas anteriores hayan tenido otro monto.</p></section><form class="panel" id="return-form"><div class="form-grid"><div class="field wide"><label for="return-activity">Actividad</label><select id="return-activity" required>${options}</select></div><div class="field"><label for="return-amount">Primer abono (ARS)</label><input id="return-amount" type="number" min="1" step="1" inputmode="numeric" required></div><div class="field"><label for="return-method">Medio de pago</label><select id="return-method"><option>Transferencia</option><option>Efectivo</option><option>Mercado Pago</option></select></div></div><p class="notice">Las cuotas y deudas anteriores se conservan separadas. No se cobran automáticamente los meses que estuvo fuera.</p><div class="form-actions"><button class="button" type="submit">Confirmar nueva cuota</button><a class="button ghost" href="#cliente/${escapeHtml(id)}">Cancelar</a></div></form>`, "clientes");
+  const options = state.activities
+    .map(
+      (a) =>
+        `<option value="${escapeHtml(a.id)}" ${a.id === c.activityId ? "selected" : ""}>${escapeHtml(a.name)} · ${money.format(a.price)} / ${activityDuration(a)}</option>`,
+    )
+    .join("");
+  app.innerHTML = layout(
+    `<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(id)}'">← Perfil</button><section class="hero"><span class="eyebrow">${c.archivedAt || c.deletedAt ? "REGRESO AL GIMNASIO" : "RENOVACIÓN"}</span><h1>Nueva cuota para ${escapeHtml(c.name)}.</h1><p>Empieza hoy, ${dateLabel(today())}, con el primer abono. Se aplica el precio vigente de la actividad elegida, aunque las cuotas anteriores hayan tenido otro monto.</p></section><form class="panel" id="return-form"><div class="form-grid"><div class="field wide"><label for="return-activity">Actividad</label><select id="return-activity" required>${options}</select></div><div class="field"><label for="return-amount">Primer abono (ARS)</label><input id="return-amount" type="number" min="0.01" step="0.01" inputmode="numeric" required></div><div class="field"><label for="return-method">Medio de pago</label><select id="return-method"><option>Transferencia</option><option>Efectivo</option><option>Mercado Pago</option></select></div></div><p class="notice">Las cuotas y deudas anteriores se conservan separadas. No se cobran automáticamente los meses que estuvo fuera.</p><div class="form-actions"><button class="button" type="submit">Confirmar nueva cuota</button><a class="button ghost" href="#cliente/${escapeHtml(id)}">Cancelar</a></div></form>`,
+    "clientes",
+  );
   const amountInput = document.querySelector("#return-amount");
   const select = document.querySelector("#return-activity");
   const updateMaximum = () => {
@@ -513,19 +701,47 @@ function returnCustomer(id) {
     e.preventDefault();
     const activity = state.activities.find((a) => a.id === select.value);
     const amount = Number(amountInput.value);
-    if (!activity || !Number.isInteger(amount) || amount < 1 || amount > activity.price)
+    if (
+      !activity ||
+      !validMoney(amount) ||
+      amount <= 0 ||
+      amount > activity.price
+    )
       return toast("Revisá el importe y la actividad.");
     const wasInactive = Boolean(c.archivedAt || c.deletedAt);
+    if (
+      activity.unit !== "sessions" &&
+      allPeriods(c).some((p) => p.activityId === activity.id && p.end > today())
+    )
+      return toast(
+        "Esta actividad ya está vigente. Registrá un abono o esperá su vencimiento.",
+      );
     c.history = [...previousPeriods(c), periodSnapshot(c)];
     c.activityId = activity.id;
     c.activityName = activity.name;
     c.price = activity.price;
     c.start = today();
-    c.end = addMonths(c.start, activity.months);
-    c.payments = [{ amount, method: document.querySelector("#return-method").value, date: c.start }];
+    c.end =
+      activity.unit === "sessions" ? null : addMonths(c.start, activity.months);
+    c.unit = activity.unit || "months";
+    c.count = activity.count || activity.months;
+    c.sessionEvents = [];
+    c.startedAt = new Date().toISOString();
+    c.payments = [
+      {
+        amount,
+        method: document.querySelector("#return-method").value,
+        date: c.start,
+      },
+    ];
     c.archivedAt = null;
     c.deletedAt = null;
-    if (wasInactive) logLifecycle(c, "Cliente reactivado", "Comienza una cuota nueva desde el regreso");
+    if (wasInactive)
+      logLifecycle(
+        c,
+        "Cliente reactivado",
+        "Comienza una cuota nueva desde el regreso",
+      );
     save();
     location.hash = `#cliente/${id}`;
     toast("Nueva cuota registrada. Historial conservado.");
@@ -534,13 +750,21 @@ function returnCustomer(id) {
 function deleteProfile(id) {
   const c = state.customers.find((x) => x.id === id);
   if (!c) return void (location.hash = "#clientes");
-  app.innerHTML = layout(`<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(id)}'">← Perfil</button><section class="hero"><span class="eyebrow">ELIMINAR PERFIL</span><h1>Eliminar perfil.</h1><p>${escapeHtml(c.name)} dejará de aparecer entre los clientes activos. Sus cuotas y pagos quedarán disponibles en Eliminados y podrás recuperarlo si vuelve.</p></section><form class="panel" id="delete-form"><div class="field"><label for="confirm-name">Escribí el nombre completo para confirmar</label><input id="confirm-name" autocomplete="off" required placeholder="${escapeHtml(c.name)}"></div><div class="form-actions"><button class="button danger-button" type="submit">Eliminar perfil</button><a class="button secondary" href="#cliente/${escapeHtml(id)}">Conservar perfil</a></div></form>`, "clientes");
+  app.innerHTML = layout(
+    `<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(id)}'">← Perfil</button><section class="hero"><span class="eyebrow">ELIMINAR PERFIL</span><h1>Eliminar perfil.</h1><p>${escapeHtml(c.name)} dejará de aparecer entre los clientes activos. Sus cuotas y pagos quedarán disponibles en Eliminados y podrás recuperarlo si vuelve.</p></section><form class="panel" id="delete-form"><div class="field"><label for="confirm-name">Escribí el nombre completo para confirmar</label><input id="confirm-name" autocomplete="off" required placeholder="${escapeHtml(c.name)}"></div><div class="form-actions"><button class="button danger-button" type="submit">Eliminar perfil</button><a class="button secondary" href="#cliente/${escapeHtml(id)}">Conservar perfil</a></div></form>`,
+    "clientes",
+  );
   document.querySelector("#delete-form").onsubmit = (e) => {
     e.preventDefault();
-    if (document.querySelector("#confirm-name").value.trim() !== c.name) return toast("El nombre no coincide.");
+    if (document.querySelector("#confirm-name").value.trim() !== c.name)
+      return toast("El nombre no coincide.");
     c.deletedAt = today();
     c.archivedAt = null;
-    logLifecycle(c, "Perfil eliminado", "Se conserva para recuperarlo si vuelve");
+    logLifecycle(
+      c,
+      "Perfil eliminado",
+      "Se conserva para recuperarlo si vuelve",
+    );
     save();
     location.hash = "#clientes";
     toast("Perfil eliminado de la lista. Podés recuperarlo desde Clientes.");
@@ -550,45 +774,92 @@ function historyPage(id) {
   const c = state.customers.find((x) => x.id === id);
   if (!c) return void (location.hash = "#clientes");
   const periods = [...previousPeriods(c), periodSnapshot(c)];
-  const events = [{ date: c.createdAt || periods[0].start, title: "Perfil creado", detail: "Alta del cliente en Shelby Gym" }];
+  const events = [
+    {
+      date: c.createdAt || periods[0].start,
+      title: "Perfil creado",
+      detail: "Alta del cliente en Shelby Gym",
+    },
+  ];
   for (const period of periods) {
-    events.push({ date: period.start, title: "Cuota iniciada", detail: `${period.activityName} · ${money.format(period.price)} · vence ${dateLabel(period.end)}` });
+    events.push({
+      date: period.start,
+      title:
+        period.unit === "sessions"
+          ? "Pack de clases registrado"
+          : "Cuota iniciada",
+      detail: `${period.activityName} · ${money.format(period.price)} · ${periodTiming(period)}`,
+    });
     for (const payment of period.payments)
-      events.push({ date: payment.date, title: "Abono recibido", detail: `${payment.method} · ${money.format(payment.amount)} · ${period.activityName}` });
-    if (period.end <= today()) {
-      const paidByEnd = period.payments.filter((p) => p.date <= period.end).reduce((sum, p) => sum + p.amount, 0);
+      events.push({
+        date: payment.date,
+        title: "Abono recibido",
+        detail: `${payment.method} · ${money.format(payment.amount)} · ${period.activityName}`,
+      });
+    if (period.end && period.end <= today()) {
+      const paidByEnd = period.payments
+        .filter((p) => p.date <= period.end)
+        .reduce((sum, p) => sum + p.amount, 0);
       const due = Math.max(0, period.price - paidByEnd);
-      events.push({ date: period.end, title: due ? "Cuota vencida con saldo" : "Cuota finalizada", detail: due ? `${money.format(due)} pendientes al vencimiento · ${period.activityName}` : `${period.activityName} · sin saldo al vencimiento` });
+      events.push({
+        date: period.end,
+        title: due ? "Cuota vencida con saldo" : "Cuota finalizada",
+        detail: due
+          ? `${money.format(due)} pendientes al vencimiento · ${period.activityName}`
+          : `${period.activityName} · sin saldo al vencimiento`,
+      });
     }
   }
+  for (const p of periods)
+    for (const e of p.sessionEvents || [])
+      events.push({
+        date: e.date,
+        title: e.delta === 1 ? "Clase realizada" : "Clase devuelta",
+        detail: `${p.activityName}${e.reason ? ` · ${e.reason}` : ""}`,
+      });
   events.push(...(c.lifecycleEvents || []));
   events.sort((a, b) => b.date.localeCompare(a.date));
   let lastDate = "";
-  const rows = events.map((event) => {
-    const heading = event.date !== lastDate ? `<h2>${dateLabel(event.date)}</h2>` : "";
-    lastDate = event.date;
-    return `${heading}<div class="timeline-event"><strong>${escapeHtml(event.title)}</strong><span>${escapeHtml(event.detail)}</span></div>`;
-  }).join("");
-  app.innerHTML = layout(`<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(id)}'">← ${escapeHtml(c.name)}</button><section class="hero"><span class="eyebrow">MOVIMIENTOS POR DÍA</span><h1>Historial.</h1><p>Alta, cuotas, abonos y saldos al vencimiento. Las cuotas mantienen el precio original aunque hoy la actividad cueste más.</p></section><div class="timeline">${rows}</div>`, "clientes");
+  const rows = events
+    .map((event) => {
+      const heading =
+        event.date !== lastDate ? `<h2>${dateLabel(event.date)}</h2>` : "";
+      lastDate = event.date;
+      return `${heading}<div class="timeline-event"><strong>${escapeHtml(event.title)}</strong><span>${escapeHtml(event.detail)}</span></div>`;
+    })
+    .join("");
+  app.innerHTML = layout(
+    `<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(id)}'">← ${escapeHtml(c.name)}</button><section class="hero"><span class="eyebrow">MOVIMIENTOS POR DÍA</span><h1>Historial.</h1><p>Alta, cuotas, abonos y saldos al vencimiento. Las cuotas mantienen el precio original aunque hoy la actividad cueste más.</p></section><div class="timeline">${rows}</div>`,
+    "clientes",
+  );
 }
 function validLedgerDay(value) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value || "") &&
+  return (
+    /^\d{4}-\d{2}-\d{2}$/.test(value || "") &&
     !Number.isNaN(utc(value).getTime()) &&
-    utc(value).toISOString().slice(0, 10) === value;
+    utc(value).toISOString().slice(0, 10) === value
+  );
 }
 function validLedgerMonth(value) {
-  return /^\d{4}-(0[1-9]|1[0-2])$/.test(value || "") &&
+  return (
+    /^\d{4}-(0[1-9]|1[0-2])$/.test(value || "") &&
     Number(value.slice(0, 4)) >= 1900 &&
-    Number(value.slice(0, 4)) <= 2100;
+    Number(value.slice(0, 4)) <= 2100
+  );
 }
 function shiftLedgerMonth(month, amount) {
   const [year, number] = month.split("-").map(Number);
-  return new Date(Date.UTC(year, number - 1 + amount, 1)).toISOString().slice(0, 7);
+  return new Date(Date.UTC(year, number - 1 + amount, 1))
+    .toISOString()
+    .slice(0, 7);
 }
 function ledgerDays(month) {
   const [year, number] = month.split("-").map(Number);
   const count = new Date(Date.UTC(year, number, 0)).getUTCDate();
-  return Array.from({ length: count }, (_, index) => `${month}-${String(index + 1).padStart(2, "0")}`);
+  return Array.from(
+    { length: count },
+    (_, index) => `${month}-${String(index + 1).padStart(2, "0")}`,
+  );
 }
 function allPayments() {
   return state.customers.flatMap((customer) =>
@@ -606,60 +877,129 @@ function allPayments() {
 }
 function gymHistory(requestedMonth, requestedDay) {
   const payments = allPayments();
-  const month = validLedgerMonth(requestedMonth) ? requestedMonth
-    : validLedgerDay(requestedMonth) ? requestedMonth.slice(0, 7) : today().slice(0, 7);
-  const monthPayments = payments.filter((payment) => payment.date?.startsWith(month));
+  const month = validLedgerMonth(requestedMonth)
+    ? requestedMonth
+    : validLedgerDay(requestedMonth)
+      ? requestedMonth.slice(0, 7)
+      : today().slice(0, 7);
+  const monthPayments = payments.filter((payment) =>
+    payment.date?.startsWith(month),
+  );
   const days = ledgerDays(month);
   const activityByDay = new Map();
   const addActivity = (day, amount = 0) => {
     const stats = activityByDay.get(day) || { count: 0, received: 0 };
-    activityByDay.set(day, { count: stats.count + 1, received: stats.received + amount });
+    activityByDay.set(day, {
+      count: stats.count + 1,
+      received: stats.received + amount,
+    });
   };
-  for (const payment of monthPayments) addActivity(payment.date, payment.amount);
+  for (const payment of monthPayments)
+    addActivity(payment.date, payment.amount);
   const allActivity = [];
   for (const customer of state.customers) {
     const periods = [...previousPeriods(customer), periodSnapshot(customer)];
-    allActivity.push({ customer, date: customer.createdAt || periods[0].start, title: "Perfil creado", detail: "Alta del cliente" });
+    allActivity.push({
+      customer,
+      date: customer.createdAt || periods[0].start,
+      title: "Perfil creado",
+      detail: "Alta del cliente",
+    });
     for (const period of periods) {
-      const pending = Math.max(0, period.price - period.payments.reduce((sum, p) => sum + p.amount, 0));
+      const pending = Math.max(
+        0,
+        period.price - period.payments.reduce((sum, p) => sum + p.amount, 0),
+      );
       allActivity.push({
         customer,
         date: period.start,
-        title: "Cuota iniciada",
+        title:
+          period.unit === "sessions"
+            ? "Pack de clases registrado"
+            : "Cuota iniciada",
         detail: `${period.activityName} · cuota ${money.format(period.price)} · saldo actual ${money.format(pending)}`,
       });
     }
+    for (const period of periods)
+      for (const session of period.sessionEvents || [])
+        allActivity.push({
+          customer,
+          date: session.date,
+          title: session.delta === 1 ? "Clase realizada" : "Clase devuelta",
+          detail: `${period.activityName}${session.reason ? ` · ${session.reason}` : ""}`,
+        });
     for (const event of customer.lifecycleEvents || [])
-      allActivity.push({ customer, date: event.date, title: event.title, detail: event.detail });
+      allActivity.push({
+        customer,
+        date: event.date,
+        title: event.title,
+        detail: event.detail,
+      });
   }
+  for (const expense of expenseMonthPayments(month)) addActivity(expense.date);
   for (const event of allActivity)
     if (event.date?.startsWith(month)) addActivity(event.date);
-  const available = days.filter((date) => activityByDay.has(date) && (month !== today().slice(0, 7) || date <= today()));
-  const day = validLedgerDay(requestedDay) && requestedDay.startsWith(month)
-    ? requestedDay
-    : validLedgerDay(requestedMonth) && requestedMonth.startsWith(month)
-      ? requestedMonth
-      : available.at(-1) || (month === today().slice(0, 7) ? today() : days[0]);
+  const available = days.filter(
+    (date) =>
+      activityByDay.has(date) &&
+      (month !== today().slice(0, 7) || date <= today()),
+  );
+  const day =
+    validLedgerDay(requestedDay) && requestedDay.startsWith(month)
+      ? requestedDay
+      : validLedgerDay(requestedMonth) && requestedMonth.startsWith(month)
+        ? requestedMonth
+        : available.at(-1) ||
+          (month === today().slice(0, 7) ? today() : days[0]);
   const dailyPayments = payments.filter((p) => p.date === day);
   const received = monthPayments.reduce((sum, p) => sum + p.amount, 0);
-  const pending = state.customers.reduce((sum, customer) => sum + balance(customer), 0);
-  const monthlyPending = state.customers.flatMap((customer) => [...previousPeriods(customer), periodSnapshot(customer)]).filter((period) => period.start?.startsWith(month)).reduce((sum, period) => sum + Math.max(0, period.price - period.payments.reduce((n, payment) => n + payment.amount, 0)), 0);
+  const pending = state.customers.reduce(
+    (sum, customer) => sum + balance(customer),
+    0,
+  );
+  const monthlyPending = state.customers
+    .flatMap((customer) => [
+      ...previousPeriods(customer),
+      periodSnapshot(customer),
+    ])
+    .filter((period) => period.start?.startsWith(month))
+    .reduce(
+      (sum, period) =>
+        sum +
+        Math.max(
+          0,
+          period.price -
+            period.payments.reduce((n, payment) => n + payment.amount, 0),
+        ),
+      0,
+    );
   const methods = ["Transferencia", "Mercado Pago", "Efectivo"];
   const activity = allActivity.filter((event) => event.date === day);
   const monthLabel = monthFmt.format(utc(`${month}-01`));
-  const monthHeading = monthLabel[0].toLocaleUpperCase("es-AR") + monthLabel.slice(1);
-  const dayStrip = days.map((date) => {
-    const stats = activityByDay.get(date);
-    const weekday = new Intl.DateTimeFormat("es-AR", { weekday: "short", timeZone: "UTC" }).format(utc(date)).replace(".", "");
-    return `<button type="button" data-ledger-day="${date}" aria-pressed="${date === day}" aria-label="${weekday} ${Number(date.slice(-2))}: ${stats ? "con movimientos" : "sin movimientos"}"><span>${weekday}</span><strong>${Number(date.slice(-2))}</strong><small>${stats?.received ? `$ ${compactMoney.format(stats.received)}` : stats ? "●" : "—"}</small></button>`;
-  }).join("");
-  app.innerHTML = layout(`<section class="hero"><span class="eyebrow">CAJA Y MOVIMIENTOS</span><h1>Historial general.</h1><p>Todo el gimnasio, día por día. Los ingresos incluyen sólo abonos recibidos.</p></section>
-    <div class="ledger-date"><div><span class="eyebrow">MES SELECCIONADO</span><h2>${monthHeading}</h2></div><div class="ledger-date-actions"><a href="#movimientos/${shiftLedgerMonth(month, -1)}" aria-label="Mes anterior">←</a><form id="ledger-month-form"><label class="sr-only" for="ledger-month-input">Elegir mes</label><input id="ledger-month-input" type="month" min="1900-01" max="2100-12" value="${month}" required><button type="submit">Ver mes</button></form><a href="#movimientos/${shiftLedgerMonth(month, 1)}" aria-label="Mes siguiente">→</a>${month !== today().slice(0, 7) ? '<a class="ledger-today" href="#movimientos">Mes actual</a>' : ""}</div></div>
-    <section class="ledger-summary" aria-label="Resumen financiero"><div class="ledger-received"><span>COBRADO EN ${monthLabel.toLocaleUpperCase("es-AR")}</span><strong>${money.format(received)}</strong><small>${monthPayments.length} ${monthPayments.length === 1 ? "abono registrado" : "abonos registrados"} · efectivo + transferencias + Mercado Pago</small></div><div class="ledger-pending"><span>PENDIENTE DE CUOTAS DE ${monthLabel.toLocaleUpperCase("es-AR")}</span><strong>${money.format(monthlyPending)}</strong><small>Saldo actual de cuotas iniciadas este mes.</small></div><div class="ledger-pending"><span>PENDIENTE TOTAL DEL GIMNASIO</span><strong>${money.format(pending)}</strong><small>Saldo actual de cuotas de todos los meses.</small></div><dl class="ledger-methods">${methods.map((method) => `<div><dt>${method}</dt><dd>${money.format(monthPayments.filter((p) => p.method === method).reduce((sum, p) => sum + p.amount, 0))}</dd></div>`).join("")}</dl></section>
-    <section class="ledger-calendar" aria-label="Movimientos por día"><div class="ledger-calendar-heading"><div><span class="eyebrow">RECORRÉ EL MES</span><h2>Día a día</h2></div><span>Deslizá para ver más →</span></div><a class="skip-link ledger-skip-link" href="#ledger-selected-day">Saltar al detalle del día</a><nav class="ledger-day-strip" aria-label="Días del mes">${dayStrip}</nav></section>
+  const monthHeading =
+    monthLabel[0].toLocaleUpperCase("es-AR") + monthLabel.slice(1);
+  const dayStrip = days
+    .map((date) => {
+      const stats = activityByDay.get(date);
+      const weekday = new Intl.DateTimeFormat("es-AR", {
+        weekday: "short",
+        timeZone: "UTC",
+      })
+        .format(utc(date))
+        .replace(".", "");
+      return `<button type="button" data-ledger-day="${date}" aria-pressed="${date === day}" aria-label="${weekday} ${Number(date.slice(-2))}: ${stats ? "con movimientos" : "sin movimientos"}"><span>${weekday}</span><strong>${Number(date.slice(-2))}</strong><small>${stats?.received ? `$ ${compactMoney.format(stats.received)}` : stats ? "●" : "—"}</small></button>`;
+    })
+    .join("");
+  app.innerHTML = layout(
+    `<section class="hero"><span class="eyebrow">CAJA Y MOVIMIENTOS</span><h1>Historial general.</h1><p>Todo el gimnasio, día por día. Los ingresos incluyen sólo abonos recibidos.</p></section>
+    ${historyOperationTabs(month)}<div class="ledger-date"><div><span class="eyebrow">MES SELECCIONADO</span><h2>${monthHeading}</h2></div><div class="ledger-date-actions"><a href="#movimientos/${shiftLedgerMonth(month, -1)}" aria-label="Mes anterior">←</a><form id="ledger-month-form"><label class="sr-only" for="ledger-month-input">Elegir mes</label><input id="ledger-month-input" type="month" min="1900-01" max="2100-12" value="${month}" required><button type="submit">Ver mes</button></form><a href="#movimientos/${shiftLedgerMonth(month, 1)}" aria-label="Mes siguiente">→</a>${month !== today().slice(0, 7) ? '<a class="ledger-today" href="#movimientos">Mes actual</a>' : ""}</div></div>
+    <section class="ledger-summary" aria-label="Resumen financiero"><div class="ledger-received"><span>COBRADO EN ${monthLabel.toLocaleUpperCase("es-AR")}</span><strong>${money.format(received)}</strong><small>${monthPayments.length} ${monthPayments.length === 1 ? "abono registrado" : "abonos registrados"} · efectivo + transferencias + Mercado Pago</small></div><div class="ledger-pending"><span>PENDIENTE DE CUOTAS Y PACKS DE ${monthLabel.toLocaleUpperCase("es-AR")}</span><strong>${money.format(monthlyPending)}</strong><small>Saldo actual de cuotas y packs iniciados este mes.</small></div><div class="ledger-pending"><span>PENDIENTE TOTAL DEL GIMNASIO</span><strong>${money.format(pending)}</strong><small>Saldo actual de cuotas de todos los meses.</small></div><dl class="ledger-methods">${methods.map((method) => `<div><dt>${method}</dt><dd>${money.format(monthPayments.filter((p) => p.method === method).reduce((sum, p) => sum + p.amount, 0))}</dd></div>`).join("")}</dl></section>
+    ${historyExpenseSummary(month)}<section class="ledger-calendar" aria-label="Movimientos por día"><div class="ledger-calendar-heading"><div><span class="eyebrow">RECORRÉ EL MES</span><h2>Día a día</h2></div><span>Deslizá para ver más →</span></div><a class="skip-link ledger-skip-link" href="#ledger-selected-day">Saltar al detalle del día</a><nav class="ledger-day-strip" aria-label="Días del mes">${dayStrip}</nav></section>
     <div class="ledger-selected-day" id="ledger-selected-day" tabindex="-1"><div><span class="eyebrow">MOVIMIENTOS DEL DÍA</span><h2>${dateLabel(day)}</h2></div><div><span>Ingresó ese día</span><strong>${money.format(dailyPayments.reduce((sum, payment) => sum + payment.amount, 0))}</strong></div></div>
-    <section class="ledger-section"><div class="ledger-section-heading"><div><span class="eyebrow">DINERO RECIBIDO</span><h2>Abonos</h2></div><span>${dailyPayments.length}</span></div>${dailyPayments.length ? `<div class="ledger-entries">${dailyPayments.map((payment) => `<button class="ledger-entry" type="button" data-customer="${escapeHtml(payment.customerId)}"><span><strong>${escapeHtml(payment.customerName)}</strong><small>${escapeHtml(payment.activityName)} · ${escapeHtml(payment.method)} · cuota ${dateLabel(payment.periodStart)}–${dateLabel(payment.periodEnd)}</small></span><b>+ ${money.format(payment.amount)}</b></button>`).join("")}</div>` : '<div class="empty">No hay abonos registrados este día.</div>'}</section>
-    <section class="ledger-section"><div class="ledger-section-heading"><div><span class="eyebrow">ACTIVIDAD, NO INGRESOS</span><h2>Altas y cuotas</h2></div><span>${activity.length}</span></div><p class="ledger-note">El precio de una cuota no se suma a caja. El saldo indicado es el actual.</p>${activity.length ? `<div class="ledger-entries">${activity.map((event) => `<button class="ledger-entry" type="button" data-customer="${escapeHtml(event.customer.id)}"><span><strong>${escapeHtml(event.customer.name)}</strong><small>${escapeHtml(event.title)} · ${escapeHtml(event.detail)}</small></span><span aria-hidden="true">›</span></button>`).join("")}</div>` : '<div class="empty">No hay altas ni cuotas registradas este día.</div>'}</section>`, "movimientos");
+    <section class="ledger-section"><div class="ledger-section-heading"><div><span class="eyebrow">DINERO RECIBIDO</span><h2>Abonos</h2></div><span>${dailyPayments.length}</span></div>${dailyPayments.length ? `<div class="ledger-entries">${dailyPayments.map((payment) => `<button class="ledger-entry" type="button" data-customer="${escapeHtml(payment.customerId)}"><span><strong>${escapeHtml(payment.customerName)}</strong><small>${escapeHtml(payment.activityName)} · ${escapeHtml(payment.method)} · ${dateLabel(payment.periodStart)}–${payment.periodEnd ? dateLabel(payment.periodEnd) : "sin vencimiento"}</small></span><b>+ ${money.format(payment.amount)}</b></button>`).join("")}</div>` : '<div class="empty">No hay abonos registrados este día.</div>'}</section>
+    ${expenseDailyHtml(day)}<section class="ledger-section"><div class="ledger-section-heading"><div><span class="eyebrow">ACTIVIDAD, NO INGRESOS</span><h2>Altas, cuotas y clases</h2></div><span>${activity.length}</span></div><p class="ledger-note">El precio de una cuota no se suma a caja. El saldo indicado es el actual.</p>${activity.length ? `<div class="ledger-entries">${activity.map((event) => `<button class="ledger-entry" type="button" data-customer="${escapeHtml(event.customer.id)}"><span><strong>${escapeHtml(event.customer.name)}</strong><small>${escapeHtml(event.title)} · ${escapeHtml(event.detail)}</small></span><span aria-hidden="true">›</span></button>`).join("")}</div>` : '<div class="empty">No hay altas ni cuotas registradas este día.</div>'}</section>`,
+    "movimientos",
+  );
   document.querySelector("#ledger-month-form").onsubmit = (event) => {
     event.preventDefault();
     const selected = document.querySelector("#ledger-month-input").value;
@@ -668,10 +1008,13 @@ function gymHistory(requestedMonth, requestedDay) {
   const strip = document.querySelector(".ledger-day-strip");
   const selectedLink = strip.querySelector('[aria-pressed="true"]');
   requestAnimationFrame(() => {
-    strip.scrollLeft = selectedLink.offsetLeft - (strip.clientWidth - selectedLink.clientWidth) / 2;
+    strip.scrollLeft =
+      selectedLink.offsetLeft -
+      (strip.clientWidth - selectedLink.clientWidth) / 2;
   });
   strip.querySelectorAll("[data-ledger-day]").forEach((button) => {
-    button.onclick = () => (location.hash = `#movimientos/${month}/${button.dataset.ledgerDay}`);
+    button.onclick = () =>
+      (location.hash = `#movimientos/${month}/${button.dataset.ledgerDay}`);
   });
   bindCustomerRows();
 }
@@ -679,18 +1022,23 @@ function pay(id, periodIndex = -1) {
   const c = state.customers.find((x) => x.id === id);
   if (!c) return void (location.hash = "#clientes");
   const period = periodIndex >= 0 ? previousPeriods(c)[periodIndex] : c;
-  if (!period || !Number.isInteger(periodIndex)) return void (location.hash = `#cliente/${id}`);
-  const periodBalance = () => Math.max(0, period.price - period.payments.reduce((sum, p) => sum + p.amount, 0));
+  if (!period || !Number.isInteger(periodIndex))
+    return void (location.hash = `#cliente/${id}`);
+  const periodBalance = () =>
+    Math.max(
+      0,
+      period.price - period.payments.reduce((sum, p) => sum + p.amount, 0),
+    );
   const remainder = periodBalance();
   if (!remainder) return void (location.hash = `#cliente/${c.id}`);
   app.innerHTML = layout(
-    `<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(c.id)}'">← ${escapeHtml(c.name)}</button><section class="hero"><span class="eyebrow">${periodIndex >= 0 ? "CUOTA ANTERIOR" : "CUOTA PENDIENTE"}</span><h1>Registrar abono.</h1><p>Quedan ${money.format(remainder)} de la cuota ${dateLabel(period.start)} a ${dateLabel(period.end)}. Este pago no cambia el vencimiento.</p></section><form class="panel" id="pay-form"><div class="form-grid"><div class="field"><label for="pay-amount">Importe recibido (ARS)</label><input id="pay-amount" type="number" min="1" max="${remainder}" step="1" inputmode="numeric" required></div><div class="field"><label for="pay-method">Medio de pago</label><select id="pay-method"><option>Transferencia</option><option>Efectivo</option><option>Mercado Pago</option></select></div></div><div class="form-actions"><button class="button" type="submit">Guardar abono</button><a class="button ghost" href="#cliente/${escapeHtml(c.id)}">Cancelar</a></div></form>`,
+    `<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(c.id)}'">← ${escapeHtml(c.name)}</button><section class="hero"><span class="eyebrow">${periodIndex >= 0 ? "CUOTA ANTERIOR" : "CUOTA PENDIENTE"}</span><h1>Registrar abono.</h1><p>Quedan ${money.format(remainder)} de la cuota ${dateLabel(period.start)} a ${dateLabel(period.end)}. Este pago no cambia el vencimiento.</p></section><form class="panel" id="pay-form"><div class="form-grid"><div class="field"><label for="pay-amount">Importe recibido (ARS)</label><input id="pay-amount" type="number" min="0.01" max="${remainder}" step="0.01" inputmode="numeric" required></div><div class="field"><label for="pay-method">Medio de pago</label><select id="pay-method"><option>Transferencia</option><option>Efectivo</option><option>Mercado Pago</option></select></div></div><div class="form-actions"><button class="button" type="submit">Guardar abono</button><a class="button ghost" href="#cliente/${escapeHtml(c.id)}">Cancelar</a></div></form>`,
     "clientes",
   );
   document.querySelector("#pay-form").onsubmit = (e) => {
     e.preventDefault();
     const amount = Number(document.querySelector("#pay-amount").value);
-    if (!Number.isInteger(amount) || amount <= 0 || amount > periodBalance())
+    if (!validMoney(amount) || amount <= 0 || amount > periodBalance())
       return toast("El importe debe estar dentro del saldo.");
     period.payments.push({
       amount,
@@ -706,16 +1054,25 @@ function edit(id) {
   const c = state.customers.find((x) => x.id === id);
   if (!c) return void (location.hash = "#clientes");
   app.innerHTML = layout(
-    `<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(c.id)}'">← ${escapeHtml(c.name)}</button><section class="hero"><span class="eyebrow">PERFIL</span><h1>Editar datos.</h1></section><form class="panel" id="edit-form"><div class="form-grid"><div class="field wide"><label for="edit-name">Nombre y apellido</label><input id="edit-name" required minlength="2" maxlength="120" value="${escapeHtml(c.name)}"></div><div class="field"><label for="edit-phone">Celular</label><input id="edit-phone" type="tel" maxlength="40" value="${escapeHtml(c.phone)}"></div>${birthdayFields("edit", c)}</div><div class="form-actions"><button class="button" type="submit">Guardar perfil</button><a class="button ghost" href="#cliente/${escapeHtml(c.id)}">Cancelar</a></div></form>`,
+    `<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(c.id)}'">← ${escapeHtml(c.name)}</button><section class="hero"><span class="eyebrow">PERFIL</span><h1>Editar datos.</h1></section><form class="panel" id="edit-form"><div class="form-grid"><div class="field wide"><label for="edit-name">Nombre y apellido</label><input id="edit-name" required minlength="2" maxlength="120" value="${escapeHtml(c.name)}"></div><div class="field"><label for="edit-phone">Celular</label><input id="edit-phone" type="tel" maxlength="40" value="${escapeHtml(c.phone)}"></div>${instagramFields("edit", c)}${birthdayFields("edit", c)}</div><div class="form-actions"><button class="button" type="submit">Guardar perfil</button><a class="button ghost" href="#cliente/${escapeHtml(c.id)}">Cancelar</a></div></form>`,
     "clientes",
   );
   document.querySelector("#edit-form").onsubmit = (e) => {
     e.preventDefault();
-    c.name = document.querySelector("#edit-name").value.trim();
+    const name = document.querySelector("#edit-name").value.trim();
     c.phone = document.querySelector("#edit-phone").value.trim();
-    const birthMonth = Number(document.querySelector("#edit-birth-month").value);
-    if (c.name.length < 2 || !validBirthday(birthMonth))
+    const instagram = normalizeInstagram(
+      document.querySelector("#edit-instagram").value,
+    );
+    if (!validInstagram(instagram)) return toast("Revisá el @ de Instagram.");
+    c.instagram = instagram;
+    c.marketingOptIn = document.querySelector("#edit-marketing").checked;
+    const birthMonth = Number(
+      document.querySelector("#edit-birth-month").value,
+    );
+    if (name.length < 2 || !validBirthday(birthMonth))
       return toast("Revisá el perfil.");
+    c.name = name;
     c.birthMonth = birthMonth || null;
     delete c.birthDay;
     delete c.birthDate;
@@ -728,7 +1085,11 @@ let lastHistoryMonth = null;
 function render() {
   if (sessionStorage.getItem(UNLOCK) !== "yes") return lock();
   const [path, id, period] = (location.hash.slice(1) || "inicio").split("/");
-  const changingHistoryDay = path === "movimientos" && validLedgerMonth(id) && id === lastHistoryMonth && validLedgerDay(period);
+  const changingHistoryDay =
+    path === "movimientos" &&
+    validLedgerMonth(id) &&
+    id === lastHistoryMonth &&
+    validLedgerDay(period);
   if (path === "cumpleanos") {
     filter = "cumpleanos";
     birthdayOffset = 0;
@@ -740,7 +1101,7 @@ function render() {
       inicio: home,
       clientes: clients,
       actividades: activities,
-      "actividad-nueva": activityNew,
+      "actividad-nueva": () => activityNew(id),
       nuevo: newCustomer,
       cliente: () => detail(id),
       abonar: () => pay(id, period === undefined ? -1 : Number(period)),
@@ -749,6 +1110,13 @@ function render() {
       historial: () => historyPage(id),
       movimientos: () => gymHistory(id, period),
       editar: () => edit(id),
+      gastos: () => expenseList(id),
+      gasto: () => expenseEditor(id),
+      "gasto-pago": () => expensePay(id),
+      plantillas: () => templateEditor(id),
+      resumen: () => monthReport(id, period),
+      clase: () => sessionPage(id, period === undefined ? -1 : Number(period)),
+      campanas: campaignsPage,
     })[path] || home
   )();
   if (!changingHistoryDay) window.scrollTo({ top: 0, behavior: "instant" });
