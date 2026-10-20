@@ -20,7 +20,8 @@
     "db:stop": "supabase stop",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts",
     "format": "prettier --write src tests scripts next.config.ts playwright.config.ts",
-    "test:integration": "node scripts/test-integration.mjs && node scripts/test-import.mjs",
+    "test:integration": "node scripts/test-integration.mjs && node scripts/test-import.mjs && node scripts/test-operations.mjs",
+    "test:pages": "node scripts/test-pages-operations.mjs",
     "test:import": "node scripts/test-import.mjs"
   },
   "dependencies": {

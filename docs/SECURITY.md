@@ -4,32 +4,32 @@ Primera implementación local, 2026-10-03. Datos de QA sintéticos. No se ha con
 
 ## Threat model
 
-| Amenaza | Control implementado | Evidencia o pendiente |
-| --- | --- | --- |
-| Acceso anónimo o Auth sin habilitación | Signup público desactivado, staff activo, RLS y grants mínimos | Pruebas negativas de integración |
-| Monitor cambia tarifas/eleva rol | Solo dueño en acciones y RPC; sin escritura directa de staff | Pruebas REST/RPC y ruta directa |
-| JWT con permisos desactualizados | Rol/active consultados en DB; no user_metadata | Prueba con token emitido antes de revocar staff |
-| IDOR desde UUID manipulado | Autorización en cada frontera; todo el personal activo ve el gimnasio único | No existe aislamiento por cliente final ni multitenancy |
-| Duplicación/sobrepago por doble envío o concurrencia | Idempotencia, transacción y bloqueo por suscripción | Reintento y dos pagos simultáneos probados |
-| Cambio de condiciones durante alta | Comparar precio, revisión y fecha mostrados antes de guardar | Pruebas de conflicto y snapshot histórico |
-| XSS/clickjacking/CSRF | Escape React, sin HTML dinámico; CSP con nonce; frame-ancestors none; comprobación Origin de Next | Verificar navegador y headers al desplegar |
-| Filtración por caché/sesión | SSR por request, no-store; sin PWA offline ni caché compartida | No agregar caché privada sin demostrar aislamiento |
-| Exposición de service role | Fuera del runtime; solo scripts técnicos | Revisión de imports y secretos excluidos de Git/Drive |
-| Pérdida de datos | Historial inmutable desde app; migraciones | Backup remoto/RPO/RTO y restauración pendientes |
+| Amenaza                                              | Control implementado                                                                              | Evidencia o pendiente                                   |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Acceso anónimo o Auth sin habilitación               | Signup público desactivado, staff activo, RLS y grants mínimos                                    | Pruebas negativas de integración                        |
+| Monitor cambia tarifas/eleva rol                     | Solo dueño en acciones y RPC; sin escritura directa de staff                                      | Pruebas REST/RPC y ruta directa                         |
+| JWT con permisos desactualizados                     | Rol/active consultados en DB; no user_metadata                                                    | Prueba con token emitido antes de revocar staff         |
+| IDOR desde UUID manipulado                           | Autorización en cada frontera; todo el personal activo ve el gimnasio único                       | No existe aislamiento por cliente final ni multitenancy |
+| Duplicación/sobrepago por doble envío o concurrencia | Idempotencia, transacción y bloqueo por suscripción                                               | Reintento y dos pagos simultáneos probados              |
+| Cambio de condiciones durante alta                   | Comparar precio, revisión y fecha mostrados antes de guardar                                      | Pruebas de conflicto y snapshot histórico               |
+| XSS/clickjacking/CSRF                                | Escape React, sin HTML dinámico; CSP con nonce; frame-ancestors none; comprobación Origin de Next | Verificar navegador y headers al desplegar              |
+| Filtración por caché/sesión                          | SSR por request, no-store; sin PWA offline ni caché compartida                                    | No agregar caché privada sin demostrar aislamiento      |
+| Exposición de service role                           | Fuera del runtime; solo scripts técnicos                                                          | Revisión de imports y secretos excluidos de Git/Drive   |
+| Pérdida de datos                                     | Historial inmutable desde app; migraciones                                                        | Backup remoto/RPO/RTO y restauración pendientes         |
 
 ## Roles y permisos
 
-| Operación | Dueño | Monitor | Auth sin staff/anónimo |
-| --- | --- | --- | --- |
-| Consultar clientes, cuotas y abonos | Sí | Sí | No |
-| Alta/edición de perfil e inicio de período | Sí | Sí | No |
-| Registrar abono recibido | Sí | Sí | No |
-| Crear/editar/desactivar plantillas comerciales | Sí | No | No |
-| Configurar moneda/zona | Sí | No | No |
-| Consultar participantes/exclusiones del sorteo | Sí | Sí | No |
-| Registrar fecha del sorteo | Sí | No | No |
-| Cambiar staff/roles | Solo provisión técnica | No | No |
-| Reescribir/borrar abonos | No implementado | No | No |
+| Operación                                      | Dueño                  | Monitor | Auth sin staff/anónimo |
+| ---------------------------------------------- | ---------------------- | ------- | ---------------------- |
+| Consultar clientes, cuotas y abonos            | Sí                     | Sí      | No                     |
+| Alta/edición de perfil e inicio de período     | Sí                     | Sí      | No                     |
+| Registrar abono recibido                       | Sí                     | Sí      | No                     |
+| Crear/editar/desactivar plantillas comerciales | Sí                     | No      | No                     |
+| Configurar moneda/zona                         | Sí                     | No      | No                     |
+| Consultar participantes/exclusiones del sorteo | Sí                     | Sí      | No                     |
+| Registrar fecha del sorteo                     | Sí                     | No      | No                     |
+| Cambiar staff/roles                            | Solo provisión técnica | No      | No                     |
+| Reescribir/borrar abonos                       | No implementado        | No      | No                     |
 
 Alta/edición de clientes por monitor es el alcance operativo inicial documentado; confirmar con el dueño antes de producción. Cliente final es un registro, no una cuenta Auth. El gimnasio usa un deployment/base independiente.
 
@@ -71,3 +71,13 @@ El archivo se procesa en el navegador dentro de un worker acotado (2 MB, expansi
 Solo dueño puede renderizar la ruta, ejecutar la acción y llamar la RPC. El servidor revalida y la DB vuelve a comprobar identidad/rol vigente, payload, moneda, fechas, importes, actividades y duplicados. RLS/grants niegan escritura directa; auditoría visible solo al dueño. Transacción y locks evitan lotes parciales y reintentos duplicados. La importación no autoriza cambiar datos críticos en producción desde esta sesión.
 
 Los pagos históricos no se convierten en cobros nuevos. `occurred_on` distingue fecha real de cobro e instante de importación; apertura sin detalle no inventa medio/fecha. Los abonos nuevos consideran la apertura para evitar sobrepago. Datos de edad deben tratarse como información personal y revisarse con la política de menores/retención del cliente antes de producción.
+
+## Controles de la ampliación de operaciones
+
+Los socios y sus perfiles de Instagram son privados. Los enlaces se construyen desde un identificador validado, sin aceptar URLs arbitrarias. Los borradores de campaña y sus destinatarios son exclusivos del dueño. Recepción puede registrar clases, confirmando la deuda; cierres, ofertas y correcciones requieren dueño.
+
+Las exportaciones requieren personal autorizado y no se cachean. El CSV protege textos que Excel podría interpretar como fórmulas. Los campos de dinero, fechas, cantidades y destinatarios se vuelven a validar en servidor/base. Las operaciones repetidas y concurrentes no duplican cobros ni consumen la misma última clase.
+
+No hay claves ni proveedor de WhatsApp en esta entrega. Su activación requiere el número oficial, permisos/plantillas correspondientes, controles de consentimiento y repetición y una comprobación de vigencia antes de cada envío. No se envían mensajes al importar ni al guardar una campaña.
+
+Antes del uso real: configurar hosting de Next.js, proyecto Supabase, cuentas individuales, permisos, backups y recuperación. GitHub Pages y su PIN siguen siendo exclusivamente una muestra con datos ficticios almacenados en el navegador.

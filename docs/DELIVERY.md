@@ -1,3 +1,7 @@
+# Estado de publicación
+
+La muestra estática se publica en https://calderondante.github.io/Shelby-Gym/gestion/. La actualización del 2026-10-20 está autorizada para publicación directa, sin video. El código de la app operativa Next.js/Supabase está en `main`; el alojamiento con datos compartidos aún requiere configuración. Los apartados históricos siguientes conservan instrucciones de entregas anteriores. Ver [cambios actuales](UPDATES_2026-10-20.md).
+
 # Entrega de Shelby Gym — 2026-10-03
 
 Primera versión funcional local con datos sintéticos, autorizada por el usuario. Moneda **ARS** y zona **America/Argentina/Buenos_Aires**, confirmadas explícitamente. No hay despliegue de producción, remoto Git ni push.

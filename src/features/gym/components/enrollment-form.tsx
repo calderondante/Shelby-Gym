@@ -96,7 +96,11 @@ export function EnrollmentForm({
           {activity ? (
             <div className="plan-preview">
               <div>
-                <span className="muted">Cuota del período</span>
+                <span className="muted">
+                  {activity.duration_unit === "sessions"
+                    ? "Precio del pack"
+                    : "Cuota del período"}
+                </span>
                 <strong>{money(total, currency)}</strong>
                 {activity.offer_price_cents ? (
                   <small>
@@ -108,16 +112,26 @@ export function EnrollmentForm({
               <div>
                 <span className="muted">Con el primer abono de hoy</span>
                 <strong className="date-range">
-                  {dateLabel(startsOn)} →{" "}
-                  {dateLabel(
-                    endDate(
-                      startsOn,
-                      activity.duration_count,
-                      activity.duration_unit as "months" | "days",
-                    ),
+                  {activity.duration_unit === "sessions" ? (
+                    `${activity.duration_count} ${activity.duration_count === 1 ? "clase" : "clases"} · sin vencimiento`
+                  ) : (
+                    <>
+                      {dateLabel(startsOn)} →{" "}
+                      {dateLabel(
+                        endDate(
+                          startsOn,
+                          activity.duration_count,
+                          activity.duration_unit as "months" | "days",
+                        ),
+                      )}
+                    </>
                   )}
                 </strong>
-                <small>La vigencia empieza aunque quede saldo.</small>
+                <small>
+                  {activity.duration_unit === "sessions"
+                    ? "Registrá cada clase realizada desde el perfil. Puede quedar saldo."
+                    : "La vigencia empieza aunque quede saldo."}
+                </small>
               </div>
             </div>
           ) : null}
@@ -137,10 +151,12 @@ export function EnrollmentForm({
         </section>
         <FormFeedback state={state} />
         <div className="form-footer">
-          <p>Guardamos el perfil, la suscripción y el abono juntos.</p>
+          <p>Guardamos el perfil, la actividad y el abono juntos.</p>
           <SubmitButton>
             {customerId
-              ? "Iniciar nuevo período"
+              ? activity?.duration_unit === "sessions"
+                ? "Registrar pack de clases"
+                : "Iniciar nuevo período"
               : "Crear cliente y registrar abono"}
           </SubmitButton>
         </div>

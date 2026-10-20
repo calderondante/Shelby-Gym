@@ -31,6 +31,10 @@ Ver [Desarrollo y operación](docs/DEVELOPMENT.md) para setup, permisos, pruebas
 - Perfil con períodos, deuda y desglose de pagos; completar una cuota no cambia su vencimiento.
 - Baja y retiro reversibles, regreso con cuota desde el nuevo primer abono e historial mensual con recorrido diario de movimientos.
 - Abonos transaccionales, idempotentes y protegidos contra sobrepagos concurrentes.
+- Packs de clases sin vencimiento, asistencia con deuda confirmada y correcciones trazables.
+- Instagram opcional, cumpleaños por mes y sorteo solo para socios con participantes conservados al cierre.
+- Gastos, plantillas recurrentes, pagos mixtos, resumen mensual, cierre conservado y descarga CSV/vista PDF.
+- Campañas de regreso a partir de dos meses desde el vencimiento, preparadas como borradores sin enviar WhatsApp.
 
 La renovación anticipada, pausas, corrección/anulación de abonos y gestión visual del personal no forman parte de esta primera entrega. Ver reglas y pendientes en [Producto](docs/PRODUCT.md).
 
@@ -52,6 +56,8 @@ pnpm test:e2e
 ```
 
 Las pruebas agregan **datos sintéticos**. No hacen escrituras en remoto. Resultados y limitaciones en [QA](docs/QA.md).
+
+Ver [actualización del 20 de octubre](docs/UPDATES_2026-10-20.md) para las reglas aprobadas y el alcance de publicación.
 
 ## Documentación y diseño
 

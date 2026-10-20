@@ -1,3 +1,13 @@
+# Estado actual y reglas aprobadas
+
+La actualización del 2026-10-20 está autorizada para implementación y publicación directa, sin video. Ver [detalle de la actualización](UPDATES_2026-10-20.md). Sus reglas prevalecen sobre las propuestas o preguntas históricas que se conservan debajo.
+
+- Sorteo: solo socios con cuota; los packs de clases no otorgan participación. Se conserva el límite de más de 30 días desde el vencimiento y el alta anterior al cierre.
+- Actividades: duración temporal o cantidad de clases sin vencimiento. Asistencia con deuda permitida tras confirmación de recepción.
+- Recuperación: dos meses calendario desde el vencimiento de cuota. WhatsApp pendiente de configurar; campañas en borrador.
+- Perfil: teléfono e Instagram opcional. Promociones requieren autorización registrada.
+- Historial: cobros y gastos por día/mes, deuda actual por mes de origen, resúmenes descargables y cierres conservados.
+
 # Producto
 
 ## Historial general del gimnasio (2026-10-19)
@@ -13,12 +23,12 @@
 
 - El perfil guarda sólo el **mes** de cumpleaños. No se pide ni infiere día o año de nacimiento. Los perfiles anteriores de la demo con fecha completa se leen por mes.
 - El filtro incluye a **todas** las personas que cumplen en el mes elegido, hayan cumplido ya o no. La lista separa participantes y excluidos; el contador del mes incluye ambos grupos.
-- Cada persona muestra su **estado de cuota actual**: al día, pendiente (con importe), vencida, o más de 30 días sin pagar/renovar. Baja, retirada y ausencia de cuota conservan estados propios. El estado actual no altera retroactivamente la elegibilidad al cierre del sorteo.
+- Cada persona muestra su **estado de cuota actual**: al día, pendiente (con importe), vencida, o vencida hace más de 30 días. Baja, retirada y ausencia de cuota conservan estados propios. El estado actual no altera retroactivamente la elegibilidad conservada al cierre del sorteo.
 - En Clientes, el filtro Cumpleaños permite elegir el mes del sorteo. La lista separa participantes y excluidos, mostrando el motivo de exclusión.
 - Antes de registrar la fecha del sorteo, la lista es una vista previa calculada al día de hoy en horario argentino. El dueño registra la fecha real del sorteo; para ese mes y año queda fijada y no se sobrescribe desde la app.
 - Quien fue dado de alta **después** de esa fecha no participa en ese sorteo. Puede figurar en el sorteo del año siguiente si entonces cumple los demás requisitos.
 - Queda fuera quien, al cierre, tenía el perfil de baja/retirado o cuya última cuota iniciada hasta el cierre había vencido **más de 30 días** antes. El día 30 todavía participa; desde el día 31 no. Una cuota futura no cuenta para un sorteo pasado.
-- La lista se calcula con el historial de altas, períodos y cambios de estado. Una edición posterior del mes de cumpleaños puede cambiar la lista histórica; congelar participantes o gestionar correcciones del sorteo requerirá un flujo adicional.
+- La lista se calcula con el historial de altas, períodos y cambios de estado. Los nuevos cierres conservan participantes y motivos. Los sorteos anteriores sin copia permanecen identificados como cierres históricos por fecha.
 
 ## Baja, retiro y regreso (2026-10-19)
 
@@ -31,7 +41,7 @@
 
 Estado: definición inicial del producto, con reglas operativas pendientes. Producto: gestión de clientes, suscripciones y cuotas de **Shelby Gym**, con musculación y artes marciales. Responsable: por definir. Última revisión: 2026-10-03.
 
-Fuente: descripción del usuario y referencias de marca adjuntas en esta sesión. Distinguir requisitos expresados, propuestas de solución y decisiones pendientes. El usuario aprobó inicialmente la estética y autorizó empezar a codificar el 2026-10-03. Se implementa y prueba localmente; no se ha autorizado ni configurado un despliegue de producción.
+Fuente: descripción del usuario y referencias de marca adjuntas en esta sesión. Distinguir requisitos expresados, propuestas de solución y decisiones pendientes. El usuario aprobó inicialmente la estética y autorizó empezar a codificar el 2026-10-03. La muestra estática está publicada en GitHub Pages; la app operativa Next.js/Supabase se verifica localmente y requiere hosting con base compartida.
 
 ## Problema del cliente
 
@@ -43,10 +53,10 @@ Fuente: descripción del usuario y referencias de marca adjuntas en esta sesión
 
 ## Usuarios
 
-| Usuario/persona | Objetivo | Contexto y dispositivo | Permisos necesarios | Frecuencia |
-| --- | --- | --- | --- | --- |
-| Dueño | Configurar las plantillas de actividades, precio, duración y oferta simultánea | Celular y PC | Configuración comercial expresamente asignada al dueño; otros permisos por definir | Por definir |
-| Monitor | Registrar si la cuota está abonada, importes por medio y saldo pendiente | Celular y PC; también compatibilidad tablet/Android/iOS según baseline | Registro manual de pagos expresamente solicitado; alta/edición de clientes y correcciones por confirmar | Por definir |
+| Usuario/persona | Objetivo                                                                       | Contexto y dispositivo                                                 | Permisos necesarios                                                                                     | Frecuencia  |
+| --------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ----------- |
+| Dueño           | Configurar las plantillas de actividades, precio, duración y oferta simultánea | Celular y PC                                                           | Configuración comercial expresamente asignada al dueño; otros permisos por definir                      | Por definir |
+| Monitor         | Registrar si la cuota está abonada, importes por medio y saldo pendiente       | Celular y PC; también compatibilidad tablet/Android/iOS según baseline | Registro manual de pagos expresamente solicitado; alta/edición de clientes y correcciones por confirmar | Por definir |
 
 El cliente del gimnasio es la persona cuyo perfil se administra. No se ha solicitado que tenga una cuenta o portal propio en la app. No asumir que cliente registrado equivale a usuario con acceso.
 
@@ -54,13 +64,13 @@ Definir roles con el cliente; no deducir permisos por el nombre de un rol. Separ
 
 ## Workflows
 
-| ID | Actor y disparador | Precondiciones | Flujo principal | Errores/alternativas | Resultado y aceptación |
-| --- | --- | --- | --- | --- | --- |
-| WF-01 | Dueño configura una actividad/oferta | Acceso de dueño; reglas comerciales acordadas | Crear o editar una plantilla reutilizable con actividad u oferta simultánea, precio, duración y oferta cuando corresponda | Mostrar validación y preservar datos ante error; efecto sobre suscripciones existentes por definir | La opción queda disponible para seleccionarla al dar de alta un cliente con precio y duración visibles |
-| WF-02 | Personal admite un nuevo cliente | Hay al menos una actividad/plan disponible | Completar los datos del perfil, seleccionar/asignar actividad en el mismo formulario, revisar condiciones y guardar | Sin actividades: explicar cómo configurarlas; error de guardado: conservar inputs; prevenir envío duplicado | Perfil y asignación quedan guardados; no se informa éxito parcial como alta completa |
-| WF-03 | Personal consulta una suscripción y cuota | Cliente registrado y acceso autorizado | Encontrar al cliente y consultar actividad, vigencia/vencimiento y cuota aplicable | Sin coincidencias: opción clara de alta; datos no disponibles: indicar error/actualización pendiente | Información legible en celular y PC; tras una operación confirmada, la vista refleja el resultado |
-| WF-04 | Monitor registra un pago recibido fuera de la app | Cliente y cuota identificados; permiso de registro | Introducir importe recibido y medio, añadir otro medio si corresponde, revisar total y saldo y guardar | Pagos parciales admitidos; conservar inputs ante fallo y evitar registro duplicado | Se conserva el desglose; situación de pago y saldo reflejan los importes confirmados sin procesar dinero desde la app |
-| WF-05 | Monitor registra un abono posterior de una cuota pendiente | Cuota existente con saldo pendiente | Registrar nuevo importe y medio sobre la misma cuota, mostrar acumulado y saldo actualizado | Correcciones/anulaciones por definir; no convertir el abono en una nueva cuota por defecto | El segundo abono conserva el historial y reduce el saldo de la cuota original; no representa por sí solo una nueva suscripción |
+| ID    | Actor y disparador                                         | Precondiciones                                     | Flujo principal                                                                                                           | Errores/alternativas                                                                                        | Resultado y aceptación                                                                                                         |
+| ----- | ---------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| WF-01 | Dueño configura una actividad/oferta                       | Acceso de dueño; reglas comerciales acordadas      | Crear o editar una plantilla reutilizable con actividad u oferta simultánea, precio, duración y oferta cuando corresponda | Mostrar validación y preservar datos ante error; efecto sobre suscripciones existentes por definir          | La opción queda disponible para seleccionarla al dar de alta un cliente con precio y duración visibles                         |
+| WF-02 | Personal admite un nuevo cliente                           | Hay al menos una actividad/plan disponible         | Completar los datos del perfil, seleccionar/asignar actividad en el mismo formulario, revisar condiciones y guardar       | Sin actividades: explicar cómo configurarlas; error de guardado: conservar inputs; prevenir envío duplicado | Perfil y asignación quedan guardados; no se informa éxito parcial como alta completa                                           |
+| WF-03 | Personal consulta una suscripción y cuota                  | Cliente registrado y acceso autorizado             | Encontrar al cliente y consultar actividad, vigencia/vencimiento y cuota aplicable                                        | Sin coincidencias: opción clara de alta; datos no disponibles: indicar error/actualización pendiente        | Información legible en celular y PC; tras una operación confirmada, la vista refleja el resultado                              |
+| WF-04 | Monitor registra un pago recibido fuera de la app          | Cliente y cuota identificados; permiso de registro | Introducir importe recibido y medio, añadir otro medio si corresponde, revisar total y saldo y guardar                    | Pagos parciales admitidos; conservar inputs ante fallo y evitar registro duplicado                          | Se conserva el desglose; situación de pago y saldo reflejan los importes confirmados sin procesar dinero desde la app          |
+| WF-05 | Monitor registra un abono posterior de una cuota pendiente | Cuota existente con saldo pendiente                | Registrar nuevo importe y medio sobre la misma cuota, mostrar acumulado y saldo actualizado                               | Correcciones/anulaciones por definir; no convertir el abono en una nueva cuota por defecto                  | El segundo abono conserva el historial y reduce el saldo de la cuota original; no representa por sí solo una nueva suscripción |
 
 Para cada workflow: espera, ausencia de datos, fallos de red, errores del usuario, recuperación/deshacer, confirmación y uso táctil. Describir reglas de negocio y origen de los datos antes de diseñar pantallas o tablas.
 
@@ -68,14 +78,14 @@ Para cada workflow: espera, ausencia de datos, fallos de red, errores del usuari
 
 Propuesta de vocabulario para evitar mezclar qué se practica, qué se contrata y qué se paga:
 
-| Concepto | Significado propuesto | Pendiente |
-| --- | --- | --- |
-| Actividad | Disciplina o servicio ofrecido; musculación y artes marciales son ejemplos expresados | Catálogo concreto de disciplinas |
-| Plan/plantilla comercial | El dueño configura actividad/oferta simultánea, precio y duración; ofertas cuando correspondan | Presentación exacta de combinaciones y condiciones de descuentos |
-| Perfil del cliente | Datos de la persona a la que se asigna la actividad | Campos mínimos, identificación y búsqueda de duplicados |
-| Suscripción | Lo que el cliente contrata, asociado a la plantilla y su duración; comienza al registrar el primer abono, aunque quede saldo; un mes iniciado el 11 de febrero vence el 11 de marzo | Renovaciones, pausas, alta sin ningún abono y casos de fin de mes |
-| Cuota | Importe correspondiente al período contratado, con total, abonado acumulado y saldo pendiente | Ofertas, recargos, excedentes o ajustes no solicitados |
-| Pago/abono | Dinero recibido fuera de la app y registrado por el monitor; puede ser parcial y repartirse entre medios | Requisitos de verificación, corrección y comprobantes |
+| Concepto                 | Significado propuesto                                                                                                                                                               | Pendiente                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Actividad                | Disciplina o servicio ofrecido; musculación y artes marciales son ejemplos expresados                                                                                               | Catálogo concreto de disciplinas                                  |
+| Plan/plantilla comercial | El dueño configura actividad/oferta simultánea, precio y duración; ofertas cuando correspondan                                                                                      | Presentación exacta de combinaciones y condiciones de descuentos  |
+| Perfil del cliente       | Datos de la persona a la que se asigna la actividad                                                                                                                                 | Campos mínimos, identificación y búsqueda de duplicados           |
+| Suscripción              | Lo que el cliente contrata, asociado a la plantilla y su duración; comienza al registrar el primer abono, aunque quede saldo; un mes iniciado el 11 de febrero vence el 11 de marzo | Renovaciones, pausas, alta sin ningún abono y casos de fin de mes |
+| Cuota                    | Importe correspondiente al período contratado, con total, abonado acumulado y saldo pendiente                                                                                       | Ofertas, recargos, excedentes o ajustes no solicitados            |
+| Pago/abono               | Dinero recibido fuera de la app y registrado por el monitor; puede ser parcial y repartirse entre medios                                                                            | Requisitos de verificación, corrección y comprobantes             |
 
 Mostrar por separado **vigencia de la suscripción** y **situación de pago**: un solo indicador «activo» puede ocultar deuda o un pago aún no aplicado. Los nombres de estados y sus reglas quedan por definir; no implementarlos por deducción.
 
@@ -104,31 +114,31 @@ Mostrar por separado **vigencia de la suscripción** y **situación de pago**: u
 
 Ejemplos de aceptación con importes ficticios, **sin fijar precio ni moneda del gimnasio**:
 
-| Total de cuota | Registro | Abonado acumulado | Saldo | Presentación propuesta |
-| --- | --- | --- | --- | --- |
-| 20.000 | 10.000 transferencia + 10.000 efectivo | 20.000 | 0 | Abonado; ambos medios visibles |
-| 20.000 | Primer abono de 12.000 Mercado Pago el 11 de febrero, plan de un mes | 12.000 | 8.000 | Suscripción iniciada hasta el 11 de marzo; parcial con saldo visible en Clientes |
-| 20.000 | Sobre el caso anterior, abono posterior de 8.000 efectivo | 20.000 | 0 | Abonado; se conservan ambos registros y la cuota original |
+| Total de cuota | Registro                                                             | Abonado acumulado | Saldo | Presentación propuesta                                                           |
+| -------------- | -------------------------------------------------------------------- | ----------------- | ----- | -------------------------------------------------------------------------------- |
+| 20.000         | 10.000 transferencia + 10.000 efectivo                               | 20.000            | 0     | Abonado; ambos medios visibles                                                   |
+| 20.000         | Primer abono de 12.000 Mercado Pago el 11 de febrero, plan de un mes | 12.000            | 8.000 | Suscripción iniciada hasta el 11 de marzo; parcial con saldo visible en Clientes |
+| 20.000         | Sobre el caso anterior, abono posterior de 8.000 efectivo            | 20.000            | 0     | Abonado; se conservan ambos registros y la cuota original                        |
 
 «En tiempo real» expresa la necesidad de información actualizada. Confirmar si debe sincronizar cambios de otro dispositivo mientras se mantiene abierta la pantalla y con qué latencia. No elegir WebSockets/Supabase Realtime todavía. Un fallo de conexión debe indicar que la información podría estar desactualizada.
 
 ## Requisitos
 
-| ID | Requisito | Tipo (funcional/no funcional) | Prioridad | Fuente | Criterio verificable | Estado |
-| --- | --- | --- | --- | --- | --- | --- |
-| R-01 | App usable en celular y PC | No funcional | Central | Usuario | Altas y consultas completas con touch o teclado/puntero; verificar tamaños del baseline y Safari/iOS + Chrome/Android | Expresado |
-| R-02 | Crear y administrar un perfil por cliente | Funcional | Central | Usuario | Datos acordados guardados y recuperables; errores visibles | Expresado; campos pendientes |
-| R-03 | Administrar suscripción y cuota | Funcional | Central | Usuario | Consultar y modificar según reglas explícitas, sin confundir vigencia con pago | Expresado; reglas pendientes |
-| R-04 | Dueño configura plantillas de actividades, precio, duración y oferta simultánea | Funcional | Central | Usuario | La opción creada aparece en el alta con sus condiciones; ofertas/descuentos según reglas acordadas | Confirmado; detalle de ofertas pendiente |
-| R-05 | Asignar actividad desde el mismo formulario de alta | Funcional | Central | Usuario | Completar datos y seleccionar actividad sin navegar a otra pantalla para terminar el alta | Expresado |
-| R-06 | Ver suscripción y cuota actualizadas | Funcional/no funcional | Central | Usuario | Reflejar operaciones confirmadas; acordar sincronización entre dispositivos | Expresado; alcance realtime pendiente |
-| R-07 | Estética inspirada en iPhone e identidad Shelby Gym: negro predominante, rojo y algo de blanco | UX | Central | Usuario y referencias adjuntas | Jerarquía, controles táctiles y feedback claros; misma calidad en PC; paleta coherente con la marca | Confirmado; tokens son propuesta |
-| R-08 | Acceso autorizado a datos personales y cambios comerciales | Seguridad | Baseline obligatorio | AGENTS/SECURITY | Roles y alcance acordados, controles servidor/RLS y pruebas negativas | Permisos pendientes |
-| R-09 | Registro manual con transferencia, Mercado Pago y efectivo | Funcional | Central | Usuario | Monitor registra medio e importe de un pago externo sin ejecutar un cobro desde la app | Confirmado |
-| R-10 | Pago repartido entre varios medios y abonos parciales/posteriores | Funcional | Central | Usuario | Cada importe y medio queda visible; total abonado y saldo son coherentes en los ejemplos de aceptación | Confirmado |
-| R-11 | Vencimiento según fecha del primer abono registrado y duración de la plantilla | Funcional | Central | Usuario | Plan de un mes: 11 de febrero → 11 de marzo, también con abono parcial; resolver casos límite antes de implementar | Regla base confirmada; casos límite pendientes |
-| R-12 | Primer abono inicia la suscripción aunque quede saldo | Funcional | Central | Usuario | Primer abono del 11 de febrero inicia el mes hasta 11 de marzo; un abono posterior reduce deuda sin mover esas fechas | Confirmado |
-| R-13 | Vista global de todos los clientes con saldos pendientes visibles | Funcional/UX | Central | Usuario | Consultar suscripción y saldo sin abrir cada perfil; lista completa y filtro de deuda propuesto | Confirmado; filtro es propuesta UX |
+| ID   | Requisito                                                                                      | Tipo (funcional/no funcional) | Prioridad            | Fuente                         | Criterio verificable                                                                                                  | Estado                                         |
+| ---- | ---------------------------------------------------------------------------------------------- | ----------------------------- | -------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| R-01 | App usable en celular y PC                                                                     | No funcional                  | Central              | Usuario                        | Altas y consultas completas con touch o teclado/puntero; verificar tamaños del baseline y Safari/iOS + Chrome/Android | Expresado                                      |
+| R-02 | Crear y administrar un perfil por cliente                                                      | Funcional                     | Central              | Usuario                        | Datos acordados guardados y recuperables; errores visibles                                                            | Expresado; campos pendientes                   |
+| R-03 | Administrar suscripción y cuota                                                                | Funcional                     | Central              | Usuario                        | Consultar y modificar según reglas explícitas, sin confundir vigencia con pago                                        | Expresado; reglas pendientes                   |
+| R-04 | Dueño configura plantillas de actividades, precio, duración y oferta simultánea                | Funcional                     | Central              | Usuario                        | La opción creada aparece en el alta con sus condiciones; ofertas/descuentos según reglas acordadas                    | Confirmado; detalle de ofertas pendiente       |
+| R-05 | Asignar actividad desde el mismo formulario de alta                                            | Funcional                     | Central              | Usuario                        | Completar datos y seleccionar actividad sin navegar a otra pantalla para terminar el alta                             | Expresado                                      |
+| R-06 | Ver suscripción y cuota actualizadas                                                           | Funcional/no funcional        | Central              | Usuario                        | Reflejar operaciones confirmadas; acordar sincronización entre dispositivos                                           | Expresado; alcance realtime pendiente          |
+| R-07 | Estética inspirada en iPhone e identidad Shelby Gym: negro predominante, rojo y algo de blanco | UX                            | Central              | Usuario y referencias adjuntas | Jerarquía, controles táctiles y feedback claros; misma calidad en PC; paleta coherente con la marca                   | Confirmado; tokens son propuesta               |
+| R-08 | Acceso autorizado a datos personales y cambios comerciales                                     | Seguridad                     | Baseline obligatorio | AGENTS/SECURITY                | Roles y alcance acordados, controles servidor/RLS y pruebas negativas                                                 | Permisos pendientes                            |
+| R-09 | Registro manual con transferencia, Mercado Pago y efectivo                                     | Funcional                     | Central              | Usuario                        | Monitor registra medio e importe de un pago externo sin ejecutar un cobro desde la app                                | Confirmado                                     |
+| R-10 | Pago repartido entre varios medios y abonos parciales/posteriores                              | Funcional                     | Central              | Usuario                        | Cada importe y medio queda visible; total abonado y saldo son coherentes en los ejemplos de aceptación                | Confirmado                                     |
+| R-11 | Vencimiento según fecha del primer abono registrado y duración de la plantilla                 | Funcional                     | Central              | Usuario                        | Plan de un mes: 11 de febrero → 11 de marzo, también con abono parcial; resolver casos límite antes de implementar    | Regla base confirmada; casos límite pendientes |
+| R-12 | Primer abono inicia la suscripción aunque quede saldo                                          | Funcional                     | Central              | Usuario                        | Primer abono del 11 de febrero inicia el mes hasta 11 de marzo; un abono posterior reduce deuda sin mover esas fechas | Confirmado                                     |
+| R-13 | Vista global de todos los clientes con saldos pendientes visibles                              | Funcional/UX                  | Central              | Usuario                        | Consultar suscripción y saldo sin abrir cada perfil; lista completa y filtro de deuda propuesto                       | Confirmado; filtro es propuesta UX             |
 
 Los requisitos no funcionales deben cubrir dispositivos/navegadores, accesibilidad, performance, disponibilidad, privacidad, retención y recuperación, con objetivos acordados.
 
@@ -154,34 +164,34 @@ No solicitados para este primer alcance: rutinas de entrenamiento, asistencia, r
 
 ## Futuras features
 
-| Idea | Evidencia/necesidad | Dependencias | Condición para priorizar |
-| --- | --- | --- | --- |
-| Por definir tras validar el flujo central | Necesidad demostrada del gimnasio | Por definir | No añadir por anticipado |
+| Idea                                      | Evidencia/necesidad               | Dependencias | Condición para priorizar |
+| ----------------------------------------- | --------------------------------- | ------------ | ------------------------ |
+| Por definir tras validar el flujo central | Necesidad demostrada del gimnasio | Por definir  | No añadir por anticipado |
 
 ## Success criteria
 
-| Resultado | Métrica | Baseline | Objetivo | Plazo | Cómo medir |
-| --- | --- | --- | --- | --- | --- |
-| Alta sencilla | Tiempo y cantidad de pasos para registrar/asignar | Proceso actual por conocer | Objetivo numérico por acordar; una sola pantalla para datos y actividad | Por definir | Prueba con personal real en celular y PC |
-| Consulta clara de cuota/suscripción | Tiempo para encontrar un cliente y comprender su estado | Por definir | Objetivo por acordar; vigencia y cuota visibles sin interpretación ambigua | Por definir | Tareas de consulta representativas |
-| Datos actualizados y coherentes | Divergencias entre operación guardada y vista mostrada | Por definir | No mostrar como confirmado lo que falló; SLA entre dispositivos por acordar | Por definir | Pruebas de alta/cobro/renovación y fallo de red |
+| Resultado                           | Métrica                                                 | Baseline                   | Objetivo                                                                    | Plazo       | Cómo medir                                      |
+| ----------------------------------- | ------------------------------------------------------- | -------------------------- | --------------------------------------------------------------------------- | ----------- | ----------------------------------------------- |
+| Alta sencilla                       | Tiempo y cantidad de pasos para registrar/asignar       | Proceso actual por conocer | Objetivo numérico por acordar; una sola pantalla para datos y actividad     | Por definir | Prueba con personal real en celular y PC        |
+| Consulta clara de cuota/suscripción | Tiempo para encontrar un cliente y comprender su estado | Por definir                | Objetivo por acordar; vigencia y cuota visibles sin interpretación ambigua  | Por definir | Tareas de consulta representativas              |
+| Datos actualizados y coherentes     | Divergencias entre operación guardada y vista mostrada  | Por definir                | No mostrar como confirmado lo que falló; SLA entre dispositivos por acordar | Por definir | Pruebas de alta/cobro/renovación y fallo de red |
 
 ## Preguntas, supuestos y aprobación
 
-| Tema | Pregunta o supuesto explícito | Responsable | Evidencia/respuesta | Estado |
-| --- | --- | --- | --- | --- |
-| Actividades simultáneas | Configuración de la oferta | Usuario | El dueño la configura en Actividades mediante plantillas con actividad, precio y duración | Regla confirmada; presentación por concretar |
-| Periodicidad/vencimiento | Base del período | Usuario | Desde fecha de pago y duración de plantilla; ejemplo de un mes: 11 de febrero → 11 de marzo | Confirmado; fin de mes/hora de corte pendientes |
-| Pagos | Registro y medios | Usuario | Manual por monitor, sin cobro desde app; transferencia, Mercado Pago, efectivo; múltiples medios y pagos parciales | Confirmado |
-| Inicio con pago parcial | Momento de inicio | Usuario | Desde el primer abono, al registrarlo; saldo pendiente visible en la pantalla global de todos los clientes | Confirmado |
-| Marca | Nombre y paleta | Usuario | Shelby Gym; negro, rojo y algo de blanco; screenshots de logo/perfil como referencia | Confirmado; logo original independiente pendiente |
-| Datos del perfil | ¿Qué datos mínimos y cuáles son opcionales? ¿Cómo se identifica un cliente repetido? | Usuario | Sin respuesta aún | Abierto |
-| Ofertas | ¿Descuento fijo/porcentual, fechas, requisitos y duración? ¿Cómo afecta a la renovación? | Usuario | Sin respuesta aún | Abierto |
-| Cambio de precio | Propuesta: conservar las condiciones de períodos ya acordados y definir cuándo rige el nuevo precio; no modificar cargos existentes retroactivamente sin regla explícita | Usuario | Política por confirmar | Propuesta |
-| Tiempo real | ¿Cambios de un PC deben aparecer automáticamente en otro PC/celular abierto? ¿Con qué demora aceptable? | Usuario | Sin respuesta aún | Abierto |
-| Usuarios y permisos | Alcance adicional y correcciones | Usuario | Dueño configura actividades/precio/duración; monitor registra pagos. Alta/edición, correcciones y otros permisos pendientes | Parcialmente definido |
-| Renovación y deuda | ¿Renovación anticipada/tardía desde qué fecha? ¿Gracia, pausas o restricciones por deuda? | Usuario | No resuelto por el ejemplo del 11 de febrero; completar una cuota existente no equivale a renovarla | Abierto |
-| Operación y cumplimiento | País/moneda/zona horaria, cantidad de clientes/sedes, datos actuales, retención, presupuesto y plazo | Usuario | Sin respuesta aún | Abierto |
+| Tema                     | Pregunta o supuesto explícito                                                                                                                                            | Responsable | Evidencia/respuesta                                                                                                         | Estado                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Actividades simultáneas  | Configuración de la oferta                                                                                                                                               | Usuario     | El dueño la configura en Actividades mediante plantillas con actividad, precio y duración                                   | Regla confirmada; presentación por concretar      |
+| Periodicidad/vencimiento | Base del período                                                                                                                                                         | Usuario     | Desde fecha de pago y duración de plantilla; ejemplo de un mes: 11 de febrero → 11 de marzo                                 | Confirmado; fin de mes/hora de corte pendientes   |
+| Pagos                    | Registro y medios                                                                                                                                                        | Usuario     | Manual por monitor, sin cobro desde app; transferencia, Mercado Pago, efectivo; múltiples medios y pagos parciales          | Confirmado                                        |
+| Inicio con pago parcial  | Momento de inicio                                                                                                                                                        | Usuario     | Desde el primer abono, al registrarlo; saldo pendiente visible en la pantalla global de todos los clientes                  | Confirmado                                        |
+| Marca                    | Nombre y paleta                                                                                                                                                          | Usuario     | Shelby Gym; negro, rojo y algo de blanco; screenshots de logo/perfil como referencia                                        | Confirmado; logo original independiente pendiente |
+| Datos del perfil         | ¿Qué datos mínimos y cuáles son opcionales? ¿Cómo se identifica un cliente repetido?                                                                                     | Usuario     | Sin respuesta aún                                                                                                           | Abierto                                           |
+| Ofertas                  | ¿Descuento fijo/porcentual, fechas, requisitos y duración? ¿Cómo afecta a la renovación?                                                                                 | Usuario     | Sin respuesta aún                                                                                                           | Abierto                                           |
+| Cambio de precio         | Propuesta: conservar las condiciones de períodos ya acordados y definir cuándo rige el nuevo precio; no modificar cargos existentes retroactivamente sin regla explícita | Usuario     | Política por confirmar                                                                                                      | Propuesta                                         |
+| Tiempo real              | ¿Cambios de un PC deben aparecer automáticamente en otro PC/celular abierto? ¿Con qué demora aceptable?                                                                  | Usuario     | Sin respuesta aún                                                                                                           | Abierto                                           |
+| Usuarios y permisos      | Alcance adicional y correcciones                                                                                                                                         | Usuario     | Dueño configura actividades/precio/duración; monitor registra pagos. Alta/edición, correcciones y otros permisos pendientes | Parcialmente definido                             |
+| Renovación y deuda       | ¿Renovación anticipada/tardía desde qué fecha? ¿Gracia, pausas o restricciones por deuda?                                                                                | Usuario     | No resuelto por el ejemplo del 11 de febrero; completar una cuota existente no equivale a renovarla                         | Abierto                                           |
+| Operación y cumplimiento | País/moneda/zona horaria, cantidad de clientes/sedes, datos actuales, retención, presupuesto y plazo                                                                     | Usuario     | Sin respuesta aún                                                                                                           | Abierto                                           |
 
 Registrar quién aprobó alcance y criterios, y cuándo. Relacionar cambios de alcance con un requisito y, si cambia arquitectura, un ADR.
 

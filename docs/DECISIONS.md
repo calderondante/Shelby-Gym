@@ -129,3 +129,19 @@ Registrar decisiones arquitectónicas importantes; no usar ADR para todo cambio 
 - **Chosen solution:** `customers.birth_month` opcional, sin día ni año; `raffle_draws` registra una fecha inmutable por año y mes mediante RPC de dueño. Se muestran todas las personas del mes, hayan cumplido o no, separadas por elegibilidad al cierre. Cada fila muestra además el estado de cuota de hoy y su saldo pendiente, que es independiente de la elegibilidad histórica.
 - **Reason:** minimiza datos personales, mantiene el corte verificable y evita que una cuota posterior reescriba la situación del día del sorteo.
 - **Consequences:** una edición posterior del mes de cumpleaños puede alterar una lista histórica recalculada. Congelar participantes, corregir fechas y registrar ganadores requiere un flujo adicional si el gimnasio lo solicita.
+
+## ADR — Operaciones, clases y cierres
+
+Date: 2026-10-20
+
+Decision: ampliar las contrataciones y pagos actuales para admitir packs de clases sin vencimiento; conservar cierres financieros y listas de sorteo.
+
+Context: el gimnasio necesita clases particulares de una o varias sesiones, gastos y resúmenes mensuales, recuperación comercial y datos de contacto adicionales.
+
+Options: duplicar el circuito financiero para clases; reutilizar las contrataciones con una duración por sesiones.
+
+Chosen solution: reutilizar los contratos monetarios y separar los eventos de asistencia del cobro. Gastos tiene obligaciones y pagos con reversiones; los resúmenes y sorteos cerrados guardan copias.
+
+Reason: preservar precios históricos y saldos, impedir doble ingreso por utilizar clases ya pagadas y mantener un historial comprensible.
+
+Consequences: las consultas de vigencia deben distinguir fecha y sesiones. Los sorteos solo consideran cuotas temporales; las campañas cuentan dos meses desde su vencimiento. WhatsApp queda como borrador hasta configurar el proveedor. Se publica directamente la muestra de GitHub y el código aprobado; se omite video por instrucción del usuario.

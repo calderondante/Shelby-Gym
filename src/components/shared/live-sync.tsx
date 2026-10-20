@@ -22,6 +22,11 @@ export function LiveSync() {
       "activities",
       "subscriptions",
       "payment_batches",
+      "session_events",
+      "expenses",
+      "expense_payments",
+      "monthly_closings",
+      "raffle_entries",
     ])
       channel.on(
         "postgres_changes",

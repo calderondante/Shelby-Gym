@@ -44,10 +44,12 @@ function failure(message: string): ActionResult {
     REQUEST_CONFLICT:
       "Esta operación ya fue registrada con otros datos. Actualizá la pantalla.",
     CURRENCY_LOCKED:
-      "Ya hay cuotas registradas. La moneda no se puede cambiar desde aquí.",
+      "Ya hay cuotas o gastos registrados. La moneda no se puede cambiar desde aquí.",
     FORBIDDEN: "Tu cuenta no tiene permiso para realizar esta acción.",
-    DRAW_ALREADY_RECORDED: "Ese sorteo ya tiene una fecha registrada. Actualizá la página.",
-    INVALID_DRAW_DATE: "Elegí una fecha válida del año del sorteo que no sea futura.",
+    DRAW_ALREADY_RECORDED:
+      "Ese sorteo ya tiene una fecha registrada. Actualizá la página.",
+    INVALID_DRAW_DATE:
+      "Elegí una fecha válida del año del sorteo que no sea futura.",
   };
   return {
     error:
@@ -69,6 +71,8 @@ function customer(form: FormData) {
   return {
     name: text(form, "name"),
     phone: text(form, "phone"),
+    instagram: text(form, "instagram"),
+    marketingOptIn: form.get("marketingOptIn") === "on",
     email: text(form, "email"),
     notes: text(form, "notes"),
     birthMonth: text(form, "birthMonth"),
@@ -199,7 +203,11 @@ export async function recordRaffleDrawAction(
   const { db } = await requireOwner();
   const month = text(form, "month");
   const drawOn = text(form, "drawOn");
-  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || !z.iso.date().safeParse(drawOn).success || !drawOn.startsWith(month.slice(0, 4)))
+  if (
+    !/^\d{4}-(0[1-9]|1[0-2])$/.test(month) ||
+    !z.iso.date().safeParse(drawOn).success ||
+    !drawOn.startsWith(month.slice(0, 4))
+  )
     return { error: "Elegí una fecha válida del año del sorteo." };
   const { error } = await db.rpc("record_raffle_draw", {
     p_year: Number(month.slice(0, 4)),
@@ -215,22 +223,30 @@ export async function changeCustomerStatusAction(
   form: FormData,
 ): Promise<ActionResult> {
   const { db } = await requireStaff();
-  const parsed = z.object({
-    id: uuid,
-    revision: z.coerce.number().int().positive(),
-    status: z.enum(["active", "inactive", "retired"]),
-  }).safeParse({
-    id: text(form, "id"),
-    revision: text(form, "revision"),
-    status: text(form, "status"),
-  });
+  const parsed = z
+    .object({
+      id: uuid,
+      revision: z.coerce.number().int().positive(),
+      status: z.enum(["active", "inactive", "retired"]),
+    })
+    .safeParse({
+      id: text(form, "id"),
+      revision: text(form, "revision"),
+      status: text(form, "status"),
+    });
   if (!parsed.success) return invalid(parsed.error);
   if (parsed.data.status === "retired") {
-    const { data, error } = await db.from("customers")
-      .select("name").eq("id", parsed.data.id).maybeSingle();
+    const { data, error } = await db
+      .from("customers")
+      .select("name")
+      .eq("id", parsed.data.id)
+      .maybeSingle();
     if (error || !data) return { error: "No pudimos comprobar el perfil." };
     if (text(form, "confirmName").trim() !== data.name)
-      return { error: "Escribí el nombre completo exactamente como aparece en el perfil." };
+      return {
+        error:
+          "Escribí el nombre completo exactamente como aparece en el perfil.",
+      };
   }
   const { error } = await db.rpc("change_customer_status", {
     p_id: parsed.data.id,

@@ -62,19 +62,20 @@ export function TextField({
   error?: string;
   name: string;
 } & React.ComponentProps<"input">) {
+  const fieldId = props.id ?? name;
   const [draft, setDraft] = useState(props.defaultValue ?? "");
   const { defaultValue: _initialValue, ...inputProps } = props;
   void _initialValue;
   return (
     <Field data-invalid={Boolean(error)}>
-      <FieldLabel htmlFor={name}>{label}</FieldLabel>
+      <FieldLabel htmlFor={fieldId}>{label}</FieldLabel>
       <Input
-        id={name}
+        id={fieldId}
         name={name}
         spellCheck={props.type === "email" ? false : undefined}
         autoComplete="off"
         aria-invalid={Boolean(error)}
-        aria-describedby={error ? `${name}-error` : undefined}
+        aria-describedby={error ? `${fieldId}-error` : undefined}
         {...inputProps}
         value={props.value ?? draft}
         onChange={(event) => {
@@ -82,7 +83,7 @@ export function TextField({
           props.onChange?.(event);
         }}
       />
-      {error ? <FieldError id={`${name}-error`}>{error}</FieldError> : null}
+      {error ? <FieldError id={`${fieldId}-error`}>{error}</FieldError> : null}
     </Field>
   );
 }

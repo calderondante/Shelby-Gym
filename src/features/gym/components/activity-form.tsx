@@ -90,13 +90,17 @@ export function ActivityForm({
               <NativeSelectOption value="months">
                 Meses calendario
               </NativeSelectOption>
+              <NativeSelectOption value="sessions">
+                Clases (sin vencimiento)
+              </NativeSelectOption>
               <NativeSelectOption value="days">Días</NativeSelectOption>
             </NativeSelect>
           </Field>
         </div>
         <FieldDescription>
-          Un mes desde el 11 de febrero vence el 11 de marzo. Si el día no
-          existe en el mes siguiente, vence el último día de ese mes.
+          {unit === "sessions"
+            ? "La cantidad indica cuántas clases incluye el pack. No tiene vencimiento temporal."
+            : "Un mes desde el 11 de febrero vence el 11 de marzo. Si ese día no existe, vence el último día del mes."}
         </FieldDescription>
         <details
           className="offer-details"

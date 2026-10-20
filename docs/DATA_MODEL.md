@@ -15,15 +15,15 @@ Estado: primera implementación para **un único gimnasio**, 2026-10-03. Migraci
 
 ## Entidades y campos
 
-| Entidad | Campos centrales | Propósito |
-| --- | --- | --- |
-| `staff` | id → auth.users, name, role owner/monitor, active | Identidad y autorización del personal; no usa metadata editable |
-| `gym_settings` | singleton id, currency, time_zone | Moneda y fecha civil de operación confirmadas por el dueño |
-| `activities` | name, description, price_cents, offer_price_cents, offer_label, duration_count/unit, active, revision | Plantillas de disciplinas o combinaciones; configuración comercial |
-| `customers` | name, phone/email/notes opcionales, revision, created_by | Perfil operativo con datos mínimos |
-| `subscriptions` | customer/activity FKs, snapshot de nombre/detalle/oferta/precio/moneda/duración, starts_on, ends_on, request_id/fingerprint, created_by | Un período contratado; sus condiciones no cambian al editar la plantilla |
-| `payment_batches` | subscription FK, request_id, created_by, created_at | Una recepción de dinero e idempotencia de su registro |
-| `payment_entries` | batch FK, method, amount_cents | Importe por efectivo/transferencia/Mercado Pago; varios medios en un abono |
+| Entidad           | Campos centrales                                                                                                                        | Propósito                                                                  |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `staff`           | id → auth.users, name, role owner/monitor, active                                                                                       | Identidad y autorización del personal; no usa metadata editable            |
+| `gym_settings`    | singleton id, currency, time_zone                                                                                                       | Moneda y fecha civil de operación confirmadas por el dueño                 |
+| `activities`      | name, description, price_cents, offer_price_cents, offer_label, duration_count/unit, active, revision                                   | Plantillas de disciplinas o combinaciones; configuración comercial         |
+| `customers`       | name, phone/email/notes opcionales, revision, created_by                                                                                | Perfil operativo con datos mínimos                                         |
+| `subscriptions`   | customer/activity FKs, snapshot de nombre/detalle/oferta/precio/moneda/duración, starts_on, ends_on, request_id/fingerprint, created_by | Un período contratado; sus condiciones no cambian al editar la plantilla   |
+| `payment_batches` | subscription FK, request_id, created_by, created_at                                                                                     | Una recepción de dinero e idempotencia de su registro                      |
+| `payment_entries` | batch FK, method, amount_cents                                                                                                          | Importe por efectivo/transferencia/Mercado Pago; varios medios en un abono |
 
 UUID como claves. Importes enteros en centavos, rango positivo acotado; nunca float. Instantes `timestamptz` y fechas civiles `date`. No se guardan tarjetas, CBU, comprobantes, datos médicos ni claves del cliente. Las notas advierten evitar información sensible.
 
@@ -72,3 +72,17 @@ Ampliación solicitada: clientes con edad, múltiples actividades y pagos anteri
 - Períodos importados conservan fechas y cuota histórica; su duración almacenada es la diferencia exacta en días, sin reinterpretarla con la plantilla de hoy. Su vigencia usa las mismas reglas de fecha civil que las demás cuotas.
 
 La vista previa no escribe; confirmar revalida todo. Las importaciones no actualizan ni fusionan personas existentes. Ver [IMPORTS](IMPORTS.md) para límites y formato. Migraciones del 2026-10-04 son aditivas y se verificaron también sobre una DB temporal aislada; no se reseteó la DB activa.
+
+## Ampliación aprobada — 2026-10-20
+
+- `customers`: `instagram` opcional con formato limitado y `marketing_opt_in` desactivado por defecto.
+- `activities`: duración `months`, `days` o `sessions`. Las contrataciones guardan su cantidad y precio histórico; solo `sessions` admite `ends_on=null`.
+- `session_events`: consume una clase o revierte un consumo mediante referencia única y motivo. La RPC bloquea el pack, valida disponibilidad, estado del perfil y confirmación de deuda. La corrección se reserva al dueño.
+- `expense_templates`: concepto, categoría, importe sugerido, día de vencimiento, actividad y revisión.
+- `expenses`: obligación con importe acordado, vencimiento, nota, pagos y vínculo opcional a plantilla/mes, único por esa combinación.
+- `expense_payments`: lotes inmutables por medio, con operación única y referencia de reversión. La reversión conserva importe/medios y lleva fecha actual y motivo.
+- `monthly_closings`: mes único, responsable, fecha/hora y copia de cobros, gastos y deuda calculada al final del mes. No se sobrescribe.
+- `raffle_draws` y `raffle_entries`: corte temporal y copia de personas/motivos para sorteos nuevos. Los antiguos quedan marcados sin copia.
+- `campaigns` y `campaign_recipients`: borradores y destinatarios revisados en servidor; sin envíos ni cobros automáticos.
+
+Todas las tablas expuestas tienen RLS y carecen de escritura directa para clientes autenticados. Los movimientos de dinero y clases se ejecutan mediante RPCs con permisos explícitos e idempotencia. La moneda queda bloqueada tras registrar cuotas o gastos.

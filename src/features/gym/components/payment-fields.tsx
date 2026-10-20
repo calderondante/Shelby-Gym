@@ -1,4 +1,5 @@
 "use client";
+import { useId } from "react";
 import {
   FieldGroup,
   FieldSet,
@@ -24,27 +25,35 @@ export function PaymentFields({
   total,
   currency,
   errors = {},
+  kind = "income",
 }: {
   values: PaymentInput;
   onChange: (value: PaymentInput) => void;
   total: number;
   currency: string;
   errors?: Record<string, string>;
+  kind?: "income" | "expense";
 }) {
+  const idPrefix = useId();
   const paid = Object.values(values).reduce(
     (sum, value) => sum + (parseMoney(value) ?? 0),
     0,
   );
   return (
     <FieldSet>
-      <FieldLegend>Abono recibido</FieldLegend>
+      <FieldLegend>
+        {kind === "expense" ? "Pago realizado" : "Abono recibido"}
+      </FieldLegend>
       <FieldDescription>
-        Completá los medios que usó el cliente. Podés combinar los tres.
+        {kind === "expense"
+          ? "Completá los medios con los que pagaste este gasto. Podés combinarlos."
+          : "Completá los medios que usó el cliente. Podés combinar los tres."}
       </FieldDescription>
       <FieldGroup className="payment-fields">
         {Object.entries(paymentMethods).map(([method, label]) => (
           <TextField
             key={method}
+            id={`${idPrefix}-${method}`}
             name={method}
             label={label}
             inputMode="decimal"
@@ -59,7 +68,7 @@ export function PaymentFields({
       </FieldGroup>
       <dl className="payment-summary" aria-live="polite">
         <div>
-          <dt>Abonás ahora</dt>
+          <dt>{kind === "expense" ? "Pagado ahora" : "Abonás ahora"}</dt>
           <dd>{money(paid, currency)}</dd>
         </div>
         <div className={paid > total ? "amount-error" : ""}>
@@ -68,8 +77,9 @@ export function PaymentFields({
         </div>
       </dl>
       <FieldDescription>
-        Este registro no cobra dinero. Confirmá que recibiste los importes antes
-        de guardar.
+        {kind === "expense"
+          ? "Confirmá que el dinero ya salió antes de guardar. Este formulario registra el pago."
+          : "Este registro no cobra dinero. Confirmá que recibiste los importes antes de guardar."}
       </FieldDescription>
     </FieldSet>
   );

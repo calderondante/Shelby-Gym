@@ -102,33 +102,32 @@ Estado: primera aplicación implementada y verificada localmente el **2026-10-03
 
 ## Registro de pruebas
 
-| Fecha/commit | Feature y criterio | Comando o prueba manual | Entorno/dispositivo/ancho | Resultado/evidencia | Pendiente y responsable |
-| --- | --- | --- | --- | --- | --- |
+| Fecha/commit            | Feature y criterio                                  | Comando o prueba manual                                                         | Entorno/dispositivo/ancho                                     | Resultado/evidencia                                                                            | Pendiente y responsable                                                     |
+| ----------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | 2026-10-03 / sin commit | Exploración visual Shelby Gym: Clientes/alta/abonos | Playwright + revisión de capturas; detalle en [design/README](design/README.md) | Chromium, 375/390/768/1024/1440 px; emulación touch y teclado | Correcto en alcance de prototipo; sin overflow ni errores JS; contraste de parejas verificadas | Registro histórico anterior al desarrollo; no acredita el backend posterior |
 
 ## Validación de esta base
 
 Ejecutar `node scripts/verify-workspace.mjs`, `npx --yes skills@1.7.0 list --agent codex` y `git status --short`. El script comprueba estructura, integridad local de skills y reglas de exclusión de Git; no sustituye las pruebas de la aplicación. Evidencia inicial en WORKSPACE.
 
-
 ## Evidencia de la aplicación — 2026-10-03, sin commit
 
-| Verificación | Resultado | Alcance y evidencia |
-| --- | --- | --- |
-| `pnpm lint` + `pnpm typecheck` | Correcto | ESLint y TypeScript strict; tipos de rutas Next y DB |
-| `pnpm test` | 5 pruebas correctas | Dinero en centavos, validación de importes/mezcla/ofertas, meses calendario, bisiesto/fin de mes y zona horaria; `tests/domain.test.ts` |
-| `pnpm build` | Correcto | Build de producción de todas las rutas, Next 16.3.8 |
-| `pnpm test:integration` | Correcto | Auth/PostgreSQL/REST reales y cuentas sintéticas locales; `scripts/test-integration.mjs` |
-| Seguridad e integridad | Correcto en casos probados | Anónimo, no-personal y personal revocado sin acceso; monitor no configura precios; escalada de rol denegada; escrituras directas denegadas; replay idempotente, sobrepago, concurrencia de abonos, rollback, cambio de condiciones, snapshots y moneda bloqueada |
-| `supabase db reset --local --no-seed` | Correcto | Reconstrucción desde cero de la DB desechable de QA y repetición posterior de integración |
-| DB lint y advisors | Sin errores ni avisos | Esquemas `public,private`; advisors locales de seguridad/performance con nivel warn |
-| `pnpm test:e2e` | 4 pruebas correctas | Chromium local: login/logout, alta, pago parcial/dividido, error de sobrepago sin perder inputs, persistencia, fechas inalteradas, roles, estados vacíos, responsive, Realtime y axe; `tests/e2e/gym.spec.ts` |
-| Realtime | Correcto | Un monitor abona desde otro contexto; el saldo del dueño cambia sin recarga en menos de 8 s |
-| Responsive | Sin overflow en 20 combinaciones | Clientes, alta, actividades y perfil a 375/390/768/1024/1440 px; capturas en `docs/design/screenshots/app/` |
-| axe-core | Sin infracciones en las vistas examinadas | Clientes, alta, actividades, nueva actividad y ajustes; reglas WCAG 2/2.1/2.2 A/AA. No certifica toda la app ni reemplaza lector de pantalla/manual |
-| Next MCP | Sin errores | `get_errors` con sesión de navegador activa y `get_compilation_issues`: listas vacías |
-| `pnpm audit --prod` | 0 vulnerabilidades reportadas | Auditoría de dependencias de producción en esta fecha; no garantiza ausencia futura de vulnerabilidades |
-| Base del workspace | Correcto | 16 skills, 154 archivos íntegros, documentación y exclusiones Git; `verify-workspace.mjs` |
+| Verificación                          | Resultado                                 | Alcance y evidencia                                                                                                                                                                                                                                              |
+| ------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint` + `pnpm typecheck`        | Correcto                                  | ESLint y TypeScript strict; tipos de rutas Next y DB                                                                                                                                                                                                             |
+| `pnpm test`                           | 5 pruebas correctas                       | Dinero en centavos, validación de importes/mezcla/ofertas, meses calendario, bisiesto/fin de mes y zona horaria; `tests/domain.test.ts`                                                                                                                          |
+| `pnpm build`                          | Correcto                                  | Build de producción de todas las rutas, Next 16.3.8                                                                                                                                                                                                              |
+| `pnpm test:integration`               | Correcto                                  | Auth/PostgreSQL/REST reales y cuentas sintéticas locales; `scripts/test-integration.mjs`                                                                                                                                                                         |
+| Seguridad e integridad                | Correcto en casos probados                | Anónimo, no-personal y personal revocado sin acceso; monitor no configura precios; escalada de rol denegada; escrituras directas denegadas; replay idempotente, sobrepago, concurrencia de abonos, rollback, cambio de condiciones, snapshots y moneda bloqueada |
+| `supabase db reset --local --no-seed` | Correcto                                  | Reconstrucción desde cero de la DB desechable de QA y repetición posterior de integración                                                                                                                                                                        |
+| DB lint y advisors                    | Sin errores ni avisos                     | Esquemas `public,private`; advisors locales de seguridad/performance con nivel warn                                                                                                                                                                              |
+| `pnpm test:e2e`                       | 4 pruebas correctas                       | Chromium local: login/logout, alta, pago parcial/dividido, error de sobrepago sin perder inputs, persistencia, fechas inalteradas, roles, estados vacíos, responsive, Realtime y axe; `tests/e2e/gym.spec.ts`                                                    |
+| Realtime                              | Correcto                                  | Un monitor abona desde otro contexto; el saldo del dueño cambia sin recarga en menos de 8 s                                                                                                                                                                      |
+| Responsive                            | Sin overflow en 20 combinaciones          | Clientes, alta, actividades y perfil a 375/390/768/1024/1440 px; capturas en `docs/design/screenshots/app/`                                                                                                                                                      |
+| axe-core                              | Sin infracciones en las vistas examinadas | Clientes, alta, actividades, nueva actividad y ajustes; reglas WCAG 2/2.1/2.2 A/AA. No certifica toda la app ni reemplaza lector de pantalla/manual                                                                                                              |
+| Next MCP                              | Sin errores                               | `get_errors` con sesión de navegador activa y `get_compilation_issues`: listas vacías                                                                                                                                                                            |
+| `pnpm audit --prod`                   | 0 vulnerabilidades reportadas             | Auditoría de dependencias de producción en esta fecha; no garantiza ausencia futura de vulnerabilidades                                                                                                                                                          |
+| Base del workspace                    | Correcto                                  | 16 skills, 154 archivos íntegros, documentación y exclusiones Git; `verify-workspace.mjs`                                                                                                                                                                        |
 
 Revisión visual manual de las capturas móvil/desktop y alta. Se corrigieron contraste del wordmark, targets de botones, conservación de inputs tras errores, foco sobre errores y altura del encabezado móvil. Las animaciones son CSS breves; no hay loops decorativos. Se respeta la preferencia de movimiento reducido.
 
@@ -167,3 +166,15 @@ Resultado final: **8/8 pruebas E2E correctas contra `next start`**, además de l
 - Se esperó el estado «En vivo» antes de capturar. Se ocultó solo el indicador de desarrollo de Next durante el modo demo. El backend, permisos y datos son los reales del entorno local.
 - `pnpm lint`, `pnpm typecheck`, `pnpm test` (12/12), `pnpm build` y `node scripts/verify-workspace.mjs`: correctos. Se repitió el recorrido móvil tras reiniciar el servidor después del build. `agent-browser`, requerido por la skill `next-dev-loop`, no está instalado; Playwright y el servidor Next aportaron la verificación alternativa, sin atribuirle el flujo literal de esa skill.
 - Pendiente: abrir el proyecto en la PC del usuario y comprobar el flujo en Safari/iPhone o Chrome/Android físico, incluyendo firewall/router y teclado virtual. La conexión cloud y la emulación de viewport no sustituyen esa prueba.
+
+## Regresión de operaciones — 2026-10-20
+
+- Packs: primera compra, saldo parcial, consumo con confirmación de deuda, última clase concurrente, reintento, corrección y precio histórico.
+- Gastos: obligación sin pago, abonos mixtos, sobrepago, reversión, cambio de plantilla sin alterar meses creados y generación repetida sin duplicados.
+- Meses: cobro posterior de deuda antigua, cierre con saldos a fin de mes, consulta actual frente a cierre guardado, exportación CSV y vista imprimible.
+- Sorteo: cuota temporal frente a pack, día 30/31, cierre conservado, edición posterior y altas posteriores incluso el mismo día.
+- Campañas: dos meses calendario, falta de teléfono/consentimiento, destinatario que renovó y borrador sin envío.
+- UI: 375, 390, 768, 1024 y 1440 px; teclado, contraste, movimiento reducido y ausencia de desbordes. La emulación no certifica pruebas en teléfonos físicos.
+- Seguridad: acceso anónimo, usuario ajeno al personal, monitor frente a dueño y llamadas directas a RPCs.
+
+Comandos: `pnpm test`, `pnpm test:integration`, `pnpm test:e2e`, `pnpm test:pages`, `pnpm lint`, `pnpm typecheck`, `pnpm build` y `node scripts/verify-workspace.mjs`.

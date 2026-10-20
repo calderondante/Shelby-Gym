@@ -69,13 +69,17 @@ export default async function ActivitiesPage({
                 </p>
                 <span className="activity-duration">
                   {a.duration_count}{" "}
-                  {a.duration_unit === "months"
+                  {a.duration_unit === "sessions"
                     ? a.duration_count === 1
-                      ? "mes calendario"
-                      : "meses calendario"
-                    : a.duration_count === 1
-                      ? "día"
-                      : "días"}
+                      ? "clase · sin vencimiento"
+                      : "clases · sin vencimiento"
+                    : a.duration_unit === "months"
+                      ? a.duration_count === 1
+                        ? "mes calendario"
+                        : "meses calendario"
+                      : a.duration_count === 1
+                        ? "día"
+                        : "días"}
                 </span>
               </div>
               <div className="activity-price">
@@ -88,7 +92,11 @@ export default async function ActivitiesPage({
                 {a.offer_price_cents ? (
                   <del>{money(a.price_cents, settings.currency)}</del>
                 ) : (
-                  <small>Por período</small>
+                  <small>
+                    {a.duration_unit === "sessions"
+                      ? "Por pack"
+                      : "Por período"}
+                  </small>
                 )}
               </div>
               {staff.role === "owner" ? (

@@ -1,21 +1,21 @@
 # Arquitectura
 
-Estado: primera implementación local de Shelby Gym, autorizada el 2026-10-03. Aplicación responsive de una sola base de código. No hay deployment remoto ni datos reales del gimnasio.
+Estado: primera implementación local de Shelby Gym, autorizada el 2026-10-03. Aplicación responsive de una sola base de código. Existe una muestra estática con datos ficticios en GitHub Pages. El despliegue operativo de Next.js y Supabase sigue pendiente.
 
 ## Stack implementado
 
-| Capa | Elección | Motivo |
-| --- | --- | --- |
-| App | Next.js 16.3.8 App Router, React 19.3 | Rutas y backend ligero en el mismo proyecto; versiones estables verificadas en npm |
-| Tipado | TypeScript 5.9 strict | Compatible con tooling actual; sin `any` en código propio |
-| Estilo | Tailwind 4, tokens Shelby, fuente de sistema | Negro/grafito, rojo y blanco; sin descargar fuentes |
-| Primitivas | shadcn/ui, base Base UI, registro oficial `@shadcn` | Código local y controles semánticos; targets adaptados a 44–48px |
-| Datos | Supabase/PostgreSQL 17 | Integridad, transacciones, RLS y ledger de abonos |
-| Identidad | Supabase Auth + `@supabase/ssr` | Sesión por cookies, validación servidor y roles vigentes en DB |
-| Actualización | Supabase Realtime + refresh servidor | Cambios entre equipos; fallback cada 30 s y al volver a la pestaña |
-| Validación | Zod + constraints/RPC | Feedback servidor e integridad también fuera de la UI |
-| QA | Vitest, Playwright, pruebas directas Auth/REST | Reglas de negocio, responsive, workflows y controles negativos |
-| Hosting previsto | Vercel + Supabase | Deploy sencillo; cuentas, región y presupuesto pendientes |
+| Capa             | Elección                                            | Motivo                                                                             |
+| ---------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| App              | Next.js 16.3.8 App Router, React 19.3               | Rutas y backend ligero en el mismo proyecto; versiones estables verificadas en npm |
+| Tipado           | TypeScript 5.9 strict                               | Compatible con tooling actual; sin `any` en código propio                          |
+| Estilo           | Tailwind 4, tokens Shelby, fuente de sistema        | Negro/grafito, rojo y blanco; sin descargar fuentes                                |
+| Primitivas       | shadcn/ui, base Base UI, registro oficial `@shadcn` | Código local y controles semánticos; targets adaptados a 44–48px                   |
+| Datos            | Supabase/PostgreSQL 17                              | Integridad, transacciones, RLS y ledger de abonos                                  |
+| Identidad        | Supabase Auth + `@supabase/ssr`                     | Sesión por cookies, validación servidor y roles vigentes en DB                     |
+| Actualización    | Supabase Realtime + refresh servidor                | Cambios entre equipos; fallback cada 30 s y al volver a la pestaña                 |
+| Validación       | Zod + constraints/RPC                               | Feedback servidor e integridad también fuera de la UI                              |
+| QA               | Vitest, Playwright, pruebas directas Auth/REST      | Reglas de negocio, responsive, workflows y controles negativos                     |
+| Hosting previsto | Vercel + Supabase                                   | Deploy sencillo; cuentas, región y presupuesto pendientes                          |
 
 Node 22 o 24; pnpm 11.19.0; lockfile único. ESLint 9 por compatibilidad declarada con plugins de Next; actualizar junto con esos plugins cuando soporten la versión mayor siguiente. No instalar React Native/Expo, ORM, store global ni librería de motion sin necesidad concreta.
 
@@ -68,13 +68,13 @@ CSP con nonce por respuesta y sin `unsafe-eval` en producción; estilos inline p
 
 ## Fetching, caché y actualización
 
-| Recurso | Política | Actualización |
-| --- | --- | --- |
-| Sesión y staff | Por request, sin caché compartida | Validación Auth + rol activo en DB |
-| Lista de clientes | Servidor, 30 filas por página, búsqueda/filtro | Revalidate tras mutación; Realtime; fallback de 30 s |
-| Perfil/ledger | Servidor, datos autorizados | Revalidate tras abono; Realtime |
-| Actividades | Servidor, snapshot en formulario | Ediciones invalidadas; verificación DB de precio/revisión |
-| Asset de marca | Público y optimizado por Next Image | Reemplazar cuando se reciba el original |
+| Recurso           | Política                                       | Actualización                                             |
+| ----------------- | ---------------------------------------------- | --------------------------------------------------------- |
+| Sesión y staff    | Por request, sin caché compartida              | Validación Auth + rol activo en DB                        |
+| Lista de clientes | Servidor, 30 filas por página, búsqueda/filtro | Revalidate tras mutación; Realtime; fallback de 30 s      |
+| Perfil/ledger     | Servidor, datos autorizados                    | Revalidate tras abono; Realtime                           |
+| Actividades       | Servidor, snapshot en formulario               | Ediciones invalidadas; verificación DB de precio/revisión |
+| Asset de marca    | Público y optimizado por Next Image            | Reemplazar cuando se reciba el original                   |
 
 Realtime notifica cambios; la UI reconsulta datos autorizados. Al fallar la suscripción se indica reconexión y el fallback sigue vigente. No se promete tiempo real cuando el equipo está offline.
 
@@ -97,3 +97,13 @@ Confirmado: ARS y zona America/Argentina/Buenos_Aires. Pendientes de producto: c
 CSS y WAAPI implementan los tokens de Emil. `InteractionMotion` distingue puntero/teclado sin disparar renders; `MotionStage` cancela entradas interrumpidas y respeta reduced motion. No se añadió un proveedor global de animación ni se convirtió el layout servidor en un componente cliente.
 
 El historial de pagos se consulta por relación a cliente y páginas internas de hasta 1.000 filas, sin el antiguo recorte silencioso de 300 abonos ni una URL con cientos de UUID. Para volúmenes mucho mayores, introducir paginación visible por período y medir el payload con datos reales.
+
+## Operaciones — 2026-10-20
+
+Las contrataciones existentes también admiten `duration_unit=sessions`, con `ends_on=null`. La vista de saldos agrega `sessions_remaining`, calculado desde consumos y reversiones. Se conserva el mismo circuito transaccional de pagos y snapshots de precios, evitando una segunda caja para particulares.
+
+Gastos se modela como obligaciones, plantillas recurrentes y lotes de pagos/reversiones. Los cierres mensuales y las listas de sorteo son copias persistentes protegidas por RPCs del dueño y RLS. Las campañas almacenan borradores y selección de destinatarios; no hay proveedor de envío configurado.
+
+Las nuevas pantallas continúan usando Server Components para lecturas y Server Actions con validación para mutaciones. Las exportaciones privadas requieren sesión, llevan `Cache-Control: private, no-store` y no utilizan una clave privilegiada en el navegador. Realtime y el fallback existente actualizan también las operaciones nuevas.
+
+El código operativo y la muestra estática se publican en ramas distintas. `gh-pages/gestion` es un entorno demostrativo local a cada navegador; no sustituye Supabase ni admite uso compartido de datos reales. Ver [actualización](UPDATES_2026-10-20.md).

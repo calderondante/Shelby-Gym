@@ -18,9 +18,19 @@ export const paymentSchema = z
     (v) => v.cash + v.transfer + v.mercado_pago > 0,
     "Registrá al menos un importe mayor a cero.",
   );
+export const instagramHandle = z
+  .string()
+  .trim()
+  .transform((value) => (value ? `@${value.replace(/^@/, "")}` : ""))
+  .refine(
+    (value) => !value || /^@[A-Za-z0-9_.]{1,30}$/.test(value),
+    "Ingresá el @usuario, sin enlaces ni espacios.",
+  );
 export const customerSchema = z.object({
   name: z.string().trim().min(2, "Escribí el nombre completo.").max(120),
   phone: z.string().trim().max(40),
+  instagram: instagramHandle.default(""),
+  marketingOptIn: z.boolean().default(false),
   email: z.union([z.literal(""), z.email()]).default(""),
   notes: z.string().trim().max(500),
   birthMonth: z.coerce.number().int().min(0).max(12),
@@ -41,7 +51,7 @@ export const activitySchema = z
     offerPrice: z.union([z.literal(""), amount]),
     offerLabel: z.string().trim().max(100),
     duration: z.coerce.number().int().min(1).max(365),
-    unit: z.enum(["months", "days"]),
+    unit: z.enum(["months", "days", "sessions"]),
     active: z.boolean(),
   })
   .refine(

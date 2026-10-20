@@ -13,7 +13,8 @@ export function raffleExclusion(input: {
 }) {
   if (input.registeredOn > input.cutoff) return "Alta posterior al sorteo";
   if (input.inactive) return "Perfil de baja o eliminado";
-  if (!input.latestEnd || input.latestEnd < shiftDay(input.cutoff, -30))
+  if (!input.latestEnd) return "Sin cuota de socio";
+  if (input.latestEnd < shiftDay(input.cutoff, -30))
     return "Cuota vencida hace más de 30 días";
   return null;
 }
@@ -25,12 +26,20 @@ export function birthdayAccountStatus(input: {
   balanceCents: number;
   today: string;
 }) {
-  if (input.customerStatus === "retired") return { label: "Eliminado", tone: "inactive" } as const;
-  if (input.customerStatus === "inactive") return { label: "De baja", tone: "inactive" } as const;
-  if (!input.latestEnd) return { label: "Sin cuota", tone: "inactive" } as const;
+  if (input.customerStatus === "retired")
+    return { label: "Eliminado", tone: "inactive" } as const;
+  if (input.customerStatus === "inactive")
+    return { label: "De baja", tone: "inactive" } as const;
+  if (!input.latestEnd)
+    return { label: "Sin cuota", tone: "inactive" } as const;
   if (input.latestEnd < shiftDay(input.today, -30))
-    return { label: input.balanceCents > 0 ? "Más de 30 días sin pagar" : "Más de 30 días sin renovar", tone: "long-expired" } as const;
-  if (input.latestEnd <= input.today) return { label: "Vencida", tone: "expired" } as const;
-  if (input.balanceCents > 0) return { label: "Pendiente", tone: "due" } as const;
+    return {
+      label: "Vencida hace más de 30 días",
+      tone: "long-expired",
+    } as const;
+  if (input.latestEnd <= input.today)
+    return { label: "Vencida", tone: "expired" } as const;
+  if (input.balanceCents > 0)
+    return { label: "Pendiente", tone: "due" } as const;
   return { label: "Al día", tone: "paid" } as const;
 }
