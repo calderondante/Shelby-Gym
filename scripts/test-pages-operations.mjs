@@ -16,15 +16,27 @@ page.on("pageerror", (error) => errors.push(error.message));
 await page.goto(base);
 await page.locator("#pin").fill("SHELBY26");
 await page.getByRole("button", { name: "Abrir Shelby Gym" }).click();
+assert.equal(
+  await page.evaluate(() =>
+    balance({
+      price: 0,
+      payments: [],
+      history: [{ price: 0.8, payments: [{ amount: 0.1 }, { amount: 0.7 }] }],
+    }),
+  ),
+  0,
+  "Los pagos decimales no dejan saldos residuales",
+);
 const go = async (hash) => {
   await page.goto(`${base}${hash}`);
   await page.locator("#main").waitFor();
 };
-const check = async (text) =>
-  assert.ok(
-    await page.getByText(text, { exact: false }).count(),
-    `Debe aparecer: ${text}`,
-  );
+const check = async (text) => {
+  await page
+    .getByText(text, { exact: false })
+    .first()
+    .waitFor({ state: "visible" });
+};
 await go("#actividad-nueva");
 await page.locator("#activity-name").fill("Boxeo particular");
 await page.locator("#activity-price").fill("30000");
