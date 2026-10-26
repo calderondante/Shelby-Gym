@@ -50,6 +50,8 @@ Migraciones imperativas en `supabase/migrations/`. Crear cambios con `pnpm exec 
 
 ## Salida a staging y producción
 
+La ruta de arranque gratuito propuesta usa Netlify y Supabase. Pasos de importación, variables, autorización de la organización y preparación de la base en [NETLIFY_SUPABASE](NETLIFY_SUPABASE.md); `netlify.toml` fija build, publicación, Node y flags de pnpm. Los párrafos siguientes conservan la alternativa de hosting prevista originalmente.
+
 Antes de operar con personas reales se necesitan cuentas del cliente en Supabase/Vercel, región, presupuesto, dominio, política de acceso, privacidad, backups y recuperación. Configurar SMTP y recuperación de acceso si se adopta autoservicio; en esta primera entrega no se envían emails.
 
 Crear un proyecto remoto y desplegar requieren autorización y configuración concretas. No apuntar previews a producción. Aplicar migraciones al proyecto correcto, desactivar signup público también en remoto, provisionar dueño y validar permisos con cuentas de staging. Vercel necesita únicamente las dos variables públicas de Supabase para esta app; no necesita la service role key.
