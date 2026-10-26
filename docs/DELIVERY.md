@@ -1,5 +1,7 @@
 # Estado de publicación
 
+Ruta vigente para pasar a una entrega operativa: [checklist de entrega del 26/10/2026](CHECKLIST_ENTREGA.md). Distingue lo implementado, las tareas pendientes y los criterios de aceptación; no implica que producción ya esté desplegada.
+
 La muestra estática se publica en https://calderondante.github.io/Shelby-Gym/gestion/. La actualización del 2026-10-20 está autorizada para publicación directa, sin video. El código de la app operativa Next.js/Supabase está en `main`; el alojamiento con datos compartidos aún requiere configuración. Los apartados históricos siguientes conservan instrucciones de entregas anteriores. Ver [cambios actuales](UPDATES_2026-10-20.md).
 
 # Entrega de Shelby Gym — 2026-10-03
