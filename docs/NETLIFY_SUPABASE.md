@@ -20,7 +20,7 @@ El archivo raíz `netlify.toml` configura:
 | pnpm                 | Versión fijada en `package.json`                             |
 | Flags de instalación | `--shamefully-hoist`, recomendado por Netlify para Next/pnpm |
 
-Netlify detecta Next y configura su adaptador OpenNext; no se añade un plugin manual, export estático ni redirección general a `index.html`. Si faltan `package.json` o el framework Next en la importación, revisar primero la rama y el directorio base.
+El sitio se importó originalmente como estático y la autodetección dejó las rutas de servidor sin empaquetar, aunque el build figuraba correcto. `netlify.toml` declara explícitamente el adaptador oficial `@netlify/plugin-nextjs` (OpenNext mantenido), instalado por Netlify durante el build; no es una dependencia runtime de la app. No usar export estático ni una redirección general a `index.html`. Si faltan `package.json` o el framework Next en la importación, revisar primero la rama y el directorio base.
 
 ## 2. Variables del proyecto
 

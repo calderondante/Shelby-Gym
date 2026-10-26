@@ -6,6 +6,9 @@
   NODE_VERSION = "22"
   PNPM_FLAGS = "--shamefully-hoist"
 
-# Netlify detects Next.js and provisions its maintained OpenNext adapter.
-# Set Supabase values in Netlify's environment settings, scoped to production.
-# Do not commit keys or point deploy previews at the production database.
+# Explicitly enable the maintained adapter: this site was originally imported as static.
+# It packages Server Actions, server routes and middleware instead of publishing .next as files.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Supabase values live in Netlify's production environment, never in this file.
