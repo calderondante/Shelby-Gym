@@ -46,7 +46,11 @@ await page.evaluate(() => {
 });
 const go = async (section) => {
   await page.goto(`${base}#comunicaciones/${section}`);
-  await page.locator(".comm-tabs").waitFor();
+  await page
+    .locator(
+      `.comm-tabs a[aria-current="page"][href="#comunicaciones/${section}"]`,
+    )
+    .waitFor();
 };
 await go("campanas");
 await page
@@ -70,6 +74,9 @@ assert.match(
 );
 await page.getByRole("button", { name: "Preparar mensajes privados" }).click();
 await page.waitForURL(/comunicaciones\/historial/);
+await page
+  .getByRole("heading", { name: "Mensajes preparados", exact: true })
+  .waitFor();
 assert.equal(await page.locator(".ops-item").count(), 2);
 assert.match(
   await page.locator(".ops-item").first().innerText(),
@@ -100,21 +107,25 @@ await page.evaluate(() => {
   save();
 });
 await go("automatizaciones");
-const bills = page
-  .locator("article")
-  .filter({
-    has: page.getByRole("heading", { name: "Boletas para los dueños" }),
-  });
+const bills = page.locator("article").filter({
+  has: page.getByRole("heading", { name: "Boletas para los dueños" }),
+});
 await bills.getByLabel("Habilitar la preparación").check();
 await bills.getByRole("button", { name: "Guardar regla" }).click();
 await page.getByRole("button", { name: "Revisar avisos de hoy" }).click();
 await page.waitForURL(/comunicaciones\/historial/);
+await page
+  .getByRole("heading", { name: "Mensajes preparados", exact: true })
+  .waitFor();
 assert.match(await page.locator(".ops-item").first().innerText(), /Lucía/);
 assert.match(await page.locator(".ops-item").first().innerText(), /30.000/);
 const count = await page.locator(".ops-item").count();
 await go("automatizaciones");
 await page.getByRole("button", { name: "Revisar avisos de hoy" }).click();
 await page.waitForURL(/comunicaciones\/historial/);
+await page
+  .getByRole("heading", { name: "Mensajes preparados", exact: true })
+  .waitFor();
 assert.equal(await page.locator(".ops-item").count(), count);
 await page.evaluate(() => {
   state.expenses
@@ -125,6 +136,9 @@ await page.evaluate(() => {
 await go("automatizaciones");
 await page.getByRole("button", { name: "Revisar avisos de hoy" }).click();
 await page.waitForURL(/comunicaciones\/historial/);
+await page
+  .getByRole("heading", { name: "Mensajes preparados", exact: true })
+  .waitFor();
 assert.match(await page.locator(".ops-item").first().innerText(), /Cancelado/);
 mkdirSync("qa-artifacts/communications", { recursive: true });
 for (const width of [375, 390, 768, 1024, 1440]) {
