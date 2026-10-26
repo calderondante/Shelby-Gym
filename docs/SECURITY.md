@@ -97,3 +97,7 @@ Nueva protección: con cuotas/gastos existentes no se permite cambiar la zona ho
 ## Alta desde papel — 26/10/2026
 
 La tabla `paper_enrollments` tiene RLS y lectura solo del dueño activo; no admite escritura directa desde roles web. `register_paper_customer` usa `security definer` con `search_path` vacío, autorización por `staff` y ejecución revocada a público/anónimo. El monitor no puede invocarla ni leer su procedencia. La transacción valida fechas, moneda, revisión de plantilla, importes, detalle de medios, clases y cierres; un error revierte todo. Un bloqueo por request y la huella de payload evitan duplicados/reinterpretaciones en reintentos. Las pruebas negativas se ejecutan solo en QA local con identidades sintéticas. No se requieren claves privilegiadas en el navegador.
+
+## Contraseña compartida de dueños — 26/10/2026
+
+Modo elegido por el usuario: identidad técnica server-side y contraseña de 12 a 128 caracteres. Sin signup público ni service role en el hosting web. Cambio exclusivo de dueño, contraseña actual revalidada, confirmación de nueva clave, cierre global y comprobación de sesiones activas en la función de autorización DB. La migración de acceso no concede lecturas de `auth.sessions` al navegador. Compartir identidad limita la atribución por persona. Recuperación administrativa por enlace de Auth de un solo uso; ningún enlace o secreto vigente se guarda en Git/documentos. Ver [procedimiento](ACCESS.md).

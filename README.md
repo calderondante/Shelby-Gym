@@ -24,7 +24,7 @@ Ver [Desarrollo y operación](docs/DEVELOPMENT.md) para setup, permisos, pruebas
 
 ## Funcionalidad
 
-- Acceso de dueño/monitor con permisos en servidor y DB.
+- [Acceso](docs/ACCESS.md) con contraseña única para dueños o cuentas individuales, con permisos en servidor y DB. Cambio de clave desde Ajustes y activación de un solo uso.
 - Plantillas de actividad o combinación con precio, duración y oferta manual.
 - Alta con datos, actividad y primer abono en el mismo formulario.
 - [Carga desde papel](docs/PAPER_REGISTRATION.md): cuotas anteriores vigentes o vencidas, precio original, deuda y clases ya usadas, sin Excel obligatorio ni caja ficticia.

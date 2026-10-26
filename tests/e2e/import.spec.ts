@@ -152,7 +152,11 @@ test("Excel: lectura real, revisión, precios históricos, pagos mixtos y reimpo
   await page.getByText("Historial de abonos", { exact: true }).first().click();
   await expect(page.getByText(/Pago histórico/).first()).toBeVisible();
   await page.goto("/clientes/importar");
-  await page.getByLabel("Archivo Excel").setInputFiles(file);
+  const chooser = page.waitForEvent("filechooser");
+  await page
+    .getByRole("button", { name: "Elegir archivo Excel", exact: true })
+    .click();
+  await (await chooser).setFiles(file);
   await expect(page.locator("#import-source")).toBeVisible();
   await page.getByLabel("Origen de los datos").fill(name);
   await page.locator("#activity-0").selectOption(env.E2E_ACTIVITY_ID!);

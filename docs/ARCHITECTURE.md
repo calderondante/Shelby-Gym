@@ -121,3 +121,7 @@ Baseline actualizado a Next/eslint-config-next **16.4.1** y Zod **4.6.6**, con v
 ## Incorporación manual desde papel
 
 `PaperRegistrationForm` es una interacción cliente acotada; `paperRegistrationAction` valida perfil y fechas, exige dueño y llama a `register_paper_customer`. La RPC vuelve a validar y realiza el alta completa en una transacción idempotente. Se reutilizan los importes históricos de apertura y la procedencia de `import_batches`, sin depender de archivos Excel. La vista de saldos resta el uso de clases de apertura además de la asistencia posterior. El alta del día conserva su ruta y reglas. Ver [carga desde papel](PAPER_REGISTRATION.md).
+
+## Acceso con contraseña única
+
+Una identidad técnica de Auth se resuelve en servidor con `GYM_OWNER_LOGIN_EMAIL`. Los Server Actions mantienen la autenticación real, validan el cambio con la clave actual y cierran las sesiones al terminar. La activación/recuperación usa tokens de Auth de un solo uso en fragmentos de URL. RLS verifica la vigencia de la sesión mediante `private.staff_role`; no se crea un sistema de cookies paralelo ni se usa un PIN cliente. Ver [ACCESS](ACCESS.md).

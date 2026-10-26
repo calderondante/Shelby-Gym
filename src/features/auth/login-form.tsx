@@ -7,18 +7,24 @@ import {
   SubmitButton,
   TextField,
 } from "@/components/shared/form-parts";
-export function LoginForm() {
+export function LoginForm({
+  passwordOnly = false,
+}: {
+  passwordOnly?: boolean;
+}) {
   const [state, action] = useActionState(loginAction, {});
   return (
     <form action={action}>
       <FieldGroup>
-        <TextField
-          name="email"
-          label="Correo electrónico"
-          type="email"
-          autoComplete="username"
-          required
-        />
+        {!passwordOnly ? (
+          <TextField
+            name="email"
+            label="Correo electrónico"
+            type="email"
+            autoComplete="username"
+            required
+          />
+        ) : null}
         <TextField
           name="password"
           label="Contraseña"

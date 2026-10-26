@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { PageHeading } from "@/components/shared/page-heading";
+import { ChangePasswordForm } from "@/features/auth/password-form";
 import { SettingsForm } from "@/features/gym/components/settings-form";
 import { requireStaff } from "@/features/gym/server/session";
 export default async function SettingsPage() {
@@ -29,7 +30,10 @@ export default async function SettingsPage() {
         </div>
       ) : null}
       {staff.role === "owner" ? (
-        <SettingsForm settings={data} />
+        <>
+          <SettingsForm settings={data} />
+          <ChangePasswordForm />
+        </>
       ) : (
         <p>
           El dueño debe confirmar la configuración inicial antes de registrar

@@ -225,3 +225,7 @@ Los dueños quieren seleccionar varios clientes y preparar mensajes privados de 
 ## Alta de registros en papel — 26/10/2026
 
 Aprobado: la carga inicial principal es manual desde papel, con inicio pasado, cuota vigente o vencida, precio original y abonado/deuda previos. Se permite abonado cero exclusivamente en esta incorporación histórica; la regla de primer abono para altas nuevas/regresos no cambia. Los packs admiten clases ya utilizadas. Los pagos anteriores solo llevan fecha/medio si se conocen; el resto es crédito de apertura, sin ingreso ficticio hoy. El perfil se crea en la fecha real de carga, sin alterar sorteos cerrados. Ver [flujo y límites](PAPER_REGISTRATION.md).
+
+## Acceso simplificado aprobado — 26/10/2026
+
+Los dueños entran con una única contraseña, sin correo visible, y pueden cambiarla desde Ajustes indicando la actual. Supabase Auth conserva las sesiones y permisos. El acceso compartido no distingue acciones entre personas; recuperación mediante enlace de un solo uso generado por el administrador técnico. Ver [acceso y límites](ACCESS.md).

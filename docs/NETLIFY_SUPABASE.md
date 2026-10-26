@@ -24,12 +24,16 @@ Netlify detecta Next y configura su adaptador OpenNext; no se añade un plugin m
 
 ## 2. Variables del proyecto
 
-En la configuración de variables de Netlify, agregar únicamente estas variables de aplicación para el contexto **Production**, disponibles para build y ejecución:
+En la configuración de variables de Netlify, agregar estas variables de aplicación para el contexto **Production**, disponibles para build y ejecución:
 
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+# Solo servidor: identificador técnico para el acceso con contraseña única
+GYM_OWNER_LOGIN_EMAIL=
 ```
+
+El identificador técnico de dueño lo configura el desarrollador durante la provisión; no hace falta un correo personal ni un buzón. Ver [acceso con contraseña única](ACCESS.md).
 
 Copiar URL y **Publishable key** desde **Connect** o **Settings → API Keys** del proyecto Supabase de la organización Shelby Gym. La clave pública puede empezar por `sb_publishable_`; no confundirla con una clave Secret, service role ni con la contraseña de PostgreSQL. La app normal no necesita esas claves privilegiadas en Netlify. No pegarlas en el chat, Git, el nombre del sitio ni documentos públicos.
 
@@ -45,11 +49,11 @@ Un login visible no significa que la base esté lista: no empezar a cargar perso
 
 ## 4. Preparar el proyecto Supabase correcto
 
-La conexión Supabase disponible en este chat no pudo acceder al proyecto nuevo mostrado en la organización Shelby Gym: el proveedor respondió «You do not have permission to perform this action». No se aplicaron migraciones ni se modificó ese proyecto.
+El acceso original del conector no incluía la organización nueva. El 26/10/2026 se completó la autorización oficial de la CLI de Supabase para la cuenta propietaria y se verificó el proyecto `smgxymlfjcdxabgippby`, organización **Shelby Gym**. Antes de aplicar se comprobó que no había tablas de aplicación ni usuarios Auth. Se aplicaron 18 migraciones versionadas mediante la Management API por HTTPS, conservando los nombres y versiones originales en `supabase_migrations.schema_migrations`: el acceso TCP de esta máquina al pooler no estaba disponible.
 
-Volver a autorizar la conexión Supabase de este chat incluyendo la organización/proyecto nuevo. Dar acceso mediante el flujo de conexión; no reemplazarlo por contraseñas ni tokens pegados en el chat.
+Las 26 tablas públicas tienen RLS; se creó únicamente la identidad técnica de administración y la configuración ARS/Argentina. No se cargaron clientes ni pagos. El registro público quedó desactivado y el acceso inicial requiere un enlace de activación de un solo uso. La autorización de la CLI no modifica los permisos del conector de ChatGPT.
 
-Con el acceso disponible:
+Para una nueva instalación o revisión:
 
 1. Confirmar el identificador y la organización del proyecto de destino. Inspeccionar tablas, migraciones y estado de seguridad; no asumir que sigue vacío por una captura anterior.
 2. Revisar y aplicar las migraciones versionadas de `supabase/migrations/`, conservando su historial. Si hay datos existentes, respaldarlos y evaluar conflictos antes; no resetear la base.
@@ -65,7 +69,7 @@ El PIN de la demo no se reutiliza como acceso operativo. La recuperación de acc
 
 - La URL del primer despliegue Netlify y, si falla, el error de build sin valores de variables.
 - Confirmación de que la conexión Supabase ya permite la organización Shelby Gym.
-- Después de preparar la base, el correo que se usará como dueño; su contraseña se establece por un canal seguro.
+- Después de preparar la base, el modo de acceso acordado: en Shelby se usa una identidad técnica con contraseña única y activación desde la app.
 
 Esta guía y el archivo Netlify preparan la importación; no acreditan un deploy remoto, migraciones aplicadas, cuentas creadas ni integración de WhatsApp/Instagram.
 

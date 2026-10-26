@@ -1,5 +1,6 @@
 "use server";
 import { z } from "zod";
+import { ownerLoginEmail } from "./access";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
@@ -12,8 +13,16 @@ export async function loginAction(
     return { error: "El acceso todavía no está configurado." };
   const parsed = z
     .object({ email: z.email(), password: z.string().min(1).max(128) })
-    .safeParse({ email: form.get("email"), password: form.get("password") });
-  if (!parsed.success) return { error: "Ingresá tu correo y contraseña." };
+    .safeParse({
+      email: ownerLoginEmail() ?? form.get("email"),
+      password: form.get("password"),
+    });
+  if (!parsed.success)
+    return {
+      error: ownerLoginEmail()
+        ? "Ingresá la contraseña del gimnasio."
+        : "Ingresá tu correo y contraseña.",
+    };
   const db = await createClient();
   const { error } = await db.auth.signInWithPassword(parsed.data);
   if (error)

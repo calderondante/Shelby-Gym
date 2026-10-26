@@ -175,3 +175,13 @@ Consequences: las consultas de vigencia deben distinguir fecha y sesiones. Los s
 - **Chosen solution:** formulario desde papel y RPC atómica/idempotente con procedencia, importes originales, crédito de apertura y detalle opcional de pagos; clases usadas de apertura para packs.
 - **Reason:** permite cargar el cuaderno sin inventar caja, asistencias ni fechas de creación del perfil. Mantiene separadas la operación diaria y la incorporación previa.
 - **Consequences:** requiere migración y permiso de dueño. No se alteran cierres ni sorteos cerrados; se mantiene la importación Excel opcional. Un redeploy no sustituye la aplicación de migraciones.
+
+## ADR-017 — Contraseña única sobre Supabase Auth
+
+- **Date:** 2026-10-26.
+- **Decision:** entrada de dueños sin pedir correo y cambio de contraseña dentro de Ajustes.
+- **Context:** el comprador prefiere una clave compartida para una operación pequeña.
+- **Options:** cuentas personales con correo; PIN validado en cliente; identidad técnica y contraseña verificada por Auth.
+- **Chosen solution:** resolver identidad en servidor, mantener Auth/RLS, revalidar la clave actual al cambiar, cerrar sesiones y verificar su existencia en DB. Activación mediante enlace de recuperación de un solo uso.
+- **Reason:** simplifica el acceso sin trasladar la autorización al navegador.
+- **Consequences:** una cuenta compartida no atribuye acciones por persona; olvido requiere recuperación administrativa. La configuración de cuentas individuales sigue disponible sin la variable técnica.

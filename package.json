@@ -28,7 +28,8 @@
     "test:month": "node scripts/test-month-simulation.mjs",
     "test:admin": "node scripts/test-admin-audit.mjs",
     "test:paper": "node scripts/test-paper-registration.mjs",
-    "test:pages:paper": "node scripts/test-pages-paper.mjs"
+    "test:pages:paper": "node scripts/test-pages-paper.mjs",
+    "test:access": "node scripts/test-password-access.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
