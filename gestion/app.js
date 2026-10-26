@@ -125,6 +125,9 @@ function periodSnapshot(c) {
     activityId: c.activityId,
     sessionEvents: structuredClone(c.sessionEvents || []),
     startedAt: c.startedAt,
+    openingPaid: c.openingPaid || 0,
+    openingSessionsUsed: c.openingSessionsUsed || 0,
+    origin: c.origin || "",
   };
 }
 function logLifecycle(c, title, detail) {
@@ -199,7 +202,9 @@ function save() {
   localStorage.setItem(KEY, JSON.stringify(state));
 }
 function paid(c) {
-  return roundMoney(c.payments.reduce((sum, p) => sum + p.amount, 0));
+  return roundMoney(
+    (c.openingPaid || 0) + c.payments.reduce((sum, p) => sum + p.amount, 0),
+  );
 }
 function currentBalance(c) {
   return roundMoney(Math.max(0, c.price - paid(c)));
@@ -208,12 +213,7 @@ function balance(c) {
   return roundMoney(
     currentBalance(c) +
       previousPeriods(c).reduce(
-        (sum, p) =>
-          sum +
-          Math.max(
-            0,
-            p.price - p.payments.reduce((n, payment) => n + payment.amount, 0),
-          ),
+        (sum, p) => sum + Math.max(0, p.price - paid(p)),
         0,
       ),
   );
@@ -548,7 +548,7 @@ function newCustomer() {
     )
     .join("");
   app.innerHTML = layout(
-    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">ALTA EN UN SOLO PASO</span><h1>Nuevo cliente.</h1><p>Completá el perfil, elegí la actividad y anotá el primer abono. Se pueden combinar dos medios y dejar saldo pendiente.</p></section><form class="panel" id="customer-form"><div class="form-grid"><div class="field wide"><label for="customer-name">Nombre y apellido</label><input id="customer-name" required minlength="2" maxlength="120" autocomplete="name" placeholder="Ej. Clara Díaz"></div><div class="field"><label for="customer-phone">Celular (opcional)</label><input id="customer-phone" type="tel" maxlength="40" autocomplete="tel" placeholder="+54 9 11 1234 5678"></div>${instagramFields("customer")}${birthdayFields("customer")}<div class="field wide"><label for="customer-activity">Actividad</label><select id="customer-activity" required>${options}</select></div><div class="field"><label for="payment-1">Primer abono (ARS)</label><input id="payment-1" type="number" min="0" step="0.01" inputmode="numeric" value="0" required></div><div class="field"><label for="method-1">Medio</label><select id="method-1"><option>Transferencia</option><option>Efectivo</option><option>Mercado Pago</option></select></div><div class="field"><label for="payment-2">Segundo medio (ARS, opcional)</label><input id="payment-2" type="number" min="0" step="0.01" inputmode="numeric" value="0"></div><div class="field"><label for="method-2">Medio adicional</label><select id="method-2"><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option></select></div></div><p class="notice">La vigencia empieza con el primer abono. Si queda saldo, se ve en Clientes y puede completarse después.</p><div class="form-actions"><button class="button" type="submit">Registrar cliente</button><a class="button ghost" href="#clientes">Cancelar</a></div></form>`,
+    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">ALTA EN UN SOLO PASO</span><h1>Nuevo cliente.</h1><p>Completá el perfil, elegí la actividad y anotá el primer abono. Se pueden combinar dos medios y dejar saldo pendiente.</p></section><div class="hero-actions"><a class="button secondary" href="#nuevo/papel">Cargar desde papel</a></div><form class="panel" id="customer-form"><div class="form-grid"><div class="field wide"><label for="customer-name">Nombre y apellido</label><input id="customer-name" required minlength="2" maxlength="120" autocomplete="name" placeholder="Ej. Clara Díaz"></div><div class="field"><label for="customer-phone">Celular (opcional)</label><input id="customer-phone" type="tel" maxlength="40" autocomplete="tel" placeholder="+54 9 11 1234 5678"></div>${instagramFields("customer")}${birthdayFields("customer")}<div class="field wide"><label for="customer-activity">Actividad</label><select id="customer-activity" required>${options}</select></div><div class="field"><label for="payment-1">Primer abono (ARS)</label><input id="payment-1" type="number" min="0" step="0.01" inputmode="numeric" value="0" required></div><div class="field"><label for="method-1">Medio</label><select id="method-1"><option>Transferencia</option><option>Efectivo</option><option>Mercado Pago</option></select></div><div class="field"><label for="payment-2">Segundo medio (ARS, opcional)</label><input id="payment-2" type="number" min="0" step="0.01" inputmode="numeric" value="0"></div><div class="field"><label for="method-2">Medio adicional</label><select id="method-2"><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option></select></div></div><p class="notice">La vigencia empieza con el primer abono. Si queda saldo, se ve en Clientes y puede completarse después.</p><div class="form-actions"><button class="button" type="submit">Registrar cliente</button><a class="button ghost" href="#clientes">Cancelar</a></div></form>`,
     "clientes",
   );
   document.querySelector("#customer-form").onsubmit = (e) => {
@@ -634,7 +634,7 @@ function detail(id) {
     oldBalance = balance(c) - remainder,
     history = previousPeriods(c).slice().reverse();
   app.innerHTML = layout(
-    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">PERFIL DE CLIENTE</span><h1>${escapeHtml(c.name)}.</h1><p>${escapeHtml(c.activityName)} · ${periodTiming(c)}</p></section>${c.deletedAt ? `<p class="notice">Perfil eliminado el ${dateLabel(c.deletedAt)}. Cuotas y pagos conservados; podés recuperarlo si vuelve.</p>` : c.archivedAt ? `<p class="notice">Dado de baja el ${dateLabel(c.archivedAt)}. El historial y los saldos se conservan. Para volver, iniciá una cuota con el precio actual.</p>` : c.end && c.end < shiftDays(today(), -30) ? `<p class="notice">La cuota venció hace ${daysPast(c.end)} días. El perfil sigue disponible; no se cobra automáticamente ni se borra por falta de pago.</p>` : ""}<div class="panel"><div class="detail-hero"><h2>${c.unit === "sessions" ? "Último pack" : "Última cuota"}</h2><span class="status ${type}">${label}</span></div><div class="detail-grid"><div><span>Total acordado</span><strong>${money.format(c.price)}</strong></div><div><span>Abonado</span><strong>${money.format(paid(c))}</strong></div><div><span>Saldo pendiente</span><strong>${money.format(remainder)}</strong></div></div>${oldBalance ? `<p class="notice">Hay ${money.format(oldBalance)} pendientes de cuotas anteriores. El regreso no borra esa deuda.</p>` : ""}<div class="form-actions">${remainder ? `<a class="button" href="#abonar/${escapeHtml(c.id)}">+ Registrar abono</a>` : ""}${c.archivedAt || c.deletedAt ? `<a class="button" href="#regresar/${escapeHtml(c.id)}">Reactivar cliente</a>` : c.end && c.end <= today() ? `<a class="button secondary" href="#regresar/${escapeHtml(c.id)}">Iniciar nueva cuota</a>` : ""}<a class="button secondary" href="#editar/${escapeHtml(c.id)}">Editar perfil</a><a class="button secondary" href="#regresar/${escapeHtml(c.id)}">Agregar actividad o pack</a></div><hr class="divider"><div><strong>Celular:</strong> ${escapeHtml(c.phone || "Sin registrar")}</div><div><strong>Instagram:</strong> ${c.instagram ? `<a href="https://www.instagram.com/${escapeHtml(c.instagram.slice(1))}/" target="_blank" rel="noopener noreferrer">${escapeHtml(c.instagram)}</a>` : "Sin registrar"}</div><div><strong>Cumpleaños:</strong> ${birthdayLabel(c)}</div><hr class="divider"><h2>Abonos de esta cuota</h2><ol class="payments">${c.payments.map((p) => `<li>${dateLabel(p.date)} · ${escapeHtml(p.method)} · <strong>${money.format(p.amount)}</strong></li>`).join("")}</ol></div>${history.length ? `<section class="history"><h2>Cuotas anteriores</h2>${history.map((p, index) => `<details class="panel history-period"><summary>${escapeHtml(p.activityName)} · ${dateLabel(p.start)} · ${p.unit === "sessions" ? `${remainingClasses(p)} de ${p.count} clases` : `a ${dateLabel(p.end)}`} · ${money.format(p.price)}</summary><p>Abonado: ${money.format(p.payments.reduce((n, payment) => n + payment.amount, 0))} · Pendiente: ${money.format(Math.max(0, p.price - p.payments.reduce((n, payment) => n + payment.amount, 0)))}</p>${roundMoney(p.price - p.payments.reduce((n, payment) => n + payment.amount, 0)) > 0 ? `<a class="button secondary" href="#abonar/${escapeHtml(c.id)}/${previousPeriods(c).length - 1 - index}">Registrar abono anterior</a>` : ""}<ol class="payments">${p.payments.map((payment) => `<li>${dateLabel(payment.date)} · ${escapeHtml(payment.method)} · ${money.format(payment.amount)}</li>`).join("")}</ol></details>`).join("")}</section>` : ""}${packControls(c)}<section class="profile-management"><h2>Historial y perfil</h2><p>Las cuotas anteriores, los pagos y los saldos permanecen asociados a esta persona.</p><div class="form-actions"><a class="button secondary" href="#historial/${escapeHtml(c.id)}">Ver historial por día</a>${c.archivedAt || c.deletedAt ? "" : `<button class="button secondary" id="archive-customer" type="button">Dar de baja</button>`}${c.deletedAt ? "" : `<a class="button ghost" href="#borrar/${escapeHtml(c.id)}">Eliminar perfil…</a>`}</div></section>`,
+    `<button class="nav-back" onclick="location.hash='#clientes'">← Clientes</button><section class="hero"><span class="eyebrow">PERFIL DE CLIENTE</span><h1>${escapeHtml(c.name)}.</h1><p>${escapeHtml(c.activityName)} · ${periodTiming(c)}</p></section>${c.deletedAt ? `<p class="notice">Perfil eliminado el ${dateLabel(c.deletedAt)}. Cuotas y pagos conservados; podés recuperarlo si vuelve.</p>` : c.archivedAt ? `<p class="notice">Dado de baja el ${dateLabel(c.archivedAt)}. El historial y los saldos se conservan. Para volver, iniciá una cuota con el precio actual.</p>` : c.end && c.end < shiftDays(today(), -30) ? `<p class="notice">La cuota venció hace ${daysPast(c.end)} días. El perfil sigue disponible; no se cobra automáticamente ni se borra por falta de pago.</p>` : ""}<div class="panel"><div class="detail-hero"><h2>${c.unit === "sessions" ? "Último pack" : "Última cuota"}</h2><span class="status ${type}">${label}</span></div><div class="detail-grid"><div><span>Total acordado</span><strong>${money.format(c.price)}</strong></div><div><span>Abonado</span><strong>${money.format(paid(c))}</strong></div><div><span>Saldo pendiente</span><strong>${money.format(remainder)}</strong></div></div>${oldBalance ? `<p class="notice">Hay ${money.format(oldBalance)} pendientes de cuotas anteriores. El regreso no borra esa deuda.</p>` : ""}<div class="form-actions">${remainder ? `<a class="button" href="#abonar/${escapeHtml(c.id)}">+ Registrar abono</a>` : ""}${c.archivedAt || c.deletedAt ? `<a class="button" href="#regresar/${escapeHtml(c.id)}">Reactivar cliente</a>` : c.end && c.end <= today() ? `<a class="button secondary" href="#regresar/${escapeHtml(c.id)}">Iniciar nueva cuota</a>` : ""}<a class="button secondary" href="#editar/${escapeHtml(c.id)}">Editar perfil</a><a class="button secondary" href="#regresar/${escapeHtml(c.id)}">Agregar actividad o pack</a></div><hr class="divider"><div><strong>Celular:</strong> ${escapeHtml(c.phone || "Sin registrar")}</div><div><strong>Instagram:</strong> ${c.instagram ? `<a href="https://www.instagram.com/${escapeHtml(c.instagram.slice(1))}/" target="_blank" rel="noopener noreferrer">${escapeHtml(c.instagram)}</a>` : "Sin registrar"}</div><div><strong>Cumpleaños:</strong> ${birthdayLabel(c)}</div><hr class="divider"><h2>Abonos de esta cuota</h2>${c.openingPaid ? `<p class="notice">Abonado previo sin fecha o medio detallados: ${money.format(c.openingPaid)}. No es un cobro nuevo.</p>` : ""}${c.openingSessionsUsed ? `<p class="notice">${c.openingSessionsUsed} clases ya usadas antes de la carga, sin fechas de asistencia detalladas.</p>` : ""}<ol class="payments">${c.payments.map((p) => `<li>${dateLabel(p.date)} · ${escapeHtml(p.method)} · <strong>${money.format(p.amount)}</strong></li>`).join("")}</ol></div>${history.length ? `<section class="history"><h2>Cuotas anteriores</h2>${history.map((p, index) => `<details class="panel history-period"><summary>${escapeHtml(p.activityName)} · ${dateLabel(p.start)} · ${p.unit === "sessions" ? `${remainingClasses(p)} de ${p.count} clases` : `a ${dateLabel(p.end)}`} · ${money.format(p.price)}</summary><p>Abonado: ${money.format(paid(p))} · Pendiente: ${money.format(Math.max(0, p.price - paid(p)))}</p>${roundMoney(p.price - paid(p)) > 0 ? `<a class="button secondary" href="#abonar/${escapeHtml(c.id)}/${previousPeriods(c).length - 1 - index}">Registrar abono anterior</a>` : ""}<ol class="payments">${p.payments.map((payment) => `<li>${dateLabel(payment.date)} · ${escapeHtml(payment.method)} · ${money.format(payment.amount)}</li>`).join("")}</ol></details>`).join("")}</section>` : ""}${packControls(c)}<section class="profile-management"><h2>Historial y perfil</h2><p>Las cuotas anteriores, los pagos y los saldos permanecen asociados a esta persona.</p><div class="form-actions"><a class="button secondary" href="#historial/${escapeHtml(c.id)}">Ver historial por día</a>${c.archivedAt || c.deletedAt ? "" : `<button class="button secondary" id="archive-customer" type="button">Dar de baja</button>`}${c.deletedAt ? "" : `<a class="button ghost" href="#borrar/${escapeHtml(c.id)}">Eliminar perfil…</a>`}</div></section>`,
     "clientes",
   );
   const archiveButton = document.querySelector("#archive-customer");
@@ -732,6 +732,9 @@ function returnCustomer(id) {
     c.unit = activity.unit || "months";
     c.count = activity.count || activity.months;
     c.sessionEvents = [];
+    c.openingPaid = 0;
+    c.openingSessionsUsed = 0;
+    c.origin = "";
     c.startedAt = new Date().toISOString();
     c.payments = [
       {
@@ -803,9 +806,11 @@ function historyPage(id) {
         detail: `${payment.method} · ${money.format(payment.amount)} · ${period.activityName}`,
       });
     if (period.end && period.end <= today()) {
-      const paidByEnd = period.payments
-        .filter((p) => p.date <= period.end)
-        .reduce((sum, p) => sum + p.amount, 0);
+      const paidByEnd =
+        (period.openingPaid || 0) +
+        period.payments
+          .filter((p) => p.date <= period.end)
+          .reduce((sum, p) => sum + p.amount, 0);
       const due = Math.max(0, period.price - paidByEnd);
       events.push({
         date: period.end,
@@ -912,10 +917,7 @@ function gymHistory(requestedMonth, requestedDay) {
       detail: "Alta del cliente",
     });
     for (const period of periods) {
-      const pending = Math.max(
-        0,
-        period.price - period.payments.reduce((sum, p) => sum + p.amount, 0),
-      );
+      const pending = Math.max(0, period.price - paid(period));
       allActivity.push({
         customer,
         date: period.start,
@@ -969,16 +971,7 @@ function gymHistory(requestedMonth, requestedDay) {
       periodSnapshot(customer),
     ])
     .filter((period) => period.start?.startsWith(month))
-    .reduce(
-      (sum, period) =>
-        sum +
-        Math.max(
-          0,
-          period.price -
-            period.payments.reduce((n, payment) => n + payment.amount, 0),
-        ),
-      0,
-    );
+    .reduce((sum, period) => sum + Math.max(0, period.price - paid(period)), 0);
   const methods = ["Transferencia", "Mercado Pago", "Efectivo"];
   const activity = allActivity.filter((event) => event.date === day);
   const monthLabel = monthFmt.format(utc(`${month}-01`));
@@ -1031,12 +1024,7 @@ function pay(id, periodIndex = -1) {
   if (!period || !Number.isInteger(periodIndex))
     return void (location.hash = `#cliente/${id}`);
   const periodBalance = () =>
-    roundMoney(
-      Math.max(
-        0,
-        period.price - period.payments.reduce((sum, p) => sum + p.amount, 0),
-      ),
-    );
+    roundMoney(Math.max(0, period.price - paid(period)));
   const remainder = periodBalance();
   if (!remainder) return void (location.hash = `#cliente/${c.id}`);
   app.innerHTML = layout(
@@ -1113,7 +1101,7 @@ function render() {
       clientes: clients,
       actividades: activities,
       "actividad-nueva": () => activityNew(id),
-      nuevo: newCustomer,
+      nuevo: () => (id === "papel" ? paperRegistration() : newCustomer()),
       cliente: () => detail(id),
       abonar: () => pay(id, period === undefined ? -1 : Number(period)),
       regresar: () => returnCustomer(id),

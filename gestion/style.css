@@ -1414,3 +1414,16 @@ textarea {
     font-size: 11px;
   }
 }
+
+.paper-payment {
+  display: grid;
+  gap: 16px;
+  padding: 18px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+.paper-payment legend {
+  font-weight: 650;
+  padding-block: 10px;
+}

@@ -17,6 +17,7 @@ function remainingClasses(period) {
   return Math.max(
     0,
     (period.count || 0) -
+      (period.openingSessionsUsed || 0) -
       (period.sessionEvents || []).reduce((n, e) => n + e.delta, 0),
   );
 }
@@ -80,9 +81,7 @@ function sessionPage(id, index) {
   const c = state.customers.find((c) => c.id === id),
     p = c && (index < 0 ? c : previousPeriods(c)[index]);
   if (!p || p.unit !== "sessions") return void (location.hash = "#clientes");
-  const debt = roundMoney(
-    Math.max(0, p.price - p.payments.reduce((n, e) => n + e.amount, 0)),
-  );
+  const debt = roundMoney(Math.max(0, p.price - paid(p)));
   app.innerHTML = layout(
     `<a class="nav-back" href="#cliente/${escapeHtml(id)}">← ${escapeHtml(c.name)}</a><section class="hero"><span class="eyebrow">CLASES PARTICULARES</span><h1>${escapeHtml(p.activityName)}.</h1><p>${escapeHtml(c.name)} · sin vencimiento</p></section><div class="ops-totals"><div><span>Clases disponibles</span><strong>${remainingClasses(p)} / ${p.count}</strong></div><div><span>Saldo del pack</span><strong>${money.format(debt)}</strong></div></div>${remainingClasses(p) && !c.archivedAt && !c.deletedAt ? `<form id="session-form" class="panel">${debt ? `<label class="ops-check"><input type="checkbox" id="session-debt" required>Confirmo la asistencia con ${money.format(debt)} pendientes del pack.</label>` : ""}<button class="button" type="submit">Registrar clase realizada</button></form>` : `<p class="notice">${c.archivedAt || c.deletedAt ? "Reactivá el perfil para registrar clases." : "Este pack utilizó todas sus clases. Podés agregar uno nuevo desde el perfil."}</p>`}<section class="ops-section"><h2>Clases y correcciones</h2>${
       (p.sessionEvents || []).length
@@ -390,6 +389,7 @@ function reportData(month, asOfMonthEnd = false) {
             Math.max(
               0,
               p.price -
+                (p.openingPaid || 0) -
                 p.payments
                   .filter((x) => !asOfMonthEnd || x.date.slice(0, 7) < until)
                   .reduce((n, x) => n + x.amount, 0),
