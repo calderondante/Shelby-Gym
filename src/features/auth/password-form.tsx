@@ -1,6 +1,7 @@
 "use client";
 import { useActionState, useState } from "react";
 import Link from "next/link";
+import { MIN_PASSWORD_LENGTH } from "./password-policy";
 import { FieldGroup } from "@/components/ui/field";
 import {
   FormFeedback,
@@ -51,7 +52,7 @@ function NewPasswordFields() {
         type="password"
         autoComplete="new-password"
         required
-        minLength={12}
+        minLength={MIN_PASSWORD_LENGTH}
         maxLength={128}
       />
       <TextField
@@ -60,12 +61,12 @@ function NewPasswordFields() {
         type="password"
         autoComplete="new-password"
         required
-        minLength={12}
+        minLength={MIN_PASSWORD_LENGTH}
         maxLength={128}
       />
       <p className="muted">
-        Usá al menos 12 caracteres. Una frase larga y fácil de recordar es una
-        buena opción.
+        Usá al menos {MIN_PASSWORD_LENGTH} caracteres. Una frase larga y fácil
+        de recordar es una buena opción.
       </p>
     </>
   );

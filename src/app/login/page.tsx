@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { Brand } from "@/components/shared/brand";
+import { InstallApp } from "@/components/shared/pwa-provider";
 import { ownerLoginEmail } from "@/features/auth/access";
 import { LoginForm } from "@/features/auth/login-form";
 import { hasSupabaseConfig } from "@/lib/supabase/env";
@@ -36,6 +37,7 @@ export default async function LoginPage({
             ? "Si olvidaste la clave, solicitá un enlace de recuperación al administrador técnico."
             : "Si necesitás recuperar tu acceso, contactá al dueño."}
         </p>
+        <InstallApp compact />
       </div>
     </main>
   );

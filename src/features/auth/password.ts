@@ -1,9 +1,13 @@
 import { z } from "zod";
+import { MIN_PASSWORD_LENGTH } from "./password-policy";
 export const newPasswordSchema = z
   .object({
     password: z
       .string()
-      .min(12, "Usá al menos 12 caracteres.")
+      .min(
+        MIN_PASSWORD_LENGTH,
+        `Usá al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
+      )
       .max(128, "Usá hasta 128 caracteres."),
     confirmation: z.string().max(128),
   })

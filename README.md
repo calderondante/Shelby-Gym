@@ -66,6 +66,7 @@ Ver [actualización del 20 de octubre](docs/UPDATES_2026-10-20.md) para las regl
 ## Documentación y diseño
 
 - [AGENTS.md](AGENTS.md): constitución técnica para Codex.
+- [Instalar Shelby Gym](docs/PWA.md): acceso desde el icono sin barra de direcciones, en celular o PC.
 - [Arquitectura](docs/ARCHITECTURE.md), [modelo de datos](docs/DATA_MODEL.md), [seguridad](docs/SECURITY.md), [decisiones](docs/DECISIONS.md).
 - [Sistema de diseño](docs/DESIGN_SYSTEM.md), [capturas de la app](docs/design/screenshots/app/), [prototipo de referencia](docs/design/shelby-preview.html).
 - [Skills](docs/SKILLS.md): 16 skills locales en `.agents/skills/`, con inventario, origen e integridad verificables.

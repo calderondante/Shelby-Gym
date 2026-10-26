@@ -71,3 +71,7 @@ La actualización incluye también una grabación real de la interacción en `do
 [Copia actualizada del código para la PC](https://drive.google.com/file/d/1b5KdNnspSSHbuHcnkLTQVx1ReDO024hu/view) en la carpeta Código. Contiene `scripts/demo-local.mjs`, `scripts/seed-demo.mjs`, [instrucciones para abrir la app desde un celular](DEMO_LOCAL.md) y capturas verificadas. No incluye `.env.local`, `.env.test.local`, base de datos, cuentas, contraseñas ni sesiones; al restaurarla se crean credenciales locales nuevas y se preparan tres clientes ficticios mediante el sembrador.
 
 La copia conserva las versiones anteriores en Drive. No habilita acceso desde un teléfono a este entorno cloud: para una prueba física hay que ejecutar el proyecto en la PC de la misma red Wi-Fi que el teléfono.
+
+## Acceso instalado — 26/10/2026
+
+La contraseña admite desde ocho caracteres, sin reemplazar la existente. El mínimo de Supabase Auth se actualiza a 8 mediante Management API y se verifica por lectura; continúa deshabilitado el registro público. La app puede instalarse con icono del gimnasio y ventana independiente. Las instrucciones están en Login y Ajustes; ver [PWA.md](PWA.md). Es necesario confirmar la instalación una vez por equipo y conservar conexión para trabajar.

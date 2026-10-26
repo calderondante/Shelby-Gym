@@ -233,3 +233,7 @@ Los dueños entran con una única contraseña, sin correo visible, y pueden camb
 ## WhatsApp manual aprobado — 26/10/2026
 
 Seleccionar varios clientes y preparar un mensaje privado por persona; abrir cada chat con destinatario y texto cargados para que el operador confirme el envío. Prioridad de coste: Click to Chat sin Cloud API. Conservar consentimiento, permisos, fecha y revalidación de datos. No marcar como enviado/entregado por abrir el enlace ni abrir todos los chats automáticamente. Marca de revisión solo para la visita a esta pantalla. Ver [flujo](WHATSAPP_MANUAL.md).
+
+## Acceso desde el dispositivo — aprobado 26/10/2026
+
+Se permite una contraseña desde 8 caracteres (máximo 128), con cambio desde Ajustes y sin alterar la actual durante el despliegue. La app de gestión debe poder abrirse desde un icono como aplicación web instalada, sin barra de direcciones, en celular o PC. La instalación se confirma una vez por equipo; no agrega funcionamiento financiero offline ni permisos de notificaciones.

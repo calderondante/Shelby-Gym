@@ -100,7 +100,11 @@ La tabla `paper_enrollments` tiene RLS y lectura solo del dueño activo; no admi
 
 ## Contraseña compartida de dueños — 26/10/2026
 
-Modo elegido por el usuario: identidad técnica server-side y contraseña de 12 a 128 caracteres. Sin signup público ni service role en el hosting web. Cambio exclusivo de dueño, contraseña actual revalidada, confirmación de nueva clave, cierre global y comprobación de sesiones activas en la función de autorización DB. La migración de acceso no concede lecturas de `auth.sessions` al navegador. Compartir identidad limita la atribución por persona. Recuperación administrativa por enlace de Auth de un solo uso; ningún enlace o secreto vigente se guarda en Git/documentos. Ver [procedimiento](ACCESS.md).
+Modo elegido por el usuario: identidad técnica server-side y contraseña de 8 a 128 caracteres. El mínimo se aplica en formulario, validación del servidor y configuración de Supabase Auth; no se modifica la clave existente. Sin signup público ni service role en el hosting web. Cambio exclusivo de dueño, contraseña actual revalidada, confirmación de nueva clave, cierre global y comprobación de sesiones activas en la función de autorización DB. La migración de acceso no concede lecturas de `auth.sessions` al navegador. Compartir identidad limita la atribución por persona. Recuperación administrativa por enlace de Auth de un solo uso; ningún enlace o secreto vigente se guarda en Git/documentos. Ver [procedimiento](ACCESS.md).
+
+## Instalación en el dispositivo
+
+La PWA utiliza manifest e iconos públicos y un service worker del mismo origen. El worker pasa las navegaciones GET a la red; únicamente ante fallo de conexión muestra una respuesta pública sin datos y con `no-store`. No implementa CacheStorage, IndexedDB, cola de operaciones, push ni sincronización offline. No intercepta POST ni almacena respuestas privadas. La instalación no evita Auth/RLS ni altera el cierre de sesiones. No se introducen credenciales ni claves de push. Guía de uso en [PWA.md](PWA.md).
 
 ## Apertura manual de WhatsApp
 

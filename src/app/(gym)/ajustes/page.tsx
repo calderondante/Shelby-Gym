@@ -2,6 +2,7 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { PageHeading } from "@/components/shared/page-heading";
 import { ChangePasswordForm } from "@/features/auth/password-form";
+import { InstallApp } from "@/components/shared/pwa-provider";
 import { SettingsForm } from "@/features/gym/components/settings-form";
 import { requireStaff } from "@/features/gym/server/session";
 export default async function SettingsPage() {
@@ -19,6 +20,7 @@ export default async function SettingsPage() {
         title={data ? "Ajustes" : "Antes de empezar"}
         description="La moneda y las fechas con las que trabaja tu gimnasio."
       />
+      <InstallApp />
       {staff.role === "owner" && data ? (
         <div className="operation-tabs">
           <Link

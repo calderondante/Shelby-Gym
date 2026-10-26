@@ -106,3 +106,10 @@ El @ de Instagram no permite iniciar mensajes privados a cualquiera; su API tien
 **Alcance acordado → cuentas/destino → despliegue → funciones pendientes → datos y recuperación → prueba en dos equipos → capacitación y aceptación.**
 
 El número aún pendiente no bloquea publicar la gestión si se acuerda separar Meta. La falta de cuentas de hosting, permisos, corrección de abonos o pruebas de aceptación sí puede impedir una entrega completa hoy. No hay una hora garantizada ni un despliegue realizado por crear esta ruta.
+
+## Acceso instalado — 26/10/2026
+
+- [x] Mínimo de contraseña de 8 caracteres alineado entre formulario, servidor y Supabase remoto; clave existente conservada.
+- [x] Manifest standalone e iconos del logo, con ayuda de instalación en Login y Ajustes.
+- [x] Worker sin almacenamiento privado ni operaciones desconectadas.
+- [ ] Aceptar instalación y apertura desde el icono en iPhone/Android y PC reales del comprador.

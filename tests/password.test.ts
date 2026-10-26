@@ -11,11 +11,18 @@ describe("credenciales del gimnasio", () => {
         confirmation: "Una frase extensa para entrar",
       }).success,
     ).toBe(true));
-  it("rechaza claves cortas aunque coincidan", () =>
+  it("acepta exactamente ocho caracteres", () =>
     expect(
       newPasswordSchema.safeParse({
         password: "Shelby26",
         confirmation: "Shelby26",
+      }).success,
+    ).toBe(true));
+  it("rechaza siete caracteres aunque coincidan", () =>
+    expect(
+      newPasswordSchema.safeParse({
+        password: "Abc123!",
+        confirmation: "Abc123!",
       }).success,
     ).toBe(false));
   it("rechaza una confirmación diferente", () =>

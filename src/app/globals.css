@@ -2668,6 +2668,26 @@ html:not([data-input="keyboard"]) details[open] > :not(summary) {
   padding-block: 1rem;
   border-bottom: 1px solid var(--border);
 }
+
+.install-app summary {
+  min-height: 44px;
+  padding-block: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.install-app p,
+.install-app li {
+  margin-block: 12px;
+  line-height: 1.6;
+}
+.install-app ul {
+  list-style: disc;
+  padding-inline-start: 20px;
+}
+.install-app-compact {
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+}
 .manual-whatsapp-tools small {
   color: var(--muted-foreground);
 }

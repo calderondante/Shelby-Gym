@@ -195,3 +195,13 @@ Consequences: las consultas de vigencia deben distinguir fecha y sesiones. Los s
 - **Chosen solution:** lista por destinatario, enlace validado por servidor al abrir, confirmación en WhatsApp, copia y marcas de revisión locales a la pantalla.
 - **Reason:** encaja con el volumen del gimnasio sin credenciales Meta ni dependencias adicionales, y conserva control humano de cada envío.
 - **Consequences:** no hay envío masivo automático ni confirmación de entrega. Se usa la cuenta iniciada en el dispositivo; no se fuerza un remitente desde Canales. Las marcas no son historial persistente.
+
+## ADR-019 — Instalación web y mínimo de ocho caracteres
+
+- **Date:** 2026-10-26.
+- **Decision:** permitir contraseñas desde 8 caracteres e instalación de Shelby Gym en celular/PC sin barra de direcciones.
+- **Context:** el dueño solicita simplificar el acceso manteniendo la app web existente.
+- **Options:** aplicación nativa y tiendas; acceso solo en navegador; PWA con acceso directo y datos online.
+- **Chosen solution:** manifest standalone, iconos de la marca, guía e invitación nativa de instalación y worker de red con pantalla de desconexión pública. Mínimo 8 compartido por formulario/servidor y configurado en Auth.
+- **Reason:** conserva una base de código sin dependencias nuevas, tiendas ni almacenamiento offline de datos privados.
+- **Consequences:** cada dispositivo confirma la instalación una vez; iOS usa el menú Compartir. Sigue necesitando internet. La clave actual no cambia y se mantienen revalidación y revocación de sesiones.

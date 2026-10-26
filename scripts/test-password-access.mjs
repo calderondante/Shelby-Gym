@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync, mkdirSync } from "node:fs";
 import { parseEnv } from "node:util";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import { createClient } from "@supabase/supabase-js";
 import { chromium, expect } from "@playwright/test";
@@ -28,8 +28,10 @@ const session = () =>
 const suffix = randomUUID(),
   email = `password-${suffix}@example.test`,
   initial = "Initial-" + randomUUID(),
-  changed = "Changed-" + randomUUID(),
-  activated = "Activated-" + randomUUID();
+  changed = randomBytes(4).toString("hex"),
+  activated = randomBytes(4).toString("hex");
+assert.equal(changed.length, 8);
+assert.equal(activated.length, 8);
 const { data, error } = await admin.auth.admin.createUser({
   email,
   password: initial,
@@ -90,6 +92,9 @@ try {
   await expect(
     page.getByRole("heading", { name: "Contraseña de acceso" }),
   ).toBeVisible();
+  await expect(
+    page.getByLabel("Nueva contraseña", { exact: true }),
+  ).toHaveAttribute("minlength", "8");
   await page
     .getByLabel("Contraseña actual", { exact: true })
     .fill("Actual incorrecta");

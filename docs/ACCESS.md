@@ -5,7 +5,7 @@ Aprobado el 26/10/2026: para este gimnasio, los dueños quieren entrar únicamen
 ## Uso
 
 - Abrir la URL oficial de Netlify e introducir la contraseña del gimnasio.
-- La primera vez, abrir el enlace de activación entregado por el administrador técnico, pulsar **Elegir mi contraseña** y guardar una contraseña de al menos 12 caracteres con su confirmación.
+- La primera vez, abrir el enlace de activación entregado por el administrador técnico, pulsar **Elegir mi contraseña** y guardar una contraseña de al menos 8 caracteres con su confirmación. Se admiten hasta 128; una frase larga sigue siendo una buena opción.
 - Para cambiarla: **Ajustes → Contraseña de acceso**, indicar la clave actual, la nueva y su confirmación. Todas las sesiones de esa cuenta se cierran; cada dispositivo vuelve a entrar con la nueva.
 - Si se olvida la clave, el administrador técnico autorizado genera otro enlace de recuperación de un solo uso. No existe una clave maestra ni se reusa el PIN de la demo.
 

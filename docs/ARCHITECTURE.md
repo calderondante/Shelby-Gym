@@ -86,7 +86,7 @@ Drive es un archivo de entregables de código, diseño y documentación; no reem
 
 ## PWA y decisiones pendientes
 
-La experiencia responsive funciona sin instalación. PWA puede añadirse al confirmar necesidad de acceso desde pantalla de inicio; no se implementa caché offline de información privada ni sincronización de cobros desconectados. No hay funcionalidades nativas que justifiquen Expo/App Store en este alcance.
+La experiencia responsive funciona sin instalación y ahora permite instalar Shelby Gym con icono propio y `display: standalone`. Next publica `/manifest.webmanifest`; un proveedor cliente pequeño captura la invitación nativa y registra `/sw.js`. Las instrucciones están en Login y Ajustes. El worker deja los datos en la red, sin caché privada ni sincronización de cobros desconectados; muestra una pantalla pública ante falta de conexión. No hay funcionalidades nativas que justifiquen Expo/App Store en este alcance. Ver [instalación y límites](PWA.md).
 
 Confirmado: ARS y zona America/Argentina/Buenos_Aires. Pendientes de producto: campos obligatorios/duplicados, renovación anticipada y pausas, corrección auditada de pagos, gestión del personal, ofertas programadas, retención y backups, datos reales de volumen y sedes. Reglas iniciales explícitas en PRODUCT y DECISIONS.
 
