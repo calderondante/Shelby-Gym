@@ -101,3 +101,7 @@ La tabla `paper_enrollments` tiene RLS y lectura solo del dueño activo; no admi
 ## Contraseña compartida de dueños — 26/10/2026
 
 Modo elegido por el usuario: identidad técnica server-side y contraseña de 12 a 128 caracteres. Sin signup público ni service role en el hosting web. Cambio exclusivo de dueño, contraseña actual revalidada, confirmación de nueva clave, cierre global y comprobación de sesiones activas en la función de autorización DB. La migración de acceso no concede lecturas de `auth.sessions` al navegador. Compartir identidad limita la atribución por persona. Recuperación administrativa por enlace de Auth de un solo uso; ningún enlace o secreto vigente se guarda en Git/documentos. Ver [procedimiento](ACCESS.md).
+
+## Apertura manual de WhatsApp
+
+`/comunicaciones/whatsapp/[id]` exige dueño activo y revalida en servidor destinatario, autorización, estado/fecha y contenido con el contexto vigente antes de redirigir. El navegador no suministra teléfono, cuerpo ni URL de destino; se usa únicamente `https://wa.me/` con número validado y texto codificado. Respuestas privadas `no-store`, enlaces sin prefetch y sin referente. Los tests no navegan a WhatsApp ni contactan números reales; comprueban Location y atributos del enlace. No se registra entrega ni se cambia el ledger al abrir.

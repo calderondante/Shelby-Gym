@@ -37,7 +37,9 @@ test("comunicaciones: navegación responsive, privacidad, revisión y permisos",
     .fill("Consultá nuestro nuevo plan");
   await page.getByRole("button", { name: /Preparar 1 mensajes/ }).click();
   await expect(page).toHaveURL(/seccion=historial/);
-  await expect(page.locator("p[role=status]")).toContainText("No se enviaron");
+  await expect(page.locator("p.notice[role=status]")).toContainText(
+    "No se enviaron",
+  );
   await expect(
     page.locator(".operation-panel").filter({ hasText: seedName }).first(),
   ).toContainText("Hola " + seedName);
@@ -61,7 +63,9 @@ test("comunicaciones: navegación responsive, privacidad, revisión y permisos",
     .fill("Shelby Gym");
   await page.getByLabel("Número exclusivo de WhatsApp").fill("");
   await page.getByRole("button", { name: "Guardar datos" }).click();
-  await expect(page.locator("p[role=status]")).toContainText("guardados");
+  await expect(page.locator("p.notice[role=status]")).toContainText(
+    "guardados",
+  );
   mkdirSync("qa-artifacts/communications", { recursive: true });
   for (const width of [375, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });

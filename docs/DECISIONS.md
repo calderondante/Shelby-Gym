@@ -185,3 +185,13 @@ Consequences: las consultas de vigencia deben distinguir fecha y sesiones. Los s
 - **Chosen solution:** resolver identidad en servidor, mantener Auth/RLS, revalidar la clave actual al cambiar, cerrar sesiones y verificar su existencia en DB. Activación mediante enlace de recuperación de un solo uso.
 - **Reason:** simplifica el acceso sin trasladar la autorización al navegador.
 - **Consequences:** una cuenta compartida no atribuye acciones por persona; olvido requiere recuperación administrativa. La configuración de cuentas individuales sigue disponible sin la variable técnica.
+
+## ADR-018 — Mensajes manuales mediante Click to Chat
+
+- **Date:** 2026-10-26.
+- **Decision:** priorizar apertura manual de WhatsApp con texto y destinatario desde las copias preparadas.
+- **Context:** el dueño prefiere evitar los cargos de la API para el uso cotidiano y quiere seleccionar varias personas.
+- **Options:** Cloud API con facturación y programador; automatización de WhatsApp Web; enlaces oficiales individuales.
+- **Chosen solution:** lista por destinatario, enlace validado por servidor al abrir, confirmación en WhatsApp, copia y marcas de revisión locales a la pantalla.
+- **Reason:** encaja con el volumen del gimnasio sin credenciales Meta ni dependencias adicionales, y conserva control humano de cada envío.
+- **Consequences:** no hay envío masivo automático ni confirmación de entrega. Se usa la cuenta iniciada en el dispositivo; no se fuerza un remitente desde Canales. Las marcas no son historial persistente.

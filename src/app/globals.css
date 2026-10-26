@@ -2663,3 +2663,22 @@ html:not([data-input="keyboard"]) details[open] > :not(summary) {
   font-weight: 600;
   padding-block: 10px;
 }
+
+.manual-whatsapp-tools {
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.manual-whatsapp-tools small {
+  color: var(--muted-foreground);
+}
+.manual-whatsapp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding-block: 1rem;
+}
+.manual-whatsapp-actions .operation-check,
+.manual-whatsapp-actions [role="status"] {
+  flex-basis: 100%;
+}

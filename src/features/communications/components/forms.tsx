@@ -395,8 +395,9 @@ export function CampaignComposer({
         </p>
       ) : null}
       <p className="muted">
-        Preparar guarda una copia por destinatario. Las cuentas todavía no están
-        conectadas: no se enviará nada.
+        Preparar guarda una copia por destinatario. En WhatsApp podés abrir cada
+        chat desde Preparados y confirmar el envío. Instagram sigue pendiente de
+        conexión.
       </p>
     </CommunicationForm>
   );

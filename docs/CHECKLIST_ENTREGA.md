@@ -45,7 +45,7 @@ Referencias: [Netlify](https://www.netlify.com/pricing/), [Next.js en Netlify](h
 
 ## 3. Cerrar funciones necesarias de la primera entrega — desarrollador
 
-- [ ] Implementar el botón **Abrir WhatsApp** con teléfono internacional y mensaje personalizado. Actualmente se preparan copias; no existe todavía este botón en el código revisado.
+- [x] Implementar **Abrir WhatsApp** con teléfono internacional y texto personalizado: prevalidación de dueño/datos, apertura individual y copia; sin afirmar entrega. Ver [flujo manual](WHATSAPP_MANUAL.md).
 - [ ] Probarlo en celular y PC. El operador confirma cada envío en WhatsApp; no se puede afirmar enviado/entregado desde nuestra app por haber abierto un enlace.
 - [ ] Acordar qué cuenta de WhatsApp usará recepción. Un enlace abre la cuenta iniciada en el dispositivo; escribir el número del gimnasio en Ajustes no cambia el remitente.
 - [ ] Acordar e implementar la corrección auditada de abonos de socios: permiso, motivo, original conservado y ajuste trazable. Verificar saldo, ingresos y cierres; no resolverlo borrando o editando pagos en la base.

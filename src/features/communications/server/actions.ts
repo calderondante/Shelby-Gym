@@ -56,6 +56,7 @@ export async function communicationAction(
           "No pudimos guardar. Conservamos el formulario para que puedas revisar e intentar nuevamente."),
   });
   let section = "campanas";
+  let campaignId = "";
   if (op === "config") {
     section = "canales";
     const parsed = z
@@ -209,6 +210,7 @@ export async function communicationAction(
       p_customers: customers,
     });
     if (result.error) return failure(result.error);
+    campaignId = result.data ?? "";
     section = "historial";
   } else if (op === "preview") {
     section = "historial";
@@ -227,5 +229,7 @@ export async function communicationAction(
   } else return { error: "Operación no disponible." };
   revalidatePath("/comunicaciones");
   revalidatePath("/campanas");
-  redirect(`/comunicaciones?seccion=${section}&guardado=1`);
+  redirect(
+    `/comunicaciones?seccion=${section}&guardado=1${campaignId ? `&campana=${encodeURIComponent(campaignId)}` : ""}`,
+  );
 }

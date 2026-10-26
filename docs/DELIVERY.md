@@ -1,6 +1,6 @@
 # Despliegue operativo — 26/10/2026
 
-La aplicación Next de `main` está publicada en https://darling-smakager-792ffe.netlify.app con el adaptador oficial OpenNext de Netlify. Versión de código publicada: `4e6cf06`. Se corrigió la importación inicial de la demo estática y se configuró la rama de producción `main`. El PIN de GitHub Pages no sirve en este acceso.
+La aplicación Next está publicada en https://darling-smakager-792ffe.netlify.app con el adaptador oficial OpenNext de Netlify. La publicación sigue la rama `main`; el primer despliegue operativo fue `4e6cf06`. Se corrigió la importación inicial de la demo estática y se configuró la rama de producción `main`. El PIN de GitHub Pages no sirve en este acceso.
 
 Proyecto remoto: `smgxymlfjcdxabgippby`, organización **Shelby Gym**. Se comprobó que estaba vacío antes de aplicar las 18 migraciones versionadas. Hay 26 tablas públicas con RLS; no se cargaron clientes, pagos ni actividades ficticias. Se creó una identidad técnica de dueño con configuración ARS y `America/Argentina/Buenos_Aires`. El registro público está desactivado.
 
@@ -8,7 +8,7 @@ El dueño elige su contraseña con un enlace de activación de un solo uso entre
 
 Verificación: build y checks locales aprobados, 40 tests unitarios, 15 recorridos E2E cubiertos y suite de contraseña/activación con revocación de sesiones aprobada. En remoto se verificaron Auth del dueño, permisos de lectura, rechazo de consultas anónimas, login público en navegador a cinco anchos y axe sin violaciones. Las rutas privadas respondieron HTTP 307 hacia el login al comprobarlas sin sesión. Hubo fallos intermitentes de conexión del proxy de este entorno al navegar rutas remotas; no se sustituyen las pruebas pendientes en celulares físicos por esa comprobación.
 
-Comunicaciones sigue siendo preparación de mensajes: no hay proveedor conectado ni envíos automáticos. Backups, restauración, aceptación comercial y otras funciones pendientes siguen en [checklist](CHECKLIST_ENTREGA.md). La demo estática anterior se conserva en GitHub Pages y guarda únicamente en el navegador.
+Comunicaciones incorpora [WhatsApp manual](WHATSAPP_MANUAL.md): apertura individual con destinatario/texto preparados, copia y marcas de revisión de esta visita. No hay proveedor conectado ni envíos automáticos. Backups, restauración, aceptación comercial y otras funciones pendientes siguen en [checklist](CHECKLIST_ENTREGA.md). La demo estática anterior se conserva en GitHub Pages y guarda únicamente en el navegador.
 
 ---
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { uuid } from "@/features/gym/validation/contracts";
 import { PageHeading } from "@/components/shared/page-heading";
 import { getCommunications } from "@/features/communications/server/data";
 import {
@@ -7,6 +8,7 @@ import {
   RuleEditor,
   TemplateEditor,
 } from "@/features/communications/components/forms";
+import { PreparedMessages } from "@/features/communications/components/prepared-messages";
 import { todayIn } from "@/features/gym/domain/dates";
 export const metadata = { title: "Comunicaciones" };
 const sections = [
@@ -20,9 +22,18 @@ const sections = [
 export default async function CommunicationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ seccion?: string; guardado?: string }>;
+  searchParams: Promise<{
+    seccion?: string;
+    guardado?: string;
+    aviso?: string;
+    campana?: string;
+  }>;
 }) {
-  const [data, params] = await Promise.all([getCommunications(), searchParams]);
+  const params = await searchParams;
+  const campaignId = uuid.safeParse(params.campana).success
+    ? params.campana
+    : undefined;
+  const data = await getCommunications(campaignId);
   const section = sections.some((s) => s.id === params.seccion)
     ? params.seccion
     : "campanas";
@@ -41,9 +52,9 @@ export default async function CommunicationsPage({
         description="Mensajes personales, ofertas para volver y boletas en orden."
       />
       <p className="notice">
-        WhatsApp e Instagram pendientes de conectar. Todo se guarda como
-        preparado, sin enviar. Las reglas no se ejecutan en segundo plano
-        todavía.
+        WhatsApp manual disponible: prepará una lista y confirmá cada envío en
+        WhatsApp. Los envíos automáticos y la conexión de Instagram siguen
+        pendientes.
       </p>
       <nav
         className="communication-tabs"
@@ -59,6 +70,19 @@ export default async function CommunicationsPage({
           </Link>
         ))}
       </nav>
+      {params.aviso ? (
+        <p className="notice" role="alert">
+          {params.aviso === "fecha"
+            ? "Todavía no llegó la fecha prevista de este mensaje."
+            : params.aviso === "conexion"
+              ? "No pudimos comprobar los datos. Revisá la conexión y volvé a intentar; no se abrió WhatsApp."
+              : params.aviso === "contacto"
+                ? "El contacto o su autorización cambió. Revisá el perfil y prepará un mensaje nuevo."
+                : params.aviso === "cambios"
+                  ? "Cambió la situación o el contenido del aviso. Prepará una campaña nueva o revisá los avisos de hoy antes de abrir WhatsApp."
+                  : "Este mensaje no está disponible para abrir en WhatsApp. Puede estar cancelado o corresponder a otro canal."}
+        </p>
+      ) : null}
       {params.guardado ? (
         <p className="notice" role="status">
           Cambios guardados. No se enviaron mensajes.
@@ -91,6 +115,14 @@ export default async function CommunicationsPage({
                   </div>
                   <p className="campaign-message">{c.message}</p>
                   <small>{timestamp(c.created_at)} · sin enviar</small>
+                  {c.status === "prepared" ? (
+                    <Link
+                      className="text-link"
+                      href={`/comunicaciones?seccion=historial&campana=${c.id}`}
+                    >
+                      Revisar mensajes de esta campaña →
+                    </Link>
+                  ) : null}
                 </article>
               ))
             ) : (
@@ -129,9 +161,8 @@ export default async function CommunicationsPage({
         <section className="operation-section">
           <h2>Reglas de preparación</h2>
           <p>
-            Configurá los mensajes ahora. Hasta conectar los canales y activar
-            un servicio programado, usá «Revisar avisos de hoy» para generar las
-            propuestas sin enviarlas.
+            Usá «Revisar avisos de hoy» para preparar los recordatorios. Después
+            abrí cada chat desde Preparados y confirmá el envío en WhatsApp.
           </p>
           {data.rules.map((r) => (
             <section className="operation-panel" key={r.kind}>
@@ -164,8 +195,8 @@ export default async function CommunicationsPage({
         <section className="operation-section">
           <h2>¿Quién recibe las boletas?</h2>
           <p>
-            Estos contactos recibirán avisos privados cuando se conecte
-            WhatsApp. No se usan para contactar clientes.
+            Prepará sus avisos y abrí cada chat en WhatsApp para confirmar el
+            envío. No se usan para contactar clientes.
           </p>
           {data.owners.map((o) => (
             <details className="communication-details" key={o.id}>
@@ -232,11 +263,11 @@ export default async function CommunicationsPage({
           <div className="operation-grid">
             <article className="operation-panel">
               <h2>WhatsApp</h2>
-              <p>Pendiente de vincular</p>
+              <p>Apertura manual disponible</p>
               <small>
-                Número exclusivo, cuenta de empresa y plantillas aprobadas para
-                iniciar conversaciones. La conexión se hará del lado del
-                servidor.
+                Abrí los mensajes preparados con la cuenta de WhatsApp que
+                tengas iniciada en el dispositivo. El envío manual no utiliza la
+                API de Meta.
               </small>
             </article>
             <article className="operation-panel">
@@ -283,8 +314,9 @@ export default async function CommunicationsPage({
               />
             </label>
             <p className="muted">
-              Guardar estos datos no conecta las cuentas. No pegues contraseñas
-              ni tokens aquí.
+              El número guardado es una referencia: no cambia la cuenta desde la
+              que WhatsApp envía. Revisá qué cuenta tenés iniciada antes de
+              confirmar. No pegues contraseñas ni tokens aquí.
             </p>
           </CommunicationForm>
         </>
@@ -293,55 +325,32 @@ export default async function CommunicationsPage({
         <section className="operation-section">
           <div className="operation-entry">
             <h2>Mensajes preparados</h2>
-            <span>Últimos 200</span>
+            <span>{campaignId ? "Esta campaña" : "Últimos 200"}</span>
           </div>
           <p>
             Cada fila representa un mensaje privado. «Preparado» nunca significa
             enviado ni entregado.
           </p>
-          {data.outbox.length ? (
-            data.outbox.map((m) => (
-              <article className="operation-panel" key={m.id}>
-                <div className="operation-entry">
-                  <h3>{m.recipient_name}</h3>
-                  <strong>
-                    {m.status === "cancelled"
-                      ? "Cancelado"
-                      : "Preparado · Sin enviar"}
-                  </strong>
-                </div>
-                <small>
-                  {m.channel === "whatsapp" ? "WhatsApp" : "Instagram"} ·{" "}
-                  {m.destination} · {timestamp(m.scheduled_for)}
-                </small>
-                <p className="campaign-message">{m.body}</p>
-                <small>
-                  {m.source === "expense"
-                    ? "Boleta a dueño"
-                    : m.source === "recovery"
-                      ? "Regla de regreso"
-                      : "Campaña"}{" "}
-                  · {m.note}
-                </small>
-                {m.status === "prepared" ? (
-                  <CommunicationForm
-                    operation="cancel"
-                    id={m.id}
-                    label="Cancelar preparación"
-                  >
-                    <span className="sr-only">
-                      Cancelar mensaje para {m.recipient_name}
-                    </span>
-                  </CommunicationForm>
-                ) : null}
-              </article>
-            ))
-          ) : (
-            <p className="daily-empty">
-              Todavía no hay mensajes preparados. Podés crear una campaña o
-              revisar las reglas de hoy.
-            </p>
-          )}
+          <p className="notice">
+            Se abre WhatsApp del celular o WhatsApp Web en PC. Cada destinatario
+            tiene su propio chat; vos confirmás el envío allí. Revisá que estés
+            usando la cuenta del gimnasio.
+          </p>
+          {campaignId ? (
+            <Link
+              className="text-link"
+              href="/comunicaciones?seccion=historial"
+            >
+              Ver todos los avisos preparados →
+            </Link>
+          ) : null}
+          <PreparedMessages
+            messages={data.outbox.map((m) => ({
+              ...m,
+              scheduledLabel: timestamp(m.scheduled_for),
+            }))}
+            now={new Date().toISOString()}
+          />
         </section>
       ) : null}
     </>

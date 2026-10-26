@@ -1,6 +1,8 @@
 # Comunicaciones de Shelby Gym
 
-Estado al 2026-10-25: centro de preparación implementado. El gimnasio todavía no dispone de número exclusivo ni cuenta profesional lista para conectar. **No hay envíos, credenciales Meta, webhook ni programador activo.** GitHub Pages es una demo local al navegador, sin backend; la implementación Next/Supabase guarda la configuración de forma persistente y restringida al dueño cuando se despliega con su base de datos.
+Estado al 2026-10-26: centro de preparación implementado y aplicación Next/Supabase desplegada en Netlify. El gimnasio todavía no dispone de número exclusivo ni cuenta profesional lista para conectar. **WhatsApp manual disponible mediante Click to Chat; no hay envíos automáticos, credenciales Meta, webhook ni programador activo.** GitHub Pages es una demo local al navegador, sin backend; la implementación Next/Supabase guarda la configuración de forma persistente y restringida al dueño en su base de datos remota.
+
+Ver [WhatsApp manual](WHATSAPP_MANUAL.md) para abrir cada chat con destinatario y texto ya preparados, sin usar la API.
 
 ## Uso
 
@@ -11,7 +13,7 @@ En **Mensajes** hay seis secciones:
 - **Automatizaciones:** configurar la preparación de regreso para clientes seleccionados o todos los elegibles; configurar boletas antes del vencimiento (3 días iniciales), ese día y repetición mientras haya saldo (cada día inicialmente). Los plazos y la hora son editables; el horario es Argentina. «Habilitar» habilita la regla de preparación, no un envío. «Revisar avisos de hoy» evalúa las reglas manualmente.
 - **Dueños:** nombre y celular internacional de cada receptor de boletas; desactivar preserva el historial. El aviso es privado a cada dueño activo.
 - **Canales:** guardar nombre del gimnasio, futuro número e Instagram. Los campos son opcionales hasta conseguir las cuentas. Guardar no conecta nada; no introducir contraseñas ni tokens.
-- **Preparados:** últimas 200 copias personalizadas, destino, canal, fecha prevista y origen. Estados posibles: Preparado / Sin enviar y Cancelado. Se puede cancelar una copia antes de enviarla. Las campañas previas se conservan como borradores anteriores.
+- **Preparados:** últimas 200 copias personalizadas, destino, canal, fecha prevista y origen. WhatsApp permite abrir cada chat y copiar el texto; las marcas de revisión organizan esta visita, sin registrar entrega. Estados posibles: Preparado / Sin enviar y Cancelado. Se puede cancelar una copia antes de enviarla. Las campañas previas se conservan como borradores anteriores.
 
 ## Destinatarios y reglas
 
@@ -23,6 +25,8 @@ Cada campaña usa una clave de idempotencia. La regla de regreso prepara una sol
 
 Al revisar se cancelan propuestas automáticas cuando la cuota se renueva, se revoca el consentimiento, cambia el destino, el dueño se desactiva o la boleta se salda. El pago parcial reduce el saldo. Las copias manuales son snapshots revisables/cancelables: una futura integración debe revalidar **también en el instante de enviar**. Las reglas comienzan deshabilitadas. Las propuestas canceladas no se reactivan solas: preparar una campaña nueva permite revisión explícita.
 
+Ver [guía de vinculación de WhatsApp e Instagram](META_SETUP.md), investigada el 26/10/2026, con requisitos del dueño, pasos de Meta, limitaciones y desarrollo pendiente.
+
 ## Conectar más adelante
 
 1. Obtener el número exclusivo y la cuenta de WhatsApp Business Platform; confirmar empresa, permisos, consentimiento y mecanismo para darse de baja. Registrar/promover las plantillas que Meta exija para iniciar conversaciones.
@@ -32,7 +36,7 @@ Al revisar se cancelan propuestas automáticas cuando la cuota se renueva, se re
 5. Desplegar Next y Supabase remotos con autenticación real y un programador protegido. GitHub Pages no ejecuta tareas ni protege datos privados con su PIN de demostración.
 6. Probar con números de prueba, revisar contenido, límites, coste y monitoreo. Activar canales/reglas de forma deliberada cuando los dueños estén listos. No enviar campañas reales como prueba de desarrollo.
 
-Estas tareas quedan pendientes hasta disponer de las cuentas. No se prometen envíos automáticos efectivos en esta entrega.
+Estas tareas quedan pendientes hasta disponer de las cuentas. La alternativa manual ya puede utilizarse sin esta conexión; los envíos automáticos siguen pendientes.
 
 ## Verificación
 

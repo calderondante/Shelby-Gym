@@ -2,8 +2,17 @@ import "server-only";
 import { requireOwner, requireSettings } from "@/features/gym/server/session";
 import { allPages } from "@/features/gym/server/operations";
 import type { Recipient } from "../domain/messages";
-export async function getCommunications() {
+export async function getCommunications(campaignId?: string) {
   const [{ db }, gym] = await Promise.all([requireOwner(), requireSettings()]);
+  let outboxQuery = db
+    .from("communication_outbox")
+    .select(
+      "id,campaign_id,customer_id,owner_contact_id,expense_id,source,channel,recipient_name,destination,body,scheduled_for,status,note,created_at,updated_at",
+    )
+    .order("scheduled_for", { ascending: false })
+    .order("id")
+    .limit(campaignId ? 500 : 200);
+  if (campaignId) outboxQuery = outboxQuery.eq("campaign_id", campaignId);
   const [
     config,
     templates,
@@ -52,14 +61,7 @@ export async function getCommunications() {
         .order("id")
         .range(n, n + 999),
     ),
-    db
-      .from("communication_outbox")
-      .select(
-        "id,campaign_id,customer_id,owner_contact_id,expense_id,source,channel,recipient_name,destination,body,scheduled_for,status,note,created_at,updated_at",
-      )
-      .order("scheduled_for", { ascending: false })
-      .order("id")
-      .limit(200),
+    outboxQuery,
     db
       .from("campaigns")
       .select(

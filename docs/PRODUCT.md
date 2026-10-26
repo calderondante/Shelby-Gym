@@ -229,3 +229,7 @@ Aprobado: la carga inicial principal es manual desde papel, con inicio pasado, c
 ## Acceso simplificado aprobado — 26/10/2026
 
 Los dueños entran con una única contraseña, sin correo visible, y pueden cambiarla desde Ajustes indicando la actual. Supabase Auth conserva las sesiones y permisos. El acceso compartido no distingue acciones entre personas; recuperación mediante enlace de un solo uso generado por el administrador técnico. Ver [acceso y límites](ACCESS.md).
+
+## WhatsApp manual aprobado — 26/10/2026
+
+Seleccionar varios clientes y preparar un mensaje privado por persona; abrir cada chat con destinatario y texto cargados para que el operador confirme el envío. Prioridad de coste: Click to Chat sin Cloud API. Conservar consentimiento, permisos, fecha y revalidación de datos. No marcar como enviado/entregado por abrir el enlace ni abrir todos los chats automáticamente. Marca de revisión solo para la visita a esta pantalla. Ver [flujo](WHATSAPP_MANUAL.md).
