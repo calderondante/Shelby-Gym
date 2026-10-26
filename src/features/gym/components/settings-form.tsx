@@ -54,7 +54,9 @@ export function SettingsForm({
         />
         <p className="muted">
           Las fechas de inicio y vencimiento usan esta zona horaria. Confirmá
-          estos datos antes de registrar la primera cuota.
+          estos datos antes de registrar la primera cuota o gasto. Después, la
+          moneda y la zona horaria quedan protegidas para conservar el
+          historial.
         </p>
         <FormFeedback state={state} />
         <SubmitButton>Guardar configuración</SubmitButton>

@@ -87,3 +87,9 @@ Antes del uso real: configurar hosting de Next.js, proyecto Supabase, cuentas in
 Nuevos datos personales: consentimiento separado de IG, celulares de dueños y copias de mensajes. Solo dueño activo puede leer las seis tablas y ejecutar las RPC; monitor, anónimo y usuario sin staff no administran comunicaciones. Formularios sin tokens, SDK Meta o conexión ficticia. Mensajes se renderizan como texto, nunca HTML. Teléfonos requieren formato internacional; no se asume país a partir de cifras.
 
 La revisión automática vuelve a comprobar permiso/contacto/vencimiento/saldo y cancela propuestas obsoletas. Los snapshots manuales no son autorización perpetua: la futura conexión debe verificar de nuevo al despachar, comprobar firmas de webhooks, evitar IDOR y duplicados, respetar bajas, ventanas y límites del proveedor y proteger endpoints programados. Retención/borrado de mensajes y evidencia legal de consentimiento se deben acordar antes de activar campañas reales. No se envían mensajes en desarrollo. El PIN público de GitHub Pages es exclusivamente demostrativo y sus datos siguen en el navegador: no introducir información real.
+
+## Auditoría de administrador — 2026-10-26
+
+Se retiraron Next 16.3.8 y Zod 4.6.5 tras verificar cuatro avisos públicos. Versiones corregidas: Next/eslint-config-next 16.4.1 y Zod 4.6.6; `pnpm audit --prod` devuelve cero avisos conocidos. No se demostró explotación. Las 25 tablas tienen RLS, las tres vistas son invoker y las RPC privilegiadas no son ejecutables por anónimo. Metadata editable del monitor no puede elevar su rol.
+
+Nueva protección: con cuotas/gastos existentes no se permite cambiar la zona horaria desde Ajustes, porque alteraría la interpretación de fechas del historial. Los errores de red no afirman que un pago no se haya guardado: se indica revisar el historial antes de repetir. Ver [auditoría mensual](AUDIT_2026-10-26.md), alcance y pendientes de producción.

@@ -155,3 +155,13 @@ Consequences: las consultas de vigencia deben distinguir fecha y sesiones. Los s
 - **Chosen solution:** preparación por destinatario, consentimientos separados, dos meses calendario desde vencimiento, reglas de boletas con saldo real, idempotencia y cancelación; configuración sin secretos. Las reglas solo se evalúan manualmente hasta incorporar canales y programador. La demo conserva su almacenamiento local; Next/Supabase ofrece persistencia y permisos reales al desplegarse.
 - **Reason:** permite revisar y configurar el flujo ya, conserva deudas e historial y evita presentar mensajes preparados como entregados. Instagram no permite campañas frías por conocer un @.
 - **Consequences:** no hay cron, OAuth, webhooks ni envíos efectivos en esta entrega. Conectar Meta exigirá verificar políticas, identificadores de conversación, plantillas, consentimiento, coste y límites, además de un worker seguro y revalidación antes de despachar. Ver [COMMUNICATIONS.md](COMMUNICATIONS.md).
+
+## ADR-015 — Conservar la zona horaria de la operación financiera
+
+- **Date:** 2026-10-26 (UTC).
+- **Decision:** proteger la zona horaria, además de la moneda, después de crear cuotas o gastos.
+- **Context:** la auditoría reprodujo que cambiar la zona reinterpretaba el día de cobros almacenados como timestamps; cerca de medianoche puede cambiar incluso su mes.
+- **Options:** permitir el cambio y recalcular; agregar snapshots de zona/fecha a todas las operaciones y migrar las anteriores; bloquear el ajuste cotidiano después de iniciar la contabilidad.
+- **Chosen solution:** `configure_gym` rechaza el cambio con `TIME_ZONE_LOCKED` si existen obligaciones. Se mantiene el bloqueo de moneda y se explican las consecuencias en Ajustes. Una modificación excepcional necesitará revisión y migración explícitas.
+- **Reason:** preserva el historial de este gimnasio, cuyo horario argentino fue confirmado, con el menor cambio de schema y sin reinterpretar registros.
+- **Consequences:** no se corrige un horario inicial equivocado desde un formulario una vez que hubo actividad. Requiere intervención técnica y evaluación de fechas/backup. El bloqueo se comprueba por API, navegador y reconstrucción de migraciones.

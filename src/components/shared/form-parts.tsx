@@ -40,7 +40,7 @@ export function FormFeedback({ state }: { state: ActionResult }) {
       role={state.error ? "alert" : "status"}
     >
       <AlertTitle>
-        {state.error ? "No se guardó la operación" : "Listo"}
+        {state.error ? "No pudimos confirmar la operación" : "Listo"}
       </AlertTitle>
       <AlertDescription>
         {state.error ?? state.success}

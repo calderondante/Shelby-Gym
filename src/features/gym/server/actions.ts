@@ -43,6 +43,8 @@ function failure(message: string): ActionResult {
     INVALID_STATUS: "El estado solicitado no es válido.",
     REQUEST_CONFLICT:
       "Esta operación ya fue registrada con otros datos. Actualizá la pantalla.",
+    TIME_ZONE_LOCKED:
+      "Ya hay cuotas o gastos registrados. Cambiar la zona horaria alteraría las fechas del historial; requiere una revisión técnica.",
     CURRENCY_LOCKED:
       "Ya hay cuotas o gastos registrados. La moneda no se puede cambiar desde aquí.",
     FORBIDDEN: "Tu cuenta no tiene permiso para realizar esta acción.",
@@ -54,7 +56,7 @@ function failure(message: string): ActionResult {
   return {
     error:
       messages[message] ??
-      "No se pudo guardar. Tus datos siguen en el formulario; revisá la conexión e intentá de nuevo.",
+      "No pudimos confirmar el guardado. Revisá la conexión y consultá el historial antes de volver a registrar un pago.",
   };
 }
 function text(form: FormData, name: string) {

@@ -38,6 +38,8 @@ Ver [Desarrollo y operación](docs/DEVELOPMENT.md) para setup, permisos, pruebas
 
 La renovación anticipada, pausas, corrección/anulación de abonos y gestión visual del personal no forman parte de esta primera entrega. Ver reglas y pendientes en [Producto](docs/PRODUCT.md).
 
+Informe de [auditoría de 45 días de uso](docs/AUDIT_2026-10-26.md), correcciones y pendientes antes de producción.
+
 ## Verificar
 
 ```bash

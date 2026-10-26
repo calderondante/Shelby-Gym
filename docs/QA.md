@@ -190,3 +190,11 @@ Comandos: `pnpm test`, `pnpm test:integration`, `pnpm test:e2e`, `pnpm test:page
 - Continúa pendiente prueba física con Safari/iPhone y Chrome/Android. La entrega prepara configuraciones y copias: no activa Meta, webhooks ni ejecución programada. Protocolo para conectar más adelante en [COMMUNICATIONS.md](COMMUNICATIONS.md).
 
 Publicación verificada: GitHub Pages terminó el build de `0f7bd67`. El recorrido de comunicaciones pasó también contra la URL pública, en un navegador aislado; los hashes de `app.js` y `communications.js` coinciden con los archivos publicados. La prueba espera la sección renderizada tras cambiar el hash, además de esperar la URL, para no confundir navegación iniciada con contenido disponible. El formulario de canales conserva el borrador tras rechazar un celular inválido, comprobado también contra Next.
+
+## Simulación de 45 días — 2026-10-26
+
+`pnpm test:month`: calendario ficticio 25/01/2027–10/03/2027, 37 perfiles, 127 operaciones, 49 movimientos financieros (incluidos registros heredados), 159 verificaciones de escenarios correctas, sin errores JS. Conciliación independiente de cobros, deudas, gastos, resúmenes y cierres; alta, inflación, clases, deudas, regreso tras meses, baja/retiro/recuperación, sorteo, +30 días y revisión diaria de mensajes sin envíos. Cinco viewports y Axe sobre pantallas con un mes de uso. El navegador y los datos están aislados de la demo pública.
+
+`pnpm test:admin` añade comprobación de zona horaria protegida, escalada por metadata rechazada y cobros concurrentes del saldo. Regresiones de Auth/RLS/importación/operaciones/comunicaciones correctas tras actualizar Next 16.4.1 y Zod 4.6.6. Auditoría runtime posterior: cero avisos conocidos; historial de migraciones reconstruido desde cero. Ver [informe, pruebas y limitaciones](AUDIT_2026-10-26.md).
+
+Resultado final del build de producción Next 16.4.1: **12/12 E2E correctos**, incluidos zona horaria bloqueada y pérdida de respuesta tras un abono ya confirmado en servidor. Al volver al perfil hay exactamente un pago adicional. También pasan las 28 pruebas de dominio y las suites locales de integración, comunicaciones y administrador. No se acreditan dispositivos físicos ni envíos Meta reales.

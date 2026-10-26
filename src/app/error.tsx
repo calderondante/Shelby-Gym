@@ -10,8 +10,9 @@ export default function ErrorPage({
     <section className="error-view" role="alert">
       <h1>No pudimos cargar la información</h1>
       <p>
-        Revisá tu conexión y volvé a intentarlo. No se confirmó ningún cambio
-        desde esta pantalla.
+        Revisá tu conexión y volvé a cargar la pantalla. Si estabas guardando un
+        pago, pudo haberse registrado aunque no haya llegado la respuesta.
+        Consultá el historial antes de volver a cargarlo.
       </p>
       <Button onClick={reset}>Reintentar</Button>
     </section>
