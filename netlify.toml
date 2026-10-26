@@ -11,4 +11,12 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+# CDN-served public files do not inherit Next's response headers.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Service-Worker-Allowed = "/"
+    X-Content-Type-Options = "nosniff"
+
 # Supabase values live in Netlify's production environment, never in this file.
