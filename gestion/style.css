@@ -1325,3 +1325,92 @@ textarea {
     break-inside: avoid;
   }
 }
+
+/* Communications: clear recipient selection and a quiet, personal message preview. */
+.comm-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  max-width: 100%;
+  padding: 4px 0 14px;
+  margin: 20px 0;
+}
+.comm-tabs a {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.comm-tabs a[aria-current] {
+  color: #fff;
+  background: #241a1d;
+  box-shadow: inset 0 -2px var(--red);
+}
+.comm-details {
+  border-bottom: 1px solid var(--line);
+  padding: 16px 0;
+}
+.comm-details summary {
+  min-height: 44px;
+  cursor: pointer;
+  font-weight: 650;
+}
+.comm-details summary small {
+  display: block;
+  padding: 5px 0 0 18px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.comm-details .panel {
+  margin-top: 16px;
+}
+.comm-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 14px 0;
+}
+.comm-recipient-scroll {
+  max-height: 360px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.comm-preview {
+  display: grid;
+  gap: 12px;
+  background: #202024;
+  padding: 22px;
+  border-radius: 14px;
+  margin-top: 22px;
+  overflow-wrap: anywhere;
+}
+.comm-preview p {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  margin: 0;
+}
+.comm-preview small,
+.comm-footnote {
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 13px;
+}
+.comm-footnote {
+  margin: 14px 0;
+}
+[data-comm-rule] > .ops-check {
+  margin: 16px 0;
+}
+[hidden] {
+  display: none !important;
+}
+@media (max-width: 899px) {
+  .bottomnav a {
+    min-width: 0;
+    flex: 1;
+    padding-inline: 4px;
+    font-size: 11px;
+  }
+}

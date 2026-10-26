@@ -48,7 +48,7 @@ function validInstagram(value) {
   return !value || /^@[A-Za-z0-9_.]{1,30}$/.test(value);
 }
 function instagramFields(prefix, c = {}) {
-  return `<div class="field"><label for="${prefix}-instagram">Instagram (opcional)</label><input id="${prefix}-instagram" value="${escapeHtml(c.instagram || "")}" maxlength="31" placeholder="@usuario" autocapitalize="none" autocorrect="off"></div><label class="ops-check field wide"><input id="${prefix}-marketing" type="checkbox" ${c.marketingOptIn ? "checked" : ""}>Acepta recibir ofertas por WhatsApp</label>`;
+  return `<div class="field"><label for="${prefix}-instagram">Instagram (opcional)</label><input id="${prefix}-instagram" value="${escapeHtml(c.instagram || "")}" maxlength="31" placeholder="@usuario" autocapitalize="none" autocorrect="off"></div><label class="ops-check field wide"><input id="${prefix}-marketing" type="checkbox" ${c.marketingOptIn ? "checked" : ""}>Acepta recibir ofertas por WhatsApp</label><label class="ops-check field wide"><input id="${prefix}-instagram-marketing" type="checkbox" ${c.instagramMarketingOptIn ? "checked" : ""}>Acepta recibir ofertas por Instagram</label>`;
 }
 function upgradeOperationsState() {
   state.expenses ||= [];
@@ -561,74 +561,4 @@ function monthReport(requestedMonth, version) {
       monthReport(month, "cierre");
       toast("Cierre mensual conservado.");
     };
-}
-function campaignsPage() {
-  const candidates = state.customers.filter(
-    (c) =>
-      !c.deletedAt &&
-      membershipEnd(c) &&
-      addMonths(membershipEnd(c), 2) <= today(),
-  );
-  app.innerHTML = layout(
-    `<section class="hero"><span class="eyebrow">RELACIÓN CON SOCIOS</span><h1>Que vuelvan a entrenar.</h1><p>Socios cuya última cuota venció hace dos meses calendario o más. Elegí a quién ofrecerle un nuevo plan.</p></section><p class="notice">WhatsApp todavía no está conectado. Podés preparar mensajes y destinatarios; esta muestra no envía avisos.</p><form class="panel" id="campaign-form"><div class="form-grid">${opsField("campaign-title", "Nombre de campaña", "Volvé a Shelby", "text", 'required minlength="2" maxlength="100"')}<div class="field"><label for="campaign-activity">Plan para ofrecer (opcional)</label><select id="campaign-activity"><option value="">Sin plan específico</option>${state.activities
-      .filter((a) => a.unit !== "sessions")
-      .map(
-        (a) =>
-          `<option value="${a.id}">${escapeHtml(a.name)} · ${money.format(a.price)}</option>`,
-      )
-      .join(
-        "",
-      )}</select></div><div class="field wide"><label for="campaign-message">Mensaje de la campaña</label><textarea id="campaign-message" rows="4" minlength="5" maxlength="1500" required>¡Hola! Te esperamos en Shelby Gym. Tenemos propuestas para que vuelvas a entrenar. ¿Querés que te contemos?</textarea></div></div><fieldset class="ops-recipients"><legend>Seleccioná destinatarios</legend>${
-      candidates.length
-        ? candidates
-            .map((c) => {
-              const enabled = !!c.phone?.trim() && c.marketingOptIn;
-              return `<label class="ops-person"><input type="checkbox" name="recipient" value="${escapeHtml(c.id)}" ${enabled ? "" : "disabled"}><span><strong>${escapeHtml(c.name)}</strong><small>Venció ${dateLabel(membershipEnd(c))} · ${escapeHtml(c.phone || "Sin celular")} · ${escapeHtml(c.instagram || "")}</small><small>${balance(c) ? `Deuda anterior: ${money.format(balance(c))}` : "Sin deuda anterior"}${enabled ? "" : ` · ${c.marketingOptIn ? "Falta celular" : "Sin autorización para promociones"}`}</small></span></label>`;
-            })
-            .join("")
-        : '<p class="empty">No hay socios que cumplan los dos meses desde el vencimiento.</p>'
-    }</fieldset><div class="form-actions"><button class="button" type="submit">Guardar campaña preparada</button></div><p class="notice">Guardar no envía mensajes ni modifica precios o deudas. Los envíos se activarán cuando se configure el número del gimnasio.</p></form><section class="ops-section"><h2>Campañas preparadas</h2>${state.campaigns.length ? state.campaigns.map((c) => `<article class="ops-item"><div class="ops-entry"><h3>${escapeHtml(c.title)}</h3><span>Borrador · ${c.recipients.length} destinatarios</span></div><p class="ops-message">${escapeHtml(c.message)}</p><small>${dateLabel(c.date)} · pendiente de conectar WhatsApp</small></article>`).join("") : '<p class="empty">Todavía no preparaste campañas.</p>'}</section>`,
-    "inicio",
-  );
-  document.querySelector("#campaign-form").onsubmit = (event) => {
-    event.preventDefault();
-    const title = document.querySelector("#campaign-title").value.trim(),
-      message = document.querySelector("#campaign-message").value.trim(),
-      activityId = document.querySelector("#campaign-activity").value,
-      recipients = [
-        ...document.querySelectorAll('input[name="recipient"]:checked'),
-      ].map((x) => x.value);
-    if (title.length < 2 || message.length < 5 || !recipients.length)
-      return toast(
-        "Completá el mensaje y seleccioná al menos un destinatario habilitado.",
-      );
-    if (
-      recipients.some((id) => {
-        const c = state.customers.find((c) => c.id === id);
-        return (
-          !c ||
-          c.deletedAt ||
-          !c.marketingOptIn ||
-          !c.phone ||
-          !membershipEnd(c) ||
-          addMonths(membershipEnd(c), 2) > today()
-        );
-      })
-    )
-      return toast(
-        "Cambió la situación de un destinatario. Actualizá la selección.",
-      );
-    state.campaigns.unshift({
-      id: crypto.randomUUID(),
-      title,
-      message,
-      activityId,
-      recipients,
-      date: today(),
-      status: "draft",
-    });
-    save();
-    campaignsPage();
-    toast("Campaña preparada. No se enviaron mensajes.");
-  };
 }

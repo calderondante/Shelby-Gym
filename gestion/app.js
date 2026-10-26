@@ -194,6 +194,7 @@ for (const customer of state.customers) {
 }
 if (cleanedBirthDates) localStorage.setItem(KEY, JSON.stringify(state));
 upgradeOperationsState();
+upgradeCommunicationsState();
 function save() {
   localStorage.setItem(KEY, JSON.stringify(state));
 }
@@ -269,7 +270,7 @@ function revealFilteredList() {
 }
 const brand = `<div class="brand" aria-label="Shelby Gym"><span class="brand-emblem"><img src="shelby-reference.jpg" alt="" width="574" height="1280"></span><span>SHELBY<b>GYM</b></span></div>`;
 function nav(section) {
-  return `<nav class="bottomnav" aria-label="Secciones"><a href="#inicio" ${section === "inicio" ? 'aria-current="page"' : ""}><span aria-hidden="true">⌂</span>Inicio</a><a href="#actividades" ${section === "actividades" ? 'aria-current="page"' : ""}><span aria-hidden="true">◈</span>Actividades</a><a href="#clientes" ${section === "clientes" ? 'aria-current="page"' : ""}><span aria-hidden="true">☷</span>Clientes</a><a href="#movimientos" ${section === "movimientos" ? 'aria-current="page"' : ""}><span aria-hidden="true">≡</span>Historial</a></nav>`;
+  return `<nav class="bottomnav" aria-label="Secciones"><a href="#inicio" ${section === "inicio" ? 'aria-current="page"' : ""}><span aria-hidden="true">⌂</span>Inicio</a><a href="#actividades" ${section === "actividades" ? 'aria-current="page"' : ""}><span aria-hidden="true">◈</span>Actividades</a><a href="#clientes" ${section === "clientes" ? 'aria-current="page"' : ""}><span aria-hidden="true">☷</span>Clientes</a><a href="#movimientos" ${section === "movimientos" ? 'aria-current="page"' : ""}><span aria-hidden="true">≡</span>Historial</a><a href="#comunicaciones/campanas" ${section === "comunicaciones" ? 'aria-current="page"' : ""}><span aria-hidden="true">✉</span>Mensajes</a></nav>`;
 }
 function layout(content, section) {
   return `<div class="shell"><a class="skip-link" href="#main">Saltar al contenido</a><header class="topbar">${brand}<span class="demo-badge">DEMO · DATOS FICTICIOS</span></header>${nav(section)}<main id="main" tabindex="-1">${content}</main><footer class="footnote">Vista previa interactiva. Los cambios se guardan únicamente en este navegador; no hay clientes reales ni cobros.</footer></div>`;
@@ -586,6 +587,9 @@ function newCustomer() {
       phone,
       instagram,
       marketingOptIn,
+      instagramMarketingOptIn: document.querySelector(
+        "#customer-instagram-marketing",
+      ).checked,
       birthMonth: birthMonth || null,
       activityId,
       activityName: activity.name,
@@ -1069,6 +1073,9 @@ function edit(id) {
     if (!validInstagram(instagram)) return toast("Revisá el @ de Instagram.");
     c.instagram = instagram;
     c.marketingOptIn = document.querySelector("#edit-marketing").checked;
+    c.instagramMarketingOptIn = document.querySelector(
+      "#edit-instagram-marketing",
+    ).checked;
     const birthMonth = Number(
       document.querySelector("#edit-birth-month").value,
     );
@@ -1118,7 +1125,8 @@ function render() {
       plantillas: () => templateEditor(id),
       resumen: () => monthReport(id, period),
       clase: () => sessionPage(id, period === undefined ? -1 : Number(period)),
-      campanas: campaignsPage,
+      campanas: () => commPage("campanas"),
+      comunicaciones: () => commPage(id),
     })[path] || home
   )();
   if (!changingHistoryDay) window.scrollTo({ top: 0, behavior: "instant" });
