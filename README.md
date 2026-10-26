@@ -34,7 +34,7 @@ Ver [Desarrollo y operación](docs/DEVELOPMENT.md) para setup, permisos, pruebas
 - Packs de clases sin vencimiento, asistencia con deuda confirmada y correcciones trazables.
 - Instagram opcional, cumpleaños por mes y sorteo solo para socios con participantes conservados al cierre.
 - Gastos, plantillas recurrentes, pagos mixtos, resumen mensual, cierre conservado y descarga CSV/vista PDF.
-- Campañas de regreso a partir de dos meses desde el vencimiento, preparadas como borradores sin enviar WhatsApp.
+- [Comunicaciones](docs/COMMUNICATIONS.md): selección de clientes, plantillas WhatsApp/Instagram, mensajes privados personalizados, reglas de regreso a dos meses y avisos de boletas a dueños. Conexión preparada; no hay cuentas conectadas ni envíos efectivos.
 
 La renovación anticipada, pausas, corrección/anulación de abonos y gestión visual del personal no forman parte de esta primera entrega. Ver reglas y pendientes en [Producto](docs/PRODUCT.md).
 

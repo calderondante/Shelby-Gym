@@ -13,6 +13,9 @@ export type Database = Omit<GeneratedDatabase, "public"> & {
   public: Omit<GeneratedDatabase["public"], "Functions"> & {
     Functions: Omit<
       Functions,
+      | "save_communication_template"
+      | "save_communication_owner"
+      | "prepare_communication_automations"
       | "enroll_customer"
       | "save_activity"
       | "save_expense"
@@ -21,6 +24,18 @@ export type Database = Omit<GeneratedDatabase, "public"> & {
       | "record_session"
       | "save_recovery_campaign"
     > & {
+      save_communication_template: NullableArg<
+        Functions["save_communication_template"],
+        "p_id"
+      >;
+      save_communication_owner: NullableArg<
+        Functions["save_communication_owner"],
+        "p_id"
+      >;
+      prepare_communication_automations: NullableArg<
+        Functions["prepare_communication_automations"],
+        "p_day"
+      >;
       enroll_customer: NullableArg<
         Functions["enroll_customer"],
         "p_customer_id"

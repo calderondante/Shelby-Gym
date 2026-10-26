@@ -42,3 +42,6 @@ Desktop.ini
 /library-files/
 /scratch/
 /shared/
+
+# Generated local browser evidence
+/qa-artifacts/

@@ -217,3 +217,7 @@ Confirmación del usuario (2026-10-03): **pesos argentinos (ARS) y horario de Ar
 El usuario solicita aplicar activamente las skills de Emil a la calidad visual y motion, e importar Excel para que gimnasios existentes continúen sin recargar todo. Confirma nombre/edad, actividades, inicio/vencimiento, saldos y pagos anteriores; exige conservar montos históricos frente a la inflación argentina.
 
 Implementado: flujo del dueño en Clientes → Importar Excel, XLSX con relación de columnas y actividades, preview, confirmación, perfiles con edad referenciada, múltiples períodos por cliente, precios históricos, pagos mixtos anteriores y crédito de apertura si falta el detalle. No se recalculan cuotas al precio actual. Reintentos no duplican ni sobrescriben abonos nuevos. Límites y criterios operativos propuestos en IMPORTS; validar con una planilla real anonimizada antes de migrar producción.
+
+## Comunicaciones — confirmado 2026-10-25
+
+Los dueños quieren seleccionar varios clientes y preparar mensajes privados de WhatsApp/Instagram, incluidos ofrecimientos para volver a quienes cumplen dos meses desde el vencimiento. También quieren editar los mensajes y plazos de avisos de boletas para los dueños: antes (3 días inicialmente), al vencer y mientras siga pendiente. **Todavía no tienen número exclusivo ni cuenta profesional lista; piden dejar la conexión preparada.** No se implementan ni simulan envíos reales. El detalle del comportamiento y lo pendiente está en [COMMUNICATIONS.md](COMMUNICATIONS.md).

@@ -20,6 +20,7 @@ export function CustomerFields({
     birth_month?: number | null;
     instagram?: string;
     marketing_opt_in?: boolean;
+    instagram_marketing_opt_in?: boolean;
   };
   errors?: Record<string, string>;
 }) {
@@ -68,6 +69,18 @@ export function CustomerFields({
         />
         <FieldLabel htmlFor="marketingOptIn">
           Acepta recibir ofertas del gimnasio por WhatsApp
+        </FieldLabel>
+      </Field>
+      <Field orientation="horizontal">
+        <input
+          className="check-control"
+          type="checkbox"
+          id="instagramMarketingOptIn"
+          name="instagramMarketingOptIn"
+          defaultChecked={customer?.instagram_marketing_opt_in ?? false}
+        />
+        <FieldLabel htmlFor="instagramMarketingOptIn">
+          Acepta recibir ofertas por Instagram
         </FieldLabel>
       </Field>
       <div className="birthday-select-field">

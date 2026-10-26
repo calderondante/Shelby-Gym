@@ -145,3 +145,13 @@ Chosen solution: reutilizar los contratos monetarios y separar los eventos de as
 Reason: preservar precios históricos y saldos, impedir doble ingreso por utilizar clases ya pagadas y mantener un historial comprensible.
 
 Consequences: las consultas de vigencia deben distinguir fecha y sesiones. Los sorteos solo consideran cuotas temporales; las campañas cuentan dos meses desde su vencimiento. WhatsApp queda como borrador hasta configurar el proveedor. Se publica directamente la muestra de GitHub y el código aprobado; se omite video por instrucción del usuario.
+
+## ADR-014 — Preparar comunicaciones sin simular una conexión
+
+- **Date:** 2026-10-25.
+- **Decision:** centro owner-only para campañas privadas, plantillas, reglas y boletas, con outbox preparado y sin envío.
+- **Context:** el usuario quiere mensajes a varios clientes y recordatorios configurables a dueños; confirma que todavía no dispone de número exclusivo ni cuenta profesional lista y pide preparar la conexión.
+- **Options:** enlaces manuales por persona; simular envíos; integrar Meta sin cuentas; preparar datos, reglas y mensajes auditables sin activar proveedores.
+- **Chosen solution:** preparación por destinatario, consentimientos separados, dos meses calendario desde vencimiento, reglas de boletas con saldo real, idempotencia y cancelación; configuración sin secretos. Las reglas solo se evalúan manualmente hasta incorporar canales y programador. La demo conserva su almacenamiento local; Next/Supabase ofrece persistencia y permisos reales al desplegarse.
+- **Reason:** permite revisar y configurar el flujo ya, conserva deudas e historial y evita presentar mensajes preparados como entregados. Instagram no permite campañas frías por conocer un @.
+- **Consequences:** no hay cron, OAuth, webhooks ni envíos efectivos en esta entrega. Conectar Meta exigirá verificar políticas, identificadores de conversación, plantillas, consentimiento, coste y límites, además de un worker seguro y revalidación antes de despachar. Ver [COMMUNICATIONS.md](COMMUNICATIONS.md).

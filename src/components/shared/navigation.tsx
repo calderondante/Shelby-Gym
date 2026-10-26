@@ -1,14 +1,25 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, Dumbbell, Settings2, History } from "lucide-react";
+import {
+  Users,
+  Dumbbell,
+  Settings2,
+  History,
+  MessagesSquare,
+} from "lucide-react";
 export function Navigation({ owner }: { owner: boolean }) {
   const pathname = usePathname();
   const links = [
     { href: "/clientes", label: "Clientes", Icon: Users },
     { href: "/actividades", label: "Actividades", Icon: Dumbbell },
     { href: "/historial", label: "Historial", Icon: History },
-    ...(owner ? [{ href: "/ajustes", label: "Ajustes", Icon: Settings2 }] : []),
+    ...(owner
+      ? [
+          { href: "/comunicaciones", label: "Mensajes", Icon: MessagesSquare },
+          { href: "/ajustes", label: "Ajustes", Icon: Settings2 },
+        ]
+      : []),
   ];
   return (
     <nav className="primary-nav" aria-label="Navegación principal">

@@ -105,32 +105,50 @@ export type Database = {
       campaigns: {
         Row: {
           activity_id: string | null;
+          channel: string;
           created_at: string;
           created_by: string;
           id: string;
           message: string;
+          offer: string;
+          preparation_fingerprint: string | null;
           request_id: string;
+          scheduled_for: string | null;
+          segment: string;
           status: string;
+          template_id: string | null;
           title: string;
         };
         Insert: {
           activity_id?: string | null;
+          channel?: string;
           created_at?: string;
           created_by: string;
           id?: string;
           message: string;
+          offer?: string;
+          preparation_fingerprint?: string | null;
           request_id: string;
+          scheduled_for?: string | null;
+          segment?: string;
           status?: string;
+          template_id?: string | null;
           title: string;
         };
         Update: {
           activity_id?: string | null;
+          channel?: string;
           created_at?: string;
           created_by?: string;
           id?: string;
           message?: string;
+          offer?: string;
+          preparation_fingerprint?: string | null;
           request_id?: string;
+          scheduled_for?: string | null;
+          segment?: string;
           status?: string;
+          template_id?: string | null;
           title?: string;
         };
         Relationships: [
@@ -144,6 +162,365 @@ export type Database = {
           {
             foreignKeyName: "campaigns_created_by_fkey";
             columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "campaigns_template_id_fkey";
+            columns: ["template_id"];
+            isOneToOne: false;
+            referencedRelation: "communication_templates";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      communication_outbox: {
+        Row: {
+          body: string;
+          campaign_id: string | null;
+          channel: string;
+          created_at: string;
+          created_by: string;
+          customer_id: string | null;
+          dedup_key: string;
+          destination: string;
+          expense_id: string | null;
+          id: string;
+          note: string;
+          owner_contact_id: string | null;
+          recipient_name: string;
+          scheduled_for: string;
+          source: string;
+          status: string;
+          template_id: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          body: string;
+          campaign_id?: string | null;
+          channel: string;
+          created_at?: string;
+          created_by: string;
+          customer_id?: string | null;
+          dedup_key: string;
+          destination: string;
+          expense_id?: string | null;
+          id?: string;
+          note?: string;
+          owner_contact_id?: string | null;
+          recipient_name: string;
+          scheduled_for: string;
+          source: string;
+          status?: string;
+          template_id?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          body?: string;
+          campaign_id?: string | null;
+          channel?: string;
+          created_at?: string;
+          created_by?: string;
+          customer_id?: string | null;
+          dedup_key?: string;
+          destination?: string;
+          expense_id?: string | null;
+          id?: string;
+          note?: string;
+          owner_contact_id?: string | null;
+          recipient_name?: string;
+          scheduled_for?: string;
+          source?: string;
+          status?: string;
+          template_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "communication_outbox_campaign_id_fkey";
+            columns: ["campaign_id"];
+            isOneToOne: false;
+            referencedRelation: "campaigns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "communication_outbox_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "communication_outbox_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "customer_overview";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "communication_outbox_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "customers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "communication_outbox_expense_id_fkey";
+            columns: ["expense_id"];
+            isOneToOne: false;
+            referencedRelation: "expense_balances";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "communication_outbox_expense_id_fkey";
+            columns: ["expense_id"];
+            isOneToOne: false;
+            referencedRelation: "expenses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "communication_outbox_owner_contact_id_fkey";
+            columns: ["owner_contact_id"];
+            isOneToOne: false;
+            referencedRelation: "communication_owner_contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "communication_outbox_template_id_fkey";
+            columns: ["template_id"];
+            isOneToOne: false;
+            referencedRelation: "communication_templates";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      communication_owner_contacts: {
+        Row: {
+          active: boolean;
+          created_at: string;
+          created_by: string;
+          id: string;
+          name: string;
+          phone: string;
+          revision: number;
+          updated_at: string;
+        };
+        Insert: {
+          active?: boolean;
+          created_at?: string;
+          created_by: string;
+          id?: string;
+          name: string;
+          phone: string;
+          revision?: number;
+          updated_at?: string;
+        };
+        Update: {
+          active?: boolean;
+          created_at?: string;
+          created_by?: string;
+          id?: string;
+          name?: string;
+          phone?: string;
+          revision?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "communication_owner_contacts_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      communication_rule_customers: {
+        Row: {
+          customer_id: string;
+          rule_kind: string;
+        };
+        Insert: {
+          customer_id: string;
+          rule_kind: string;
+        };
+        Update: {
+          customer_id?: string;
+          rule_kind?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "communication_rule_customers_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "customer_overview";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "communication_rule_customers_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "customers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "communication_rule_customers_rule_kind_fkey";
+            columns: ["rule_kind"];
+            isOneToOne: false;
+            referencedRelation: "communication_rules";
+            referencedColumns: ["kind"];
+          },
+        ];
+      };
+      communication_rules: {
+        Row: {
+          audience: string;
+          channel: string;
+          days_before: number;
+          enabled: boolean;
+          kind: string;
+          notify_before: boolean;
+          notify_on_due: boolean;
+          notify_overdue: boolean;
+          offer: string;
+          overdue_every: number;
+          recurring_only: boolean;
+          revision: number;
+          send_hour: number;
+          template_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          audience?: string;
+          channel?: string;
+          days_before?: number;
+          enabled?: boolean;
+          kind: string;
+          notify_before?: boolean;
+          notify_on_due?: boolean;
+          notify_overdue?: boolean;
+          offer?: string;
+          overdue_every?: number;
+          recurring_only?: boolean;
+          revision?: number;
+          send_hour?: number;
+          template_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          audience?: string;
+          channel?: string;
+          days_before?: number;
+          enabled?: boolean;
+          kind?: string;
+          notify_before?: boolean;
+          notify_on_due?: boolean;
+          notify_overdue?: boolean;
+          offer?: string;
+          overdue_every?: number;
+          recurring_only?: boolean;
+          revision?: number;
+          send_hour?: number;
+          template_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "communication_rules_template_id_fkey";
+            columns: ["template_id"];
+            isOneToOne: false;
+            referencedRelation: "communication_templates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "communication_rules_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      communication_settings: {
+        Row: {
+          business_name: string;
+          id: boolean;
+          instagram_handle: string;
+          revision: number;
+          updated_at: string;
+          updated_by: string | null;
+          whatsapp_phone: string;
+        };
+        Insert: {
+          business_name?: string;
+          id?: boolean;
+          instagram_handle?: string;
+          revision?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+          whatsapp_phone?: string;
+        };
+        Update: {
+          business_name?: string;
+          id?: boolean;
+          instagram_handle?: string;
+          revision?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+          whatsapp_phone?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "communication_settings_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      communication_templates: {
+        Row: {
+          body: string;
+          channel: string;
+          id: string;
+          purpose: string;
+          revision: number;
+          slug: string | null;
+          title: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          body: string;
+          channel: string;
+          id?: string;
+          purpose: string;
+          revision?: number;
+          slug?: string | null;
+          title: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          body?: string;
+          channel?: string;
+          id?: string;
+          purpose?: string;
+          revision?: number;
+          slug?: string | null;
+          title?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "communication_templates_updated_by_fkey";
+            columns: ["updated_by"];
             isOneToOne: false;
             referencedRelation: "staff";
             referencedColumns: ["id"];
@@ -206,6 +583,7 @@ export type Database = {
           email: string;
           id: string;
           instagram: string;
+          instagram_marketing_opt_in: boolean;
           marketing_opt_in: boolean;
           name: string;
           notes: string;
@@ -224,6 +602,7 @@ export type Database = {
           email?: string;
           id?: string;
           instagram?: string;
+          instagram_marketing_opt_in?: boolean;
           marketing_opt_in?: boolean;
           name: string;
           notes?: string;
@@ -242,6 +621,7 @@ export type Database = {
           email?: string;
           id?: string;
           instagram?: string;
+          instagram_marketing_opt_in?: boolean;
           marketing_opt_in?: boolean;
           name?: string;
           notes?: string;
@@ -748,18 +1128,6 @@ export type Database = {
           },
         ];
       };
-      schema_migrations: {
-        Row: {
-          version: string;
-        };
-        Insert: {
-          version: string;
-        };
-        Update: {
-          version?: string;
-        };
-        Relationships: [];
-      };
       session_events: {
         Row: {
           created_at: string;
@@ -963,6 +1331,7 @@ export type Database = {
           has_active: boolean | null;
           id: string | null;
           instagram: string | null;
+          instagram_marketing_opt_in: boolean | null;
           last_end: string | null;
           marketing_opt_in: boolean | null;
           name: string | null;
@@ -1081,6 +1450,7 @@ export type Database = {
       };
     };
     Functions: {
+      cancel_communication: { Args: { p_id: string }; Returns: undefined };
       change_customer_status: {
         Args: { p_id: string; p_revision: number; p_status: string };
         Returns: undefined;
@@ -1124,6 +1494,14 @@ export type Database = {
         };
         Returns: string;
       };
+      prepare_communication_automations: {
+        Args: { p_day?: string };
+        Returns: number;
+      };
+      prepare_communication_campaign: {
+        Args: { p_customers: string[]; p_data: Json; p_request: string };
+        Returns: string;
+      };
       record_payment: {
         Args: { p_entries: Json; p_request: string; p_subscription: string };
         Returns: string;
@@ -1143,6 +1521,27 @@ export type Database = {
         Returns: string;
       };
       save_activity: {
+        Args: { p_data: Json; p_id: string; p_revision: number };
+        Returns: string;
+      };
+      save_communication_owner: {
+        Args: { p_data: Json; p_id: string; p_revision: number };
+        Returns: string;
+      };
+      save_communication_rule: {
+        Args: {
+          p_customers?: string[];
+          p_data: Json;
+          p_kind: string;
+          p_revision: number;
+        };
+        Returns: undefined;
+      };
+      save_communication_settings: {
+        Args: { p_data: Json; p_revision: number };
+        Returns: undefined;
+      };
+      save_communication_template: {
         Args: { p_data: Json; p_id: string; p_revision: number };
         Returns: string;
       };

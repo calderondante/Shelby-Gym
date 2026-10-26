@@ -31,6 +31,7 @@ export const customerSchema = z.object({
   phone: z.string().trim().max(40),
   instagram: instagramHandle.default(""),
   marketingOptIn: z.boolean().default(false),
+  instagramMarketingOptIn: z.boolean().default(false),
   email: z.union([z.literal(""), z.email()]).default(""),
   notes: z.string().trim().max(500),
   birthMonth: z.coerce.number().int().min(0).max(12),

@@ -2566,3 +2566,88 @@ html:not([data-input="keyboard"]) details[open] > :not(summary) {
     flex: 0 1 280px;
   }
 }
+
+/* Communications: quiet grouping, personal previews and contained recipient lists. */
+.communication-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 0 14px;
+  margin: 22px 0;
+  max-width: 100%;
+}
+.communication-tabs a {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 11px 14px;
+  border-radius: 10px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  font-size: 14px;
+}
+.communication-tabs a[aria-current] {
+  background: var(--secondary);
+  color: var(--foreground);
+  font-weight: 650;
+  box-shadow: inset 0 -2px #e5373f;
+}
+.communication-details {
+  border-bottom: 1px solid var(--border);
+  padding: 16px 0;
+}
+.communication-details summary {
+  min-height: 44px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.communication-details summary small {
+  display: block;
+  padding: 5px 0 0 18px;
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+.communication-details .operation-form {
+  margin-top: 18px;
+}
+.message-preview {
+  padding: 22px;
+  border-radius: 14px;
+  background: var(--secondary);
+  overflow-wrap: anywhere;
+  display: grid;
+  gap: 12px;
+}
+.message-preview p,
+.campaign-message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.message-preview small {
+  color: var(--muted-foreground);
+}
+.communication-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.communication-tools button {
+  min-height: 44px;
+}
+.recipient-scroll {
+  max-height: 360px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.operation-form,
+.operation-panel {
+  min-width: 0;
+}
+@media (max-width: 767px) {
+  .primary-nav > a {
+    font-size: 11px;
+    padding-inline: 4px;
+  }
+  .communication-tabs {
+    margin-top: 16px;
+  }
+}

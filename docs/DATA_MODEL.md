@@ -86,3 +86,16 @@ La vista previa no escribe; confirmar revalida todo. Las importaciones no actual
 - `campaigns` y `campaign_recipients`: borradores y destinatarios revisados en servidor; sin envíos ni cobros automáticos.
 
 Todas las tablas expuestas tienen RLS y carecen de escritura directa para clientes autenticados. Los movimientos de dinero y clases se ejecutan mediante RPCs con permisos explícitos e idempotencia. La moneda queda bloqueada tras registrar cuotas o gastos.
+
+## Comunicaciones — 2026-10-25
+
+- `customers.instagram_marketing_opt_in`: autorización independiente de WhatsApp, false por defecto; incluida en `customer_overview`, alta y edición.
+- `communication_settings`: singleton, nombre del gimnasio, número internacional e IG opcionales, revisión optimista; **no** claves ni estado conectado.
+- `communication_templates`: canal, uso general/recovery/expense, título, cuerpo, revisión. Boletas solo WhatsApp. Variables admitidas según uso; snapshots no cambian al editar.
+- `communication_owner_contacts`: nombre, celular internacional único, activo, revisión y autor.
+- `communication_rules`: recovery/expense, habilitación de preparación, plantilla FK, canal, hora, audiencia, oferta; plazos antes/al vencer/repetición y solo recurrentes para gastos.
+- `communication_rule_customers`: relación FK de regla con clientes elegidos.
+- `communication_outbox`: FK campaña/cliente o dueño/boleta, plantilla, destino y mensaje snapshots, origen, fecha prevista UTC, dedup_key único, prepared/cancelled, autor y timestamps. Índices de estado/fecha y FKs; no sent/delivered.
+- `campaigns`: extiende borradores existentes con canal, segmento, plantilla FK, fecha prevista, oferta y fingerprint de preparación. No elimina datos anteriores.
+
+RLS owner-only y grants mínimos. RPC con validación y autorización independiente, optimistic locking y transacción por lote. Idempotencia de campaña; dedup por cliente/vencimiento/canal y boleta/dueño/día. No hay multiempresa ni migración de datos reales. Las dos migraciones nuevas fueron reconstruidas junto al historial completo en una base local descartable; probar backup/restauración antes de migrar producción.

@@ -185,9 +185,10 @@ await page.evaluate(() => {
   save();
 });
 await go("#campanas");
-await page.locator('input[name="recipient"][value="qa-regreso"]').check();
-await page.getByRole("button", { name: "Guardar campaña preparada" }).click();
-await check("Borrador · 1 destinatarios");
+await page.locator('input[name="comm-recipient"][value="qa-regreso"]').check();
+await page.getByRole("button", { name: "Preparar mensajes privados" }).click();
+await page.waitForURL(/comunicaciones\/historial/);
+await check("Preparado · Sin enviar");
 assert.equal(await page.evaluate(() => state.campaigns.length), 1);
 const past = await page.evaluate(() =>
   state.customers.find((c) => c.id === "qa-regreso").start.slice(0, 7),

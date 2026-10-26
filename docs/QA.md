@@ -178,3 +178,13 @@ Resultado final: **8/8 pruebas E2E correctas contra `next start`**, además de l
 - Seguridad: acceso anónimo, usuario ajeno al personal, monitor frente a dueño y llamadas directas a RPCs.
 
 Comandos: `pnpm test`, `pnpm test:integration`, `pnpm test:e2e`, `pnpm test:pages`, `pnpm lint`, `pnpm typecheck`, `pnpm build` y `node scripts/verify-workspace.mjs`.
+
+## Comunicaciones preparadas — 2026-10-25
+
+- Dominio: 28 tests correctos en total, incluidos calendario fin de mes, variables sin sustitución recursiva, números internacionales, consentimiento independiente y repetición de boletas.
+- Auth/PostgREST/PostgreSQL locales reales: regresión de cuotas, importaciones y caja correcta; integración adicional de comunicaciones verifica owner-only en las seis tablas y siete RPC, denegación a monitor/usuario sin staff/anónimo, escrituras directas rechazadas, lote atómico, idempotencia, horarios Argentina, personalización, regla de dos meses, boletas antes/al vencer/repetidas y saldo parcial/cero. Sin envío a proveedores.
+- Todas las migraciones reconstruidas desde cero en una base local descartable con esquema Auth mínimo. Además, pruebas de Auth con el servicio GoTrue local real. La migración correctiva evita colisiones entre records PL/pgSQL y alias SQL, y cancela propuestas tras cambios de destino.
+- Next: suite completa de **10/10 E2E** correcta, con alta/abonos, packs, gastos, importación, comunicaciones, permisos y sincronización. Se revisan las seis secciones de comunicaciones a 375, 390, 768, 1024 y 1440 px, sin overflow del documento. Axe sin infracciones en la pantalla de campaña; no equivale a certificación WCAG completa.
+- Demo GitHub Pages: regresión de operaciones y recorrido de comunicaciones correctos. Selección privada de Ana/Martín ficticios, denegación sin permiso, personalización, persistencia tras recargar, consentimiento IG separado, dueño receptor, boleta parcial, deduplicación y cancelación al saldar. Se conservan clave local y clientes previos; seis secciones verificadas en los cinco anchos.
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `pnpm test`, `node scripts/verify-workspace.mjs` y `git diff --check`: correctos. No se agregaron dependencias runtime ni credenciales de servicios externos. Evidencia local generada en `qa-artifacts/communications/` (ignorada por Git).
+- Continúa pendiente prueba física con Safari/iPhone y Chrome/Android. La entrega prepara configuraciones y copias: no activa Meta, webhooks ni ejecución programada. Protocolo para conectar más adelante en [COMMUNICATIONS.md](COMMUNICATIONS.md).

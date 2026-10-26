@@ -21,10 +21,10 @@ export default async function SettingsPage() {
       {staff.role === "owner" && data ? (
         <div className="operation-tabs">
           <Link
-            href="/campanas"
+            href="/comunicaciones"
             className={buttonVariants({ variant: "outline" })}
           >
-            Campañas y recuperación de socios
+            Comunicaciones y avisos
           </Link>
         </div>
       ) : null}

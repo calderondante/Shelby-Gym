@@ -22,7 +22,9 @@
     "format": "prettier --write src tests scripts next.config.ts playwright.config.ts",
     "test:integration": "node scripts/test-integration.mjs && node scripts/test-import.mjs && node scripts/test-operations.mjs",
     "test:pages": "node scripts/test-pages-operations.mjs",
-    "test:import": "node scripts/test-import.mjs"
+    "test:import": "node scripts/test-import.mjs",
+    "test:communications": "node scripts/test-communications.mjs",
+    "test:pages:communications": "node scripts/test-pages-communications.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

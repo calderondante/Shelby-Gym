@@ -81,3 +81,9 @@ Las exportaciones requieren personal autorizado y no se cachean. El CSV protege 
 No hay claves ni proveedor de WhatsApp en esta entrega. Su activación requiere el número oficial, permisos/plantillas correspondientes, controles de consentimiento y repetición y una comprobación de vigencia antes de cada envío. No se envían mensajes al importar ni al guardar una campaña.
 
 Antes del uso real: configurar hosting de Next.js, proyecto Supabase, cuentas individuales, permisos, backups y recuperación. GitHub Pages y su PIN siguen siendo exclusivamente una muestra con datos ficticios almacenados en el navegador.
+
+## Comunicaciones preparadas — 2026-10-25
+
+Nuevos datos personales: consentimiento separado de IG, celulares de dueños y copias de mensajes. Solo dueño activo puede leer las seis tablas y ejecutar las RPC; monitor, anónimo y usuario sin staff no administran comunicaciones. Formularios sin tokens, SDK Meta o conexión ficticia. Mensajes se renderizan como texto, nunca HTML. Teléfonos requieren formato internacional; no se asume país a partir de cifras.
+
+La revisión automática vuelve a comprobar permiso/contacto/vencimiento/saldo y cancela propuestas obsoletas. Los snapshots manuales no son autorización perpetua: la futura conexión debe verificar de nuevo al despachar, comprobar firmas de webhooks, evitar IDOR y duplicados, respetar bajas, ventanas y límites del proveedor y proteger endpoints programados. Retención/borrado de mensajes y evidencia legal de consentimiento se deben acordar antes de activar campañas reales. No se envían mensajes en desarrollo. El PIN público de GitHub Pages es exclusivamente demostrativo y sus datos siguen en el navegador: no introducir información real.

@@ -73,6 +73,7 @@ function customer(form: FormData) {
     phone: text(form, "phone"),
     instagram: text(form, "instagram"),
     marketingOptIn: form.get("marketingOptIn") === "on",
+    instagramMarketingOptIn: form.get("instagramMarketingOptIn") === "on",
     email: text(form, "email"),
     notes: text(form, "notes"),
     birthMonth: text(form, "birthMonth"),

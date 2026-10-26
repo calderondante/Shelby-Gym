@@ -107,3 +107,9 @@ Gastos se modela como obligaciones, plantillas recurrentes y lotes de pagos/reve
 Las nuevas pantallas continúan usando Server Components para lecturas y Server Actions con validación para mutaciones. Las exportaciones privadas requieren sesión, llevan `Cache-Control: private, no-store` y no utilizan una clave privilegiada en el navegador. Realtime y el fallback existente actualizan también las operaciones nuevas.
 
 El código operativo y la muestra estática se publican en ramas distintas. `gh-pages/gestion` es un entorno demostrativo local a cada navegador; no sustituye Supabase ni admite uso compartido de datos reales. Ver [actualización](UPDATES_2026-10-20.md).
+
+## Centro de comunicaciones — 2026-10-25
+
+`src/features/communications/` separa dominio (canales, consentimiento, variables, calendario), lectura de datos server-only, Server Action owner-only y formularios interactivos. `/comunicaciones` sirve seis secciones; `/campanas` redirige y conserva los borradores existentes. Consultas independientes se paralelizan; selección y preview son cliente, validación y escritura son servidor y RPC transaccional.
+
+Tablas/RPC nuevas en dos migraciones `20261026004443` y `20261026010251`: configuración sin secretos, plantillas, contactos de dueños, reglas, selección de clientes y outbox de preparación. Solo el dueño puede leer o escribir a través de RPC; no se conceden escrituras directas a authenticated. Estados limitados a prepared/cancelled. No se agrega SDK, cron ni dependencia runtime. La demo GitHub Pages implementa el mismo flujo localmente en `gestion/communications.js`, con la misma clave de almacenamiento anterior; no es el backend operativo. [Protocolo de conexión futura](COMMUNICATIONS.md#conectar-más-adelante).
