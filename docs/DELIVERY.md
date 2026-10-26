@@ -1,3 +1,17 @@
+# Despliegue operativo — 26/10/2026
+
+La aplicación Next de `main` está publicada en https://darling-smakager-792ffe.netlify.app con el adaptador oficial OpenNext de Netlify. Versión de código publicada: `4e6cf06`. Se corrigió la importación inicial de la demo estática y se configuró la rama de producción `main`. El PIN de GitHub Pages no sirve en este acceso.
+
+Proyecto remoto: `smgxymlfjcdxabgippby`, organización **Shelby Gym**. Se comprobó que estaba vacío antes de aplicar las 18 migraciones versionadas. Hay 26 tablas públicas con RLS; no se cargaron clientes, pagos ni actividades ficticias. Se creó una identidad técnica de dueño con configuración ARS y `America/Argentina/Buenos_Aires`. El registro público está desactivado.
+
+El dueño elige su contraseña con un enlace de activación de un solo uso entregado por un canal privado. El enlace no se almacena en este repositorio. Luego entra solo con contraseña y la puede cambiar desde Ajustes. Ver [acceso](ACCESS.md). La primera activación y la aceptación del dueño en dispositivos físicos quedan pendientes de su interacción.
+
+Verificación: build y checks locales aprobados, 40 tests unitarios, 15 recorridos E2E cubiertos y suite de contraseña/activación con revocación de sesiones aprobada. En remoto se verificaron Auth del dueño, permisos de lectura, rechazo de consultas anónimas, login público en navegador a cinco anchos y axe sin violaciones. Las rutas privadas respondieron HTTP 307 hacia el login al comprobarlas sin sesión. Hubo fallos intermitentes de conexión del proxy de este entorno al navegar rutas remotas; no se sustituyen las pruebas pendientes en celulares físicos por esa comprobación.
+
+Comunicaciones sigue siendo preparación de mensajes: no hay proveedor conectado ni envíos automáticos. Backups, restauración, aceptación comercial y otras funciones pendientes siguen en [checklist](CHECKLIST_ENTREGA.md). La demo estática anterior se conserva en GitHub Pages y guarda únicamente en el navegador.
+
+---
+
 # Estado de publicación
 
 Ruta vigente para pasar a una entrega operativa: [checklist de entrega del 26/10/2026](CHECKLIST_ENTREGA.md). Distingue lo implementado, las tareas pendientes y los criterios de aceptación; no implica que producción ya esté desplegada.
