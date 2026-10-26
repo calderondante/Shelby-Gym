@@ -660,12 +660,14 @@ function detail(id) {
 function returnCustomer(id) {
   const c = state.customers.find((x) => x.id === id);
   if (!c) return void (location.hash = "#clientes");
-  if (
-    (c.archivedAt || c.deletedAt) &&
-    (c.end > today() || (c.unit === "sessions" && remainingClasses(c) > 0))
-  ) {
+  const currentPeriod = allPeriods(c).find((p) =>
+    p.unit === "sessions"
+      ? remainingClasses(p) > 0
+      : p.start <= today() && p.end > today(),
+  );
+  if ((c.archivedAt || c.deletedAt) && currentPeriod) {
     app.innerHTML = layout(
-      `<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(id)}'">← Perfil</button><section class="hero"><span class="eyebrow">REGRESO</span><h1>Reactivar a ${escapeHtml(c.name)}.</h1><p>${c.unit === "sessions" ? `El pack conserva ${remainingClasses(c)} clases disponibles, sin vencimiento. Podés reactivar el perfil sin comprar otro pack.` : `La cuota actual sigue vigente hasta ${dateLabel(c.end)}. Podés volver a mostrar al cliente como activo sin cobrar una cuota nueva.`}</p></section><div class="panel"><button class="button" id="resume-active" type="button">Reactivar sin nueva cuota</button></div>`,
+      `<button class="nav-back" onclick="location.hash='#cliente/${escapeHtml(id)}'">← Perfil</button><section class="hero"><span class="eyebrow">REGRESO</span><h1>Reactivar a ${escapeHtml(c.name)}.</h1><p>${currentPeriod.unit === "sessions" ? `El pack conserva ${remainingClasses(currentPeriod)} clases disponibles, sin vencimiento. Podés reactivar el perfil sin comprar otro pack.` : `La cuota actual sigue vigente hasta ${dateLabel(currentPeriod.end)}. Podés volver a mostrar al cliente como activo sin cobrar una cuota nueva.`}</p></section><div class="panel"><button class="button" id="resume-active" type="button">Reactivar sin nueva cuota</button></div>`,
       "clientes",
     );
     document.querySelector("#resume-active").onclick = () => {
@@ -674,7 +676,7 @@ function returnCustomer(id) {
       logLifecycle(
         c,
         "Cliente reactivado",
-        "Continúa con la cuota que seguía vigente",
+        "Conserva las actividades y clases que seguían vigentes",
       );
       save();
       location.hash = `#cliente/${id}`;
