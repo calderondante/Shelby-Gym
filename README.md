@@ -27,6 +27,7 @@ Ver [Desarrollo y operación](docs/DEVELOPMENT.md) para setup, permisos, pruebas
 - Acceso de dueño/monitor con permisos en servidor y DB.
 - Plantillas de actividad o combinación con precio, duración y oferta manual.
 - Alta con datos, actividad y primer abono en el mismo formulario.
+- [Carga desde papel](docs/PAPER_REGISTRATION.md): cuotas anteriores vigentes o vencidas, precio original, deuda y clases ya usadas, sin Excel obligatorio ni caja ficticia.
 - Lista global buscable y paginada, con filtros de saldo, vencimientos, bajas y perfiles eliminados de la lista.
 - Perfil con períodos, deuda y desglose de pagos; completar una cuota no cambia su vencimiento.
 - Baja y retiro reversibles, regreso con cuota desde el nuevo primer abono e historial mensual con recorrido diario de movimientos.

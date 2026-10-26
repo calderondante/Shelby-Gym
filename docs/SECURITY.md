@@ -93,3 +93,7 @@ La revisión automática vuelve a comprobar permiso/contacto/vencimiento/saldo y
 Se retiraron Next 16.3.8 y Zod 4.6.5 tras verificar cuatro avisos públicos. Versiones corregidas: Next/eslint-config-next 16.4.1 y Zod 4.6.6; `pnpm audit --prod` devuelve cero avisos conocidos. No se demostró explotación. Las 25 tablas tienen RLS, las tres vistas son invoker y las RPC privilegiadas no son ejecutables por anónimo. Metadata editable del monitor no puede elevar su rol.
 
 Nueva protección: con cuotas/gastos existentes no se permite cambiar la zona horaria desde Ajustes, porque alteraría la interpretación de fechas del historial. Los errores de red no afirman que un pago no se haya guardado: se indica revisar el historial antes de repetir. Ver [auditoría mensual](AUDIT_2026-10-26.md), alcance y pendientes de producción.
+
+## Alta desde papel — 26/10/2026
+
+La tabla `paper_enrollments` tiene RLS y lectura solo del dueño activo; no admite escritura directa desde roles web. `register_paper_customer` usa `security definer` con `search_path` vacío, autorización por `staff` y ejecución revocada a público/anónimo. El monitor no puede invocarla ni leer su procedencia. La transacción valida fechas, moneda, revisión de plantilla, importes, detalle de medios, clases y cierres; un error revierte todo. Un bloqueo por request y la huella de payload evitan duplicados/reinterpretaciones en reintentos. Las pruebas negativas se ejecutan solo en QA local con identidades sintéticas. No se requieren claves privilegiadas en el navegador.

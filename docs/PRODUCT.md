@@ -221,3 +221,7 @@ Implementado: flujo del dueño en Clientes → Importar Excel, XLSX con relació
 ## Comunicaciones — confirmado 2026-10-25
 
 Los dueños quieren seleccionar varios clientes y preparar mensajes privados de WhatsApp/Instagram, incluidos ofrecimientos para volver a quienes cumplen dos meses desde el vencimiento. También quieren editar los mensajes y plazos de avisos de boletas para los dueños: antes (3 días inicialmente), al vencer y mientras siga pendiente. **Todavía no tienen número exclusivo ni cuenta profesional lista; piden dejar la conexión preparada.** No se implementan ni simulan envíos reales. El detalle del comportamiento y lo pendiente está en [COMMUNICATIONS.md](COMMUNICATIONS.md).
+
+## Alta de registros en papel — 26/10/2026
+
+Aprobado: la carga inicial principal es manual desde papel, con inicio pasado, cuota vigente o vencida, precio original y abonado/deuda previos. Se permite abonado cero exclusivamente en esta incorporación histórica; la regla de primer abono para altas nuevas/regresos no cambia. Los packs admiten clases ya utilizadas. Los pagos anteriores solo llevan fecha/medio si se conocen; el resto es crédito de apertura, sin ingreso ficticio hoy. El perfil se crea en la fecha real de carga, sin alterar sorteos cerrados. Ver [flujo y límites](PAPER_REGISTRATION.md).

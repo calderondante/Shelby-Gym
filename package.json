@@ -26,7 +26,9 @@
     "test:communications": "node scripts/test-communications.mjs",
     "test:pages:communications": "node scripts/test-pages-communications.mjs",
     "test:month": "node scripts/test-month-simulation.mjs",
-    "test:admin": "node scripts/test-admin-audit.mjs"
+    "test:admin": "node scripts/test-admin-audit.mjs",
+    "test:paper": "node scripts/test-paper-registration.mjs",
+    "test:pages:paper": "node scripts/test-pages-paper.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

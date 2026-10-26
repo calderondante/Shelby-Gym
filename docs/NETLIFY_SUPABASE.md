@@ -2,6 +2,8 @@
 
 Guía del 26/10/2026. El código operativo está en `main`; `gh-pages` conserva la demo. Crear una organización, vincular GitHub o completar un build no crea por sí solo las tablas, permisos ni cuentas del gimnasio.
 
+Se puede importar ahora aunque haya cambios pendientes: las actualizaciones de `main` se despliegan en el mismo sitio sin borrar datos de Supabase. La [carga desde papel](PAPER_REGISTRATION.md) requiere también su migración versionada; publicar código no aplica migraciones automáticamente.
+
 ## 1. Importar el código en Netlify
 
 En la pantalla «Deploy your first project», bajar hasta **Import a Git repository**, seleccionar GitHub y elegir `calderondante/Shelby-Gym`. La rama de producción debe ser **`main`** aunque GitHub sugiera `gh-pages` como predeterminada.

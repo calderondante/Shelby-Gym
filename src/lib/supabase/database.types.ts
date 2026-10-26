@@ -953,6 +953,79 @@ export type Database = {
           },
         ];
       };
+      paper_enrollments: {
+        Row: {
+          batch_id: string;
+          created_at: string;
+          created_by: string;
+          customer_id: string;
+          fingerprint: string;
+          request_id: string;
+          subscription_id: string;
+        };
+        Insert: {
+          batch_id: string;
+          created_at?: string;
+          created_by: string;
+          customer_id: string;
+          fingerprint: string;
+          request_id: string;
+          subscription_id: string;
+        };
+        Update: {
+          batch_id?: string;
+          created_at?: string;
+          created_by?: string;
+          customer_id?: string;
+          fingerprint?: string;
+          request_id?: string;
+          subscription_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "paper_enrollments_batch_id_fkey";
+            columns: ["batch_id"];
+            isOneToOne: true;
+            referencedRelation: "import_batches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "paper_enrollments_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "paper_enrollments_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "customer_overview";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "paper_enrollments_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "customers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "paper_enrollments_subscription_id_fkey";
+            columns: ["subscription_id"];
+            isOneToOne: true;
+            referencedRelation: "subscription_balances";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "paper_enrollments_subscription_id_fkey";
+            columns: ["subscription_id"];
+            isOneToOne: true;
+            referencedRelation: "subscriptions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       payment_batches: {
         Row: {
           created_at: string;
@@ -1236,6 +1309,7 @@ export type Database = {
           import_batch_id: string | null;
           offer_label: string;
           opening_paid_cents: number;
+          opening_sessions_used: number;
           request_fingerprint: string;
           request_id: string;
           starts_on: string;
@@ -1256,6 +1330,7 @@ export type Database = {
           import_batch_id?: string | null;
           offer_label?: string;
           opening_paid_cents?: number;
+          opening_sessions_used?: number;
           request_fingerprint: string;
           request_id: string;
           starts_on: string;
@@ -1276,6 +1351,7 @@ export type Database = {
           import_batch_id?: string | null;
           offer_label?: string;
           opening_paid_cents?: number;
+          opening_sessions_used?: number;
           request_fingerprint?: string;
           request_id?: string;
           starts_on?: string;
@@ -1403,6 +1479,7 @@ export type Database = {
           import_batch_id: string | null;
           offer_label: string | null;
           opening_paid_cents: number | null;
+          opening_sessions_used: number | null;
           paid_cents: number | null;
           request_fingerprint: string | null;
           request_id: string | null;
@@ -1518,6 +1595,10 @@ export type Database = {
           p_reverse?: string;
           p_subscription: string;
         };
+        Returns: string;
+      };
+      register_paper_customer: {
+        Args: { p_profile: Json; p_record: Json; p_request: string };
         Returns: string;
       };
       save_activity: {

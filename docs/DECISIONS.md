@@ -165,3 +165,13 @@ Consequences: las consultas de vigencia deben distinguir fecha y sesiones. Los s
 - **Chosen solution:** `configure_gym` rechaza el cambio con `TIME_ZONE_LOCKED` si existen obligaciones. Se mantiene el bloqueo de moneda y se explican las consecuencias en Ajustes. Una modificación excepcional necesitará revisión y migración explícitas.
 - **Reason:** preserva el historial de este gimnasio, cuyo horario argentino fue confirmado, con el menor cambio de schema y sin reinterpretar registros.
 - **Consequences:** no se corrige un horario inicial equivocado desde un formulario una vez que hubo actividad. Requiere intervención técnica y evaluación de fechas/backup. El bloqueo se comprueba por API, navegador y reconstrucción de migraciones.
+
+## ADR-016 — Incorporar manualmente registros del papel
+
+- **Date:** 2026-10-26.
+- **Decision:** añadir un modo de alta histórica del dueño, conservando el alta ordinaria desde el abono del día.
+- **Context:** la mayoría de socios están anotados en papel; no se importará un Excel antiguo. Hay cuotas vencidas, precios anteriores y pagos con detalle incompleto.
+- **Options:** obligar a preparar Excel; permitir backdating en cualquier alta; incorporación histórica explícita.
+- **Chosen solution:** formulario desde papel y RPC atómica/idempotente con procedencia, importes originales, crédito de apertura y detalle opcional de pagos; clases usadas de apertura para packs.
+- **Reason:** permite cargar el cuaderno sin inventar caja, asistencias ni fechas de creación del perfil. Mantiene separadas la operación diaria y la incorporación previa.
+- **Consequences:** requiere migración y permiso de dueño. No se alteran cierres ni sorteos cerrados; se mantiene la importación Excel opcional. Un redeploy no sustituye la aplicación de migraciones.

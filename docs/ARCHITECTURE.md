@@ -117,3 +117,7 @@ Tablas/RPC nuevas en dos migraciones `20261026004443` y `20261026010251`: config
 ## Revisión de seguridad — 2026-10-26
 
 Baseline actualizado a Next/eslint-config-next **16.4.1** y Zod **4.6.6**, con versiones exactas y lockfile, para retirar los avisos identificados en la [auditoría mensual](AUDIT_2026-10-26.md). No cambia el stack ni añade dependencias. La zona horaria queda protegida junto a la moneda al existir obligaciones financieras. Los fallos con resultado de guardado incierto indican revisar el historial, sin asegurar que el servidor no haya registrado la operación.
+
+## Incorporación manual desde papel
+
+`PaperRegistrationForm` es una interacción cliente acotada; `paperRegistrationAction` valida perfil y fechas, exige dueño y llama a `register_paper_customer`. La RPC vuelve a validar y realiza el alta completa en una transacción idempotente. Se reutilizan los importes históricos de apertura y la procedencia de `import_batches`, sin depender de archivos Excel. La vista de saldos resta el uso de clases de apertura además de la asistencia posterior. El alta del día conserva su ruta y reglas. Ver [carga desde papel](PAPER_REGISTRATION.md).

@@ -57,7 +57,7 @@ Referencias: [Netlify](https://www.netlify.com/pricing/), [Next.js en Netlify](h
 
 - [ ] Configurar ARS y `America/Argentina/Buenos_Aires` antes de crear cuotas/gastos. Después quedan protegidos para conservar el historial.
 - [ ] Crear las actividades reales, duraciones, precios y ofertas aprobados por el comprador.
-- [ ] Elegir inicio limpio o importación Excel. Si se importa, conservar el original, revisar columnas, duplicados, importes históricos y deuda; confirmar el lote antes de incorporarlo.
+- [ ] Cargar los registros iniciales desde papel con el dueño: fechas anteriores, importe original, abonado y deuda; comprobar una cuota vigente, otra vencida y un pack. No se requiere Excel. Ver [procedimiento](PAPER_REGISTRATION.md). La importación Excel sigue siendo una alternativa opcional.
 - [ ] Verificar que producción no contenga clientes, pagos ni contactos ficticios de QA. Limpiar únicamente fixtures identificados, nunca con un reset general sobre datos reales.
 - [ ] Definir información personal necesaria, acceso y tratamiento de datos con el gimnasio.
 - [ ] Configurar una copia restaurable de la base, ubicación segura, frecuencia y responsable. El CSV no reemplaza un backup de PostgreSQL.

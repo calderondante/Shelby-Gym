@@ -59,17 +59,21 @@ export default async function CustomerPage({
           </div>
         }
       />
-      {["alta", "pago", "perfil", "estado"].includes(query.guardado ?? "") ? (
+      {["alta", "pago", "perfil", "estado", "papel"].includes(
+        query.guardado ?? "",
+      ) ? (
         <Alert role="status" className="mb-6">
           <AlertTitle>Guardado correctamente</AlertTitle>
           <AlertDescription>
-            {query.guardado === "pago"
-              ? "El abono quedó registrado. El vencimiento no cambió."
-              : query.guardado === "alta"
-                ? "La actividad y el primer abono quedaron registrados."
-                : query.guardado === "estado"
-                  ? "El estado del perfil quedó actualizado. Sus cuotas y pagos se conservan."
-                  : "Los datos del cliente están actualizados."}
+            {query.guardado === "papel"
+              ? "El registro del papel quedó guardado con su fecha e importe originales. El abonado sin detalle no se sumó a la caja de hoy."
+              : query.guardado === "pago"
+                ? "El abono quedó registrado. El vencimiento no cambió."
+                : query.guardado === "alta"
+                  ? "La actividad y el primer abono quedaron registrados."
+                  : query.guardado === "estado"
+                    ? "El estado del perfil quedó actualizado. Sus cuotas y pagos se conservan."
+                    : "Los datos del cliente están actualizados."}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -218,6 +222,12 @@ export default async function CustomerPage({
             ) : (
               <p className="paid-label">✓ Cuota completa</p>
             )}
+            {(s.opening_sessions_used ?? 0) > 0 ? (
+              <p className="muted">
+                Clases ya usadas antes de la carga: {s.opening_sessions_used}.
+                Sin fechas de asistencia detalladas.
+              </p>
+            ) : null}
             {s.duration_unit === "sessions" ? (
               <div className="session-controls">
                 <SessionForm
@@ -271,7 +281,7 @@ export default async function CustomerPage({
             ) : null}
             {s.import_batch_id ? (
               <p className="import-origin">
-                Cuota histórica importada. Su precio original se conserva.
+                Registro histórico cargado. Su precio original se conserva.
                 {(s.opening_paid_cents ?? 0) > 0
                   ? ` Incluye ${money(s.opening_paid_cents!, s.currency!)} abonados antes de la app sin detalle de pagos.`
                   : ""}
@@ -306,7 +316,7 @@ export default async function CustomerPage({
                         </strong>
                         <small>
                           {p.import_batch_id
-                            ? "Pago histórico · importado por "
+                            ? "Pago histórico · registrado por "
                             : "Registrado por "}
                           {p.staff?.name ?? "Personal"}
                         </small>

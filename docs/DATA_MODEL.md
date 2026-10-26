@@ -99,3 +99,9 @@ Todas las tablas expuestas tienen RLS y carecen de escritura directa para client
 - `campaigns`: extiende borradores existentes con canal, segmento, plantilla FK, fecha prevista, oferta y fingerprint de preparación. No elimina datos anteriores.
 
 RLS owner-only y grants mínimos. RPC con validación y autorización independiente, optimistic locking y transacción por lote. Idempotencia de campaña; dedup por cliente/vencimiento/canal y boleta/dueño/día. No hay multiempresa ni migración de datos reales. Las dos migraciones nuevas fueron reconstruidas junto al historial completo en una base local descartable; probar backup/restauración antes de migrar producción.
+
+## Registro manual histórico — migración 20261026170933
+
+`paper_enrollments` enlaza request UUID, cliente, suscripción y lote de procedencia; conserva huella del payload y staff creador. Suscripción y lote son únicos; las referencias son FKs e incluyen índices para cliente y actor. La huella impide reutilizar un request con otros datos. `subscriptions.opening_sessions_used` es entero no negativo, solo aplicable a packs históricos y limitado a la cantidad contratada; se descuenta en `subscription_balances.sessions_remaining`.
+
+`opening_paid_cents` conserva el total abonado menos los pagos históricos efectivamente documentados. Estos últimos llevan `occurred_on` real y desglose por medios. No se modifica `customers.created_at` ni se inventan asistencias. Fechas civiles en zona del gimnasio, importes enteros en centavos y meses cerrados protegidos. Ver [semántica operativa](PAPER_REGISTRATION.md).
