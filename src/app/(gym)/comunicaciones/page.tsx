@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { uuid } from "@/features/gym/validation/contracts";
+import {
+  communicationSections as sections,
+  communicationSection,
+} from "@/features/communications/domain/sections";
 import { PageHeading } from "@/components/shared/page-heading";
 import { getCommunications } from "@/features/communications/server/data";
 import {
@@ -11,14 +15,6 @@ import {
 import { PreparedMessages } from "@/features/communications/components/prepared-messages";
 import { todayIn } from "@/features/gym/domain/dates";
 export const metadata = { title: "Comunicaciones" };
-const sections = [
-  { id: "campanas", label: "Campañas" },
-  { id: "plantillas", label: "Plantillas" },
-  { id: "automatizaciones", label: "Automatizaciones" },
-  { id: "duenos", label: "Dueños" },
-  { id: "canales", label: "Canales" },
-  { id: "historial", label: "Preparados" },
-];
 export default async function CommunicationsPage({
   searchParams,
 }: {
@@ -33,10 +29,8 @@ export default async function CommunicationsPage({
   const campaignId = uuid.safeParse(params.campana).success
     ? params.campana
     : undefined;
-  const data = await getCommunications(campaignId);
-  const section = sections.some((s) => s.id === params.seccion)
-    ? params.seccion
-    : "campanas";
+  const section = communicationSection(params.seccion);
+  const data = await getCommunications(section, campaignId);
   const today = todayIn(data.gym.time_zone);
   const timestamp = (value: string) =>
     new Intl.DateTimeFormat("es-AR", {
@@ -88,7 +82,7 @@ export default async function CommunicationsPage({
           Cambios guardados. No se enviaron mensajes.
         </p>
       ) : null}
-      {section === "campanas" ? (
+      {section === "campanas" && data.config ? (
         <>
           <CampaignComposer
             templates={data.templates}
@@ -258,7 +252,7 @@ export default async function CommunicationsPage({
           </CommunicationForm>
         </section>
       ) : null}
-      {section === "canales" ? (
+      {section === "canales" && data.config ? (
         <>
           <div className="operation-grid">
             <article className="operation-panel">

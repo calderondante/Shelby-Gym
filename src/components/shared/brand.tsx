@@ -4,10 +4,11 @@ export function Brand({ large = false }: { large?: boolean }) {
     <div className={large ? "brand brand-large" : "brand"}>
       <span className="brand-emblem">
         <Image
-          src="/brand/shelby-reference.jpg"
+          src="/brand/app-192.png"
           alt=""
-          width={574}
-          height={1280}
+          width={192}
+          height={192}
+          sizes={large ? "70px" : "52px"}
           priority
         />
       </span>

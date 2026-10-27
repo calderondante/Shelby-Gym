@@ -61,8 +61,11 @@ export default async function CustomersPage({
     mes?: string;
   }>;
 }) {
-  const { staff } = await requireStaff();
-  const params = await searchParams;
+  const [{ staff }, settings, params] = await Promise.all([
+    requireStaff(),
+    requireSettings(),
+    searchParams,
+  ]);
   const q = typeof params.q === "string" ? params.q.slice(0, 100) : "";
   const filter = [
     "deuda",
@@ -79,7 +82,6 @@ export default async function CustomersPage({
     10000,
     Math.max(1, Math.floor(Number(params.pagina) || 1)),
   );
-  const settings = await requireSettings();
   const today = todayIn(settings.time_zone);
   const raffleMonth =
     validMonth(params.mes) && Number(params.mes.slice(0, 4)) >= 2000

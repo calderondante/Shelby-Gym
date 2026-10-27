@@ -44,6 +44,10 @@ export default async function GymHistoryPage({
     : typeof params.dia === "string" && validMonth(params.dia.slice(0, 7))
       ? params.dia.slice(0, 7)
       : today.slice(0, 7);
+  const [ledger, expenseData] = await Promise.all([
+    getMonthlyLedger(month, settings.time_zone, settings.currency),
+    getExpenseData(month),
+  ]);
   const {
     payments,
     periods,
@@ -53,8 +57,7 @@ export default async function GymHistoryPage({
     sessions,
     pendingCents,
     monthlyPendingCents,
-  } = await getMonthlyLedger(month, settings.time_zone, settings.currency);
-  const expenseData = await getExpenseData(month);
+  } = ledger;
   const days = daysOfMonth(month);
   const activity = new Map<string, { count: number; received: number }>();
   function mark(day: string, received = 0) {

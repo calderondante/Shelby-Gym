@@ -54,7 +54,7 @@ export async function getMonthlyLedger(
     db
       .from("subscription_balances")
       .select(
-        "id,created_at,customer_id,activity_name,total_cents,balance_cents,currency,starts_on,ends_on,duration_unit",
+        "id,created_at,customer_id,activity_name,total_cents,balance_cents,currency,starts_on,ends_on,duration_unit,customers(name)",
       )
       .is("import_batch_id", null)
       .gte("created_at", from)
@@ -140,22 +140,10 @@ export async function getMonthlyLedger(
   const monthlyPeriods = periods.filter(
     (row) => row.created_at && inMonth(row.created_at),
   );
-  const customerIds = [
-    ...new Set(
-      monthlyPeriods
-        .map((row) => row.customer_id)
-        .filter((id): id is string => !!id),
-    ),
-  ];
   const names = new Map<string, string>();
-  for (let index = 0; index < customerIds.length; index += 100) {
-    const { data, error } = await db
-      .from("customers")
-      .select("id,name")
-      .in("id", customerIds.slice(index, index + 100));
-    if (error) throw new Error("No pudimos cargar los clientes del historial.");
-    for (const customer of data) names.set(customer.id, customer.name);
-  }
+  for (const period of monthlyPeriods)
+    if (period.customer_id && period.customers)
+      names.set(period.customer_id, period.customers.name);
   return {
     payments,
     balances,

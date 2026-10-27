@@ -1,115 +1,65 @@
 # Checklist de entrega operativa — Shelby Gym
 
-Fecha: **26 de octubre de 2026, horario de Argentina**. Objetivo: preparar la entrega al comprador para un gimnasio de hasta 100–200 socios. Este documento es una ruta de trabajo: las casillas pendientes no representan funciones terminadas ni un despliegue ya realizado.
+Actualizada el **27 de octubre de 2026, horario de Argentina**. Estado detallado y comprobaciones: [HANDOVER_STATUS.md](HANDOVER_STATUS.md).
 
-## Qué puede entregarse primero
+**Situación:** gestión online operativa. El cierre de entrega requiere backups/restauración, carga real y aceptación de los dueños. La publicación y las pruebas locales no reemplazan esa aceptación.
 
-Propuesta de primera entrega: gestión online con datos compartidos, cuentas del personal y WhatsApp asistido —abrir el chat con el mensaje preparado y confirmar el envío en WhatsApp—. Instagram mantiene el @ y el enlace del perfil. **El comprador debe aceptar expresamente este alcance si esperaba automatizaciones o una bandeja de conversaciones.**
+## Infraestructura y acceso
 
-Los envíos automáticos, la lectura/respuesta de conversaciones dentro de la app y la vinculación oficial de Meta son una etapa adicional. Si forman parte de la venta ya acordada, la entrega no se considera completa hasta implementarlos y probarlos; no se sustituyen por botones manuales sin acuerdo.
+- [x] Repositorio del comprador en GitHub; `main` conectado al despliegue de Netlify.
+- [x] Supabase de Shelby Gym configurado, 18 migraciones y 26/26 tablas públicas con RLS.
+- [x] Acceso real del dueño, registro público deshabilitado y contraseña desde 8 caracteres, modificable desde Ajustes.
+- [x] Procedimiento de activación/recuperación de acceso documentado en [ACCESS.md](ACCESS.md), sin secretos versionados.
+- [x] PWA con logo e instrucciones de instalación; apertura desde Android observada en el video del usuario.
+- [ ] Aceptar la nueva versión instalada en iPhone/Safari, Android/Chrome y PC reales. Ver [PWA.md](PWA.md).
+- [ ] Acordar responsable de infraestructura, soporte y seguimiento del consumo del plan gratuito.
 
-## 0. Base que ya tenemos
+## Funciones de gestión
 
-- [x] Código operativo Next.js/Supabase y demo publicados en GitHub.
-- [x] Clientes, actividades temporales y packs de clases, abonos parciales/mixtos, deuda, bajas, regreso y retiro recuperable implementados.
-- [x] Cumpleaños/sorteo, historial mensual, gastos, exportación y cierres implementados.
-- [x] Centro de comunicaciones con plantillas, selección y mensajes preparados; distingue preparado de enviado.
-- [x] Auditoría local de 45 días: 37 perfiles, 127 operaciones, 49 movimientos y 159 verificaciones de escenarios correctas.
-- [x] Build de producción verificado localmente, 28 tests de dominio y 12 E2E correctos; permisos, concurrencia y pérdida de respuesta comprobados.
-- [x] Correcciones de seguridad de dependencias y protección de zona horaria incorporadas.
-- [x] Existe un proyecto Supabase activo accesible en la cuenta conectada. **No se verificó como destino de Shelby ni se modificó.**
+- [x] Clientes, actividades, precios, meses/packs de clases, cuotas y pagos mixtos/parciales.
+- [x] Alta histórica desde papel, deuda anterior, regreso con nueva cuota, archivo y recuperación de perfiles.
+- [x] Historial por mes/día, pendientes mensuales, gastos y correcciones auditadas.
+- [x] Cumpleaños, filtros y sorteo con elegibilidad/estado de cuota.
+- [x] WhatsApp manual con destinatarios/textos preparados, apertura privada individual y confirmación en WhatsApp.
+- [ ] Acordar expresamente si la entrega incluye solo WhatsApp manual o también automatización/Instagram. Registrar las funciones pendientes dentro del alcance comercial.
 
-Evidencia y límites en [la auditoría](AUDIT_2026-10-26.md). Estas pruebas no acreditan un despliegue remoto ni teléfonos físicos.
+## Datos y recuperación — pendiente para el cierre
 
-## 1. Confirmar alcance y responsables — vendedor y comprador
+- [ ] Definir frecuencia, responsable y destino privado de las copias. La revisión remota encontró 0 backups disponibles y PITR deshabilitado.
+- [ ] Comprobar una restauración en un entorno separado y registrar cómo recuperar clientes, cuotas y movimientos.
+- [ ] Cargar/validar actividades y precios reales; pasar clientes y saldos desde el papel. En la revisión remota todavía no había actividades, clientes ni cobros.
+- [ ] Conciliar con el dueño los totales iniciales y resolver duplicados o fechas dudosas antes de operar.
+- [ ] Acordar acceso del personal, conservación de información y respuesta ante un equipo perdido o una clave olvidada.
 
-- [ ] Acordar por escrito qué se entrega hoy, funciones incluidas y pendientes. Distinguir WhatsApp manual, automatización y bandeja de mensajes.
-- [ ] Definir quién administra las cuentas de infraestructura y conserva el código: vendedor como servicio o comprador, según el acuerdo comercial.
-- [ ] Confirmar correos de los dueños y monitores, roles y responsable de autorizar importaciones de datos.
-- [ ] Acordar precio de entrega/mantenimiento, soporte y quién asume un eventual plan pago si el gratuito deja de alcanzar.
-- [ ] Aceptar las condiciones del plan gratuito y definir seguimiento de consumo; no prometer disponibilidad o coste cero ilimitados.
+GitHub y Drive almacenan código/entregables; no sustituyen una copia actual de PostgreSQL.
 
-## 2. Preparar infraestructura — titular de las cuentas y desarrollador
+## Aceptación con los dueños
 
-- [ ] Confirmar si el proyecto Supabase encontrado se dedicará a Shelby o si se necesita otro. Inspeccionar estructura, migraciones y datos antes de decidir; no asumir que está vacío.
-- [ ] Crear o habilitar Netlify Free bajo el titular acordado. Es la ruta de alojamiento gratuito propuesta; todavía hay que verificar el adaptador y el despliegue de este Next.js allí.
-- [ ] Separar pruebas de producción. No conectar previews ni las suites que crean fixtures a datos reales.
-- [ ] Elegir región, URL del proyecto y subdominio gratuito definitivo. Un dominio comprado es opcional para esta primera entrega.
-- [ ] Revisar el destino y el impacto de las migraciones; respaldar cualquier dato existente antes de aplicarlas. No resetear una base compartida para preparar la entrega.
-- [ ] Aplicar el historial de migraciones y revisar RLS, grants y permisos en el proyecto elegido.
-- [ ] Desplegar **la aplicación Next de `main`**, no la demo estática de `gh-pages`.
-- [ ] Configurar variables del entorno mediante el panel seguro del proveedor. La app de gestión solo necesita URL y clave pública de Supabase; la service role es para provisión administrativa restringida, nunca para el navegador.
-- [ ] Comprobar HTTPS, cookies, políticas de caché, cabeceras y autenticación en el alojamiento elegido.
+- [ ] Registrar un cliente nuevo y otro desde papel con vencimiento anterior.
+- [ ] Cobrar completo, parcial y en dos medios; consultar deuda, historial y caja del mes.
+- [ ] Registrar una baja, recuperar el perfil y abrir una nueva cuota conservando la deuda anterior.
+- [ ] Utilizar un pack, descontar una clase y verificar su saldo sin inventar cuotas mensuales.
+- [ ] Registrar una boleta, un pago parcial y una corrección; revisar totales y movimientos del día.
+- [ ] Verificar cumpleaños del mes y siguiente, estado de cuota y elegibilidad del sorteo.
+- [ ] Abrir WhatsApp con un número de prueba autorizado, comprobar remitente/texto y confirmar el envío manualmente.
+- [ ] Ver un cambio desde otro equipo; comprobar pérdida de conexión sin asumir que un pago se guardó o aconsejar repetirlo sin consultar.
+- [ ] Cambiar la contraseña y verificar que los dispositivos anteriores deban volver a entrar.
+- [ ] Aceptar fluidez, teclado, formularios y desplazamiento en los teléfonos físicos y PC.
 
-Referencias: [Netlify](https://www.netlify.com/pricing/), [Next.js en Netlify](https://docs.netlify.com/build/frameworks/framework-setup-guides/nextjs/overview/), [Supabase](https://supabase.com/pricing). Revisar las condiciones vigentes al contratar; esta checklist no contrata servicios.
+No ejecutar suites masivas con los clientes de producción. Las pruebas de desarrollo usan exclusivamente datos sintéticos locales.
 
-## 3. Cerrar funciones necesarias de la primera entrega — desarrollador
+## Entrega y soporte
 
-- [x] Implementar **Abrir WhatsApp** con teléfono internacional y texto personalizado: prevalidación de dueño/datos, apertura individual y copia; sin afirmar entrega. Ver [flujo manual](WHATSAPP_MANUAL.md).
-- [ ] Probarlo en celular y PC. El operador confirma cada envío en WhatsApp; no se puede afirmar enviado/entregado desde nuestra app por haber abierto un enlace.
-- [ ] Acordar qué cuenta de WhatsApp usará recepción. Un enlace abre la cuenta iniciada en el dispositivo; escribir el número del gimnasio en Ajustes no cambia el remitente.
-- [ ] Acordar e implementar la corrección auditada de abonos de socios: permiso, motivo, original conservado y ajuste trazable. Verificar saldo, ingresos y cierres; no resolverlo borrando o editando pagos en la base.
-- [ ] Configurar creación de cuentas propias y desactivar registro público también en remoto. El PIN `SHELBY26` pertenece exclusivamente a la demo y no es una credencial de entrega.
-- [ ] Agregar recuperación de acceso o documentar y probar un procedimiento administrativo seguro. El código actual tiene login, pero no una pantalla de autoservicio para restablecer contraseña.
-- [ ] Mantener visibles los estados «Pendiente de conectar» y «Sin enviar» de las integraciones no activadas. No presentar simulaciones como conexiones reales.
+- [ ] Entregar URL y recuperación de acceso por un medio seguro, con guía breve de alta/cobro/deuda/regreso/exportación.
+- [ ] Explicar backups, límites de la PWA y canales manuales, y dejar un contacto y cobertura de soporte.
+- [ ] Registrar versión, fecha de entrada en uso, responsable y aceptación/incidencias del comprador.
 
-## 4. Preparar datos y recuperación — comprador y desarrollador
+## Meta — solo si se contratan envíos automáticos o bandeja
 
-- [ ] Configurar ARS y `America/Argentina/Buenos_Aires` antes de crear cuotas/gastos. Después quedan protegidos para conservar el historial.
-- [ ] Crear las actividades reales, duraciones, precios y ofertas aprobados por el comprador.
-- [ ] Cargar los registros iniciales desde papel con el dueño: fechas anteriores, importe original, abonado y deuda; comprobar una cuota vigente, otra vencida y un pack. No se requiere Excel. Ver [procedimiento](PAPER_REGISTRATION.md). La importación Excel sigue siendo una alternativa opcional.
-- [ ] Verificar que producción no contenga clientes, pagos ni contactos ficticios de QA. Limpiar únicamente fixtures identificados, nunca con un reset general sobre datos reales.
-- [ ] Definir información personal necesaria, acceso y tratamiento de datos con el gimnasio.
-- [ ] Configurar una copia restaurable de la base, ubicación segura, frecuencia y responsable. El CSV no reemplaza un backup de PostgreSQL.
-- [ ] Probar la restauración en otro entorno y documentar cómo recuperar la operación. El plan gratuito requiere organizar esta protección; no asumir el backup administrado de un plan pago.
+- [ ] Número exclusivo y cuenta profesional de Instagram; titularidad del negocio y autorización oficial de Meta.
+- [ ] Conexión, permisos/revisiones, consentimiento, bajas y plantillas aprobadas cuando correspondan.
+- [ ] Transporte real, webhooks firmados, cola, programador, límites, reintentos y estados de entrega/error.
+- [ ] Revalidar cuota/saldo/destinatario antes de cada envío y probar con destinatarios autorizados.
+- [ ] Confirmar tarifas y responsable de facturación antes de activar mensajes con coste.
 
-## 5. Aceptación del comprador — en la URL definitiva
-
-- [ ] El dueño entra con su cuenta y el monitor no puede cambiar ajustes, comunicaciones o acciones reservadas.
-- [ ] Desde un teléfono se crea un cliente; desde otra sesión de PC aparece con la misma cuota y saldo.
-- [ ] Se registra pago completo, parcial y dividido entre medios; el saldo y el historial concuerdan y no hay duplicados.
-- [ ] Se completa una deuda antigua sin renovar la cuota equivocada; un regreso conserva la deuda y comienza desde el nuevo abono.
-- [ ] Baja, retiro y recuperación conservan movimientos. Una actividad todavía vigente no induce un cargo nuevo.
-- [ ] Se consume/corrige una clase, se revisa el sorteo y se comprueban los filtros de vencimientos y más de 30 días.
-- [ ] Gastos, corrección de pagos y resumen/cierre mensual cuadran con un conjunto de prueba conocido.
-- [ ] WhatsApp manual abre el destinatario y texto correctos; no se envía nada a personas reales como prueba técnica sin una instrucción expresa.
-- [ ] Se prueba Safari/iPhone o Chrome/Android físico según los equipos disponibles, más PC; formularios, teclado, desplazamiento y acciones resultan usables.
-- [ ] Una pérdida de conexión no muestra un pago como confirmado ni aconseja repetirlo sin consultar el historial.
-- [ ] Backups, recuperación de acceso y límites del hosting están documentados y accesibles al responsable.
-
-Las pruebas funcionales de aceptación usan datos identificados de prueba antes de cargar la información real. No ejecutar las suites masivas sobre la base de producción.
-
-## 6. Entregar y registrar la aceptación
-
-- [ ] Entregar URL definitiva y cuentas personales por un medio seguro; no incluir contraseñas en Git, en esta checklist ni en un documento público.
-- [ ] Dar una guía breve de alta, cobro, deuda, regreso, corrección y exportación, con explicación de los estados de mensajes.
-- [ ] Mostrar al comprador el circuito completo y registrar su aceptación, incidencias y pendientes concretos.
-- [ ] Entregar contacto de soporte, cobertura acordada, responsable de backups y procedimiento para reportar fallos.
-- [ ] Registrar versión entregada, fecha de entrada en uso y responsable. La demo de GitHub debe seguir identificada como demostración.
-
-**Criterio de entrega:** alcance aceptado, URL operativa con datos compartidos, acceso real, pruebas críticas aprobadas, recuperación comprobada e instrucciones entregadas. Crear cuentas, publicar una URL o pasar los tests locales no basta por sí solo.
-
-## Etapa Meta — si los envíos automáticos forman parte de lo vendido
-
-- [ ] Conseguir el número exclusivo, preparar WhatsApp Business Platform y disponer de Instagram profesional.
-- [ ] Completar la conexión oficial y los permisos/revisiones que Meta exija, sin compartir contraseñas por chat.
-- [ ] Registrar consentimiento, bajas y plantillas; confirmar tarifas y responsable del gasto antes de habilitar campañas.
-- [ ] Implementar recepción de eventos, validación de webhooks y, si se incluye, bandeja para leer/responder conversaciones.
-- [ ] Implementar programador y cola de envíos con reintentos, límites, deduplicación y estados reales de entrega/error.
-- [ ] Revalidar cuota, saldo, consentimiento y ventana habilitada antes de cada envío; cancelar avisos obsoletos.
-- [ ] Comprobar con destinatarios de prueba autorizados y habilitar reglas gradualmente.
-
-El @ de Instagram no permite iniciar mensajes privados a cualquiera; su API tiene condiciones de conversación. Los avisos automáticos no se consideran entregados hasta que las cuentas y el servicio estén conectados y probados. Protocolo técnico en [COMMUNICATIONS](COMMUNICATIONS.md).
-
-## Orden práctico para hoy
-
-**Alcance acordado → cuentas/destino → despliegue → funciones pendientes → datos y recuperación → prueba en dos equipos → capacitación y aceptación.**
-
-El número aún pendiente no bloquea publicar la gestión si se acuerda separar Meta. La falta de cuentas de hosting, permisos, corrección de abonos o pruebas de aceptación sí puede impedir una entrega completa hoy. No hay una hora garantizada ni un despliegue realizado por crear esta ruta.
-
-## Acceso instalado — 26/10/2026
-
-- [x] Mínimo de contraseña de 8 caracteres alineado entre formulario, servidor y Supabase remoto; clave existente conservada.
-- [x] Manifest standalone e iconos del logo, con ayuda de instalación en Login y Ajustes.
-- [x] Worker sin almacenamiento privado ni operaciones desconectadas.
-- [ ] Aceptar instalación y apertura desde el icono en iPhone/Android y PC reales del comprador.
+Guardar teléfono/@ no conecta una API. Abrir un chat no significa que se envió o entregó. Guías: [WhatsApp manual](WHATSAPP_MANUAL.md) e [integración futura](META_SETUP.md).

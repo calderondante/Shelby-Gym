@@ -205,3 +205,13 @@ Consequences: las consultas de vigencia deben distinguir fecha y sesiones. Los s
 - **Chosen solution:** manifest standalone, iconos de la marca, guía e invitación nativa de instalación y worker de red con pantalla de desconexión pública. Mínimo 8 compartido por formulario/servidor y configurado en Auth.
 - **Reason:** conserva una base de código sin dependencias nuevas, tiendas ni almacenamiento offline de datos privados.
 - **Consequences:** cada dispositivo confirma la instalación una vez; iOS usa el menú Compartir. Sigue necesitando internet. La clave actual no cambia y se mantienen revalidación y revocación de sesiones.
+
+## ADR-020 — Navegación rápida con autorización vigente
+
+- **Date:** 2026-10-27.
+- **Decision:** reducir viajes a Auth/base de datos, lecturas por sección y carga de la marca, y preparar navegación de forma acotada.
+- **Context:** el video del usuario muestra esperas entre pantallas; la medición local descubre lecturas consecutivas y datos no utilizados en Mensajes.
+- **Options:** caché persistente de datos privados; ampliar infraestructura; eliminar trabajo repetido y precargar rutas autorizadas en memoria.
+- **Chosen solution:** JWT verificado por `getClaims`, staff/sesión vigentes por RLS, cliente y contexto deduplicados por render, lecturas independientes en paralelo, nombres unidos al historial, datos limitados a la sección de Mensajes y logo del tamaño necesario. Dos rutas frecuentes se preparan al iniciar; las demás, con intención táctil/teclado/puntero. Sin nuevas dependencias ni migraciones.
+- **Reason:** mejora esperas sin ampliar el coste fijo ni retirar controles de acceso o conciliación.
+- **Consequences:** se mantiene la necesidad de internet y de comprobar equipos físicos. La precarga es volátil y se invalida; no garantiza tiempos constantes ni elimina el arranque del motor de la PWA. La prueba controlada con JWT simétrico no cuantifica el ahorro adicional de Auth con ES256 en producción.

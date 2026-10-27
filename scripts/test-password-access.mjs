@@ -88,6 +88,7 @@ try {
   await page.getByLabel("Contraseña", { exact: true }).fill(initial);
   await page.getByRole("button", { name: "Entrar al gimnasio" }).click();
   await expect(page).toHaveURL(/\/clientes$/);
+  const previousCookies = await context.cookies();
   await page.goto("http://127.0.0.1:3001/ajustes");
   await expect(
     page.getByRole("heading", { name: "Contraseña de acceso" }),
@@ -113,6 +114,12 @@ try {
     .getByRole("button", { name: "Cambiar contraseña", exact: true })
     .click();
   await expect(page).toHaveURL(/\/login\?clave=actualizada$/);
+  const revokedContext = await browser.newContext();
+  await revokedContext.addCookies(previousCookies);
+  const revokedPage = await revokedContext.newPage();
+  await revokedPage.goto("http://127.0.0.1:3001/clientes");
+  await expect(revokedPage).toHaveURL(/\/(login|sin-acceso)$/);
+  await revokedContext.close();
   const oldAccess = await previous.from("staff").select("id");
   assert.equal(oldAccess.error, null);
   assert.deepEqual(

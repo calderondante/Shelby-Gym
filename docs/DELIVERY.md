@@ -1,3 +1,7 @@
+# Entrega actual — 27/10/2026
+
+El estado vigente, funciones disponibles y tareas para cerrar la entrega están en [HANDOVER_STATUS.md](HANDOVER_STATUS.md). La gestión está publicada; backups/restauración, carga real y aceptación del comprador siguen pendientes. Las secciones fechadas a continuación conservan el historial de despliegues y no reemplazan ese estado actual.
+
 # Despliegue operativo — 26/10/2026
 
 La aplicación Next está publicada en https://darling-smakager-792ffe.netlify.app con el adaptador oficial OpenNext de Netlify. La publicación sigue la rama `main`; el primer despliegue operativo fue `4e6cf06`. Se corrigió la importación inicial de la demo estática y se configuró la rama de producción `main`. El PIN de GitHub Pages no sirve en este acceso.

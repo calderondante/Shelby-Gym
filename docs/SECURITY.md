@@ -106,6 +106,12 @@ Modo elegido por el usuario: identidad técnica server-side y contraseña de 8 a
 
 La PWA utiliza manifest e iconos públicos y un service worker del mismo origen. El worker pasa las navegaciones GET a la red; únicamente ante fallo de conexión muestra una respuesta pública sin datos y con `no-store`. No implementa CacheStorage, IndexedDB, cola de operaciones, push ni sincronización offline. No intercepta POST ni almacena respuestas privadas. La instalación no evita Auth/RLS ni altera el cierre de sesiones. No se introducen credenciales ni claves de push. Guía de uso en [PWA.md](PWA.md).
 
+## Optimización de acceso — 27/10/2026
+
+Las pantallas verifican identidad con `getClaims`, que valida firma y expiración del JWT. No se autoriza mediante `getSession`, decodificación sin firma ni metadata editable. El rol y estado actuales se leen en `staff` mediante RLS; `private.staff_role` sigue exigiendo una sesión viva en `auth.sessions`. Las acciones de contraseña conservan la revalidación actual mediante Auth. `React.cache` limita la deduplicación del cliente y contexto a cada render del servidor, sin almacenar sesiones entre solicitudes.
+
+La precarga de navegación usa exclusivamente la memoria del router de ese navegador y las mismas consultas autorizadas. Se preparan como máximo dos rutas principales al iniciar; después solo ante intención de navegar. Se omite en ahorro de datos, 2G o desconexión. No hay bucle de precarga al invalidar; Realtime, el refresco de 30 s y las mutaciones siguen actualizando/invalidando datos. Logout y cambios de contraseña se prueban también con páginas precargadas. No se introduce caché de servidor, service worker o almacenamiento offline para respuestas privadas.
+
 ## Apertura manual de WhatsApp
 
 `/comunicaciones/whatsapp/[id]` exige dueño activo y revalida en servidor destinatario, autorización, estado/fecha y contenido con el contexto vigente antes de redirigir. El navegador no suministra teléfono, cuerpo ni URL de destino; se usa únicamente `https://wa.me/` con número validado y texto codificado. Respuestas privadas `no-store`, enlaces sin prefetch y sin referente. Los tests no navegan a WhatsApp ni contactan números reales; comprueban Location y atributos del enlace. No se registra entrega ni se cambia el ledger al abrir.

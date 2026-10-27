@@ -125,3 +125,7 @@ Baseline actualizado a Next/eslint-config-next **16.4.1** y Zod **4.6.6**, con v
 ## Acceso con contraseña única
 
 Una identidad técnica de Auth se resuelve en servidor con `GYM_OWNER_LOGIN_EMAIL`. Los Server Actions mantienen la autenticación real, validan el cambio con la clave actual y cierran las sesiones al terminar. La activación/recuperación usa tokens de Auth de un solo uso en fragmentos de URL. RLS verifica la vigencia de la sesión mediante `private.staff_role`; no se crea un sistema de cookies paralelo ni se usa un PIN cliente. Ver [ACCESS](ACCESS.md).
+
+## Navegación — 27/10/2026
+
+La identidad de las páginas se valida con `getClaims`, seguida de lectura vigente de staff/sesión por RLS. Cliente y contexto se deduplican por render con `React.cache`, sin compartir sesiones entre solicitudes. Mensajes carga únicamente datos de su sección; Historial une nombres y paraleliza cobros/gastos. La navegación prepara como máximo dos rutas al iniciar y utiliza intención touch/teclado/puntero para el resto; se omite con ahorro de datos/2G o sin conexión. La precarga reside en memoria del router, con invalidación por mutaciones/Realtime/refresco, y no es una base de datos offline. Next permanece fijado en 16.4.1; revisar el enum de precarga completa y sus tests al actualizar. Ver [medición](PERFORMANCE_2026-10-27.md).
