@@ -1,3 +1,4 @@
+import { SummaryNavigation } from "@/components/shared/summary-navigation";
 import Link from "next/link";
 import { PageHeading } from "@/components/shared/page-heading";
 import {
@@ -15,7 +16,7 @@ export const metadata = { title: "Gastos" };
 export default async function ExpensesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mes?: string; guardado?: string }>;
+  searchParams: Promise<{ mes?: string; guardado?: string; estado?: string }>;
 }) {
   const [settings, { staff }, params] = await Promise.all([
     requireSettings(),
@@ -26,26 +27,33 @@ export default async function ExpensesPage({
     month = validMonth(params.mes) ? params.mes : today.slice(0, 7),
     owner = staff.role === "owner";
   const data = await getExpenseData(month);
+  const status =
+    params.estado === "pagados"
+      ? "pagados"
+      : params.estado === "todos"
+        ? "todos"
+        : "pendientes";
+  const visibleExpenses = data.expenses.filter(
+    (expense) =>
+      status === "todos" ||
+      (status === "pagados"
+        ? expense.balance_cents === 0
+        : expense.balance_cents! > 0),
+  );
   return (
     <>
       <PageHeading
         eyebrow="ADMINISTRACIÓN"
         title="Gastos del gimnasio"
-        description="Servicios, gastos habituales y pagos realizados. Los importes previstos quedan separados del dinero que salió."
-        back={{ href: `/historial?mes=${month}`, label: "Historial general" }}
+        description="Cargá la factura cuando llega y registrá el pago cuando la abones. Crear un gasto no descuenta dinero."
+        back={{ href: `/historial?mes=${month}`, label: "Resumen" }}
       />
       {params.guardado ? (
         <p role="status" className="notice">
           Cambios guardados correctamente.
         </p>
       ) : null}
-      <nav className="operation-tabs" aria-label="Secciones de historial">
-        <Link href={`/historial?mes=${month}`}>Movimientos</Link>
-        <Link href={`/historial/gastos?mes=${month}`} aria-current="page">
-          Gastos
-        </Link>
-        <Link href={`/historial/resumen?mes=${month}`}>Resumen</Link>
-      </nav>
+      <SummaryNavigation month={month} active="expenses" />
       <form className="operation-month">
         <label>
           Mes
@@ -69,10 +77,25 @@ export default async function ExpensesPage({
           <strong>{money(data.pending, settings.currency)}</strong>
         </div>
       </div>
+      <div className="workflow-guide">
+        <strong>Factura recibida → Registrar gasto → Registrar pago</strong>
+        <p>
+          Podés cargar los datos a mano o con una foto. Los recordatorios de
+          vencimiento llegan a tu bandeja y a los dispositivos con
+          notificaciones activadas.
+        </p>
+        {owner ? (
+          <Link href="/avisos">Configurar avisos al celular →</Link>
+        ) : null}
+      </div>
       {owner && !data.closing ? (
         <div className="operation-grid">
           <details className="operation-panel">
             <summary>Nuevo gasto</summary>
+            <p>
+              Cargá una factura o gasto puntual. El pago se registra después,
+              incluso si fue parcial.
+            </p>
             <ExpenseEditor
               month={month}
               today={today}
@@ -80,7 +103,7 @@ export default async function ExpensesPage({
             />
           </details>
           <details className="operation-panel">
-            <summary>Generar gastos recurrentes</summary>
+            <summary>Cargar gastos fijos de este mes</summary>
             <p>
               Solo se crean los que faltan para este mes. Podés ajustar luego
               cada importe.
@@ -88,7 +111,7 @@ export default async function ExpensesPage({
             <OperationForm
               operation="generate"
               month={month}
-              label="Generar gastos del mes"
+              label="Cargar gastos fijos del mes"
             />
           </details>
         </div>
@@ -100,13 +123,39 @@ export default async function ExpensesPage({
         </p>
       ) : null}
       <section className="operation-section">
-        <h2>Vencimientos del mes</h2>
-        {!data.expenses.length ? (
+        <h2>Facturas y gastos del mes</h2>
+        <nav className="operation-tabs" aria-label="Estado de gastos">
+          {(
+            [
+              ["pendientes", "Por pagar"],
+              ["pagados", "Pagados"],
+              ["todos", "Todos"],
+            ] as const
+          ).map(([value, label]) => (
+            <Link
+              key={value}
+              href={`/historial/gastos?mes=${month}&estado=${value}`}
+              aria-current={status === value ? "page" : undefined}
+            >
+              {label} ·{" "}
+              {
+                data.expenses.filter(
+                  (e) =>
+                    value === "todos" ||
+                    (value === "pagados"
+                      ? e.balance_cents === 0
+                      : e.balance_cents! > 0),
+                ).length
+              }
+            </Link>
+          ))}
+        </nav>
+        {!visibleExpenses.length ? (
           <p className="daily-empty">
-            No hay gastos registrados para este mes.
+            No hay gastos para este filtro en el mes elegido.
           </p>
         ) : (
-          data.expenses.map((expense) => (
+          visibleExpenses.map((expense) => (
             <article
               key={expense.id}
               className="operation-panel"
@@ -136,7 +185,9 @@ export default async function ExpensesPage({
                   ? "Pagado"
                   : expense.paid_cents! > 0
                     ? "Pago parcial"
-                    : "Pendiente"}{" "}
+                    : expense.due_on! < today
+                      ? "Vencido · pendiente de pago"
+                      : "Pendiente"}{" "}
                 · Abonado {money(expense.paid_cents!, settings.currency)} ·
                 Falta {money(expense.balance_cents!, settings.currency)}
               </p>
@@ -183,8 +234,8 @@ export default async function ExpensesPage({
           ))
         )}
       </section>
-      <section className="operation-section">
-        <h2>Pagos y correcciones del mes</h2>
+      <details className="operation-panel">
+        <summary>Historial de pagos del mes</summary>
         {!data.payments.length ? (
           <p className="daily-empty">
             Todavía no se registraron salidas de dinero.
@@ -244,16 +295,17 @@ export default async function ExpensesPage({
             </article>
           ))
         )}
-      </section>
-      <section className="operation-section">
-        <h2>Gastos recurrentes</h2>
+      </details>
+      <details className="operation-panel">
+        <summary>Configurar gastos fijos mensuales</summary>
         <p className="muted">
-          Modificar una plantilla solo cambia los meses que todavía no
-          generaste.
+          Guardá servicios que se repiten, como alquiler o internet. Después usá
+          «Cargar gastos fijos de este mes» para crear sus facturas. Cambiar
+          estos valores no modifica facturas ya cargadas.
         </p>
         {owner ? (
           <details className="operation-panel">
-            <summary>Nueva plantilla recurrente</summary>
+            <summary>Añadir gasto fijo</summary>
             <ExpenseEditor
               month={month}
               today={today}
@@ -280,7 +332,7 @@ export default async function ExpensesPage({
             )}
           </details>
         ))}
-      </section>
+      </details>
     </>
   );
 }

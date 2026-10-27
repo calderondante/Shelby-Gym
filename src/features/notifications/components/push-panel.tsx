@@ -127,7 +127,7 @@ export function PushPanel({
   };
   return (
     <section className="operation-panel">
-      <h2>Avisos en este dispositivo</h2>
+      <h2>Notificaciones con la app cerrada</h2>
       <p>
         Recibí recordatorios aunque la app esté cerrada. La notificación no
         muestra nombres, saldos ni datos de la factura en la pantalla bloqueada.
@@ -138,11 +138,25 @@ export function PushPanel({
           avisos está disponible.
         </p>
       ) : iosInstall ? (
-        <p className="notice">
-          En iPhone/iPad instalá Shelby Gym desde Safari → Compartir → Añadir a
-          pantalla de inicio. Abrila desde el icono para activar avisos
-          (iOS/iPadOS 16.4 o posterior).
-        </p>
+        <div className="workflow-guide">
+          <strong>Activar en iPhone o iPad · iOS 16.4 o posterior</strong>
+          <ol>
+            <li>
+              Abrí Shelby Gym en Safari y tocá Compartir → Añadir a pantalla de
+              inicio.
+            </li>
+            <li>Abrí la app desde su icono e ingresá a Avisos.</li>
+            <li>Tocá «Activar notificaciones» y aceptá el permiso.</li>
+            <li>
+              Usá «Probar notificación», cerrá la app y comprobá la recepción.
+            </li>
+          </ol>
+          <p>
+            Los avisos llegan por notificación del sistema; no dependen de
+            WhatsApp. Revisá que los ajustes de notificaciones y el modo
+            Concentración permitan mostrarlos.
+          </p>
+        </div>
       ) : !supported ? (
         <p className="notice">
           Este navegador no ofrece notificaciones push. Podés usar la bandeja de

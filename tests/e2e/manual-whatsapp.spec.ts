@@ -167,6 +167,9 @@ test("dos destinatarios privados, texto prefijado, revisión local y apertura si
   await expect(openLink).toHaveAttribute("rel", "noopener noreferrer");
   await a.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Solo WhatsApp por revisar" }).click();
+  await expect(
+    page.getByRole("button", { name: "Solo WhatsApp por revisar" }),
+  ).toHaveCSS("background-color", "rgb(250, 250, 250)");
   await expect(a).toHaveCount(0);
   await expect(b).toBeVisible();
   await page.getByRole("button", { name: "Solo WhatsApp por revisar" }).click();

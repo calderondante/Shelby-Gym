@@ -1,3 +1,4 @@
+import { SummaryNavigation } from "@/components/shared/summary-navigation";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, ReceiptText } from "lucide-react";
 import { getExpenseData } from "@/features/gym/server/operations";
@@ -19,7 +20,7 @@ import {
 import { money } from "@/features/gym/domain/money";
 import { paymentMethods } from "@/features/gym/validation/contracts";
 
-export const metadata = { title: "Historial general" };
+export const metadata = { title: "Resumen" };
 
 const weekday = new Intl.DateTimeFormat("es-AR", {
   weekday: "short",
@@ -127,16 +128,10 @@ export default async function GymHistoryPage({
     <>
       <PageHeading
         eyebrow="CAJA Y MOVIMIENTOS"
-        title="Historial general"
-        description="Elegí un mes y recorré sus días. Las cuotas y las deudas se muestran aparte del dinero cobrado."
+        title="Resumen"
+        description="Lo que cobraste, lo que gastaste y lo que falta cobrar. Elegí un mes para consultar sus movimientos."
       />
-      <nav className="operation-tabs" aria-label="Secciones de historial">
-        <Link href={`/historial?mes=${month}`} aria-current="page">
-          Movimientos
-        </Link>
-        <Link href={`/historial/gastos?mes=${month}`}>Gastos</Link>
-        <Link href={`/historial/resumen?mes=${month}`}>Resumen y descarga</Link>
-      </nav>
+      <SummaryNavigation month={month} active="overview" />
       <section className="ledger-month-bar" aria-label="Seleccionar mes">
         <div>
           <span className="eyebrow">MES SELECCIONADO</span>
@@ -228,232 +223,242 @@ export default async function GymHistoryPage({
           <strong>{money(expenseData.pending, settings.currency)}</strong>
         </div>
       </div>
-      <section className="ledger-calendar" aria-label="Movimientos por día">
-        <div className="ledger-calendar-heading">
-          <div>
-            <span className="eyebrow">RECORRÉ EL MES</span>
-            <h2>Día a día</h2>
-          </div>
-          <span>Deslizá para ver más →</span>
-        </div>
-        <a className="ledger-skip-link" href="#ledger-selected-day">
-          Saltar al detalle del día
-        </a>
-        <LedgerDayRail days={railDays} month={month} selected={selectedDay} />
-      </section>
-      <section
-        className="ledger-selected-day"
-        id="ledger-selected-day"
-        tabIndex={-1}
-        aria-label="Detalle del día seleccionado"
+      <details
+        className="operation-panel summary-history"
+        id="historial-del-mes"
+        open={typeof params.dia === "string" && days.includes(params.dia)}
       >
-        <div>
-          <span className="eyebrow">MOVIMIENTOS DEL DÍA</span>
-          <h2>{dateLabel(selectedDay)}</h2>
-        </div>
-        <div>
-          <span>Ingresó ese día</span>
-          <strong>{money(dailyReceived, settings.currency)}</strong>
-        </div>
-      </section>
-      <section className="daily-section" aria-labelledby="daily-payments">
-        <div className="daily-section-heading">
-          <div>
-            <span className="eyebrow">DINERO RECIBIDO</span>
-            <h2 id="daily-payments">Abonos</h2>
+        <summary>Historial del mes · movimientos día a día</summary>
+        <section className="ledger-calendar" aria-label="Movimientos por día">
+          <div className="ledger-calendar-heading">
+            <div>
+              <span className="eyebrow">RECORRÉ EL MES</span>
+              <h2>Día a día</h2>
+            </div>
+            <span>Deslizá para ver más →</span>
           </div>
-          <span>{dailyPayments.length}</span>
-        </div>
-        {dailyPayments.length ? (
-          <ol className="daily-list">
-            {dailyPayments.map((batch) => {
-              const total = batch.payment_entries.reduce(
-                (sum, entry) => sum + entry.amount_cents,
-                0,
-              );
-              const subscription = batch.subscriptions;
-              return (
-                <li key={batch.id}>
-                  <Link
-                    href={`/clientes/${subscription.customer_id}/historial`}
-                  >
+          <a className="ledger-skip-link" href="#ledger-selected-day">
+            Saltar al detalle del día
+          </a>
+          <LedgerDayRail days={railDays} month={month} selected={selectedDay} />
+        </section>
+        <section
+          className="ledger-selected-day"
+          id="ledger-selected-day"
+          tabIndex={-1}
+          aria-label="Detalle del día seleccionado"
+        >
+          <div>
+            <span className="eyebrow">MOVIMIENTOS DEL DÍA</span>
+            <h2>{dateLabel(selectedDay)}</h2>
+          </div>
+          <div>
+            <span>Ingresó ese día</span>
+            <strong>{money(dailyReceived, settings.currency)}</strong>
+          </div>
+        </section>
+        <section className="daily-section" aria-labelledby="daily-payments">
+          <div className="daily-section-heading">
+            <div>
+              <span className="eyebrow">DINERO RECIBIDO</span>
+              <h2 id="daily-payments">Abonos</h2>
+            </div>
+            <span>{dailyPayments.length}</span>
+          </div>
+          {dailyPayments.length ? (
+            <ol className="daily-list">
+              {dailyPayments.map((batch) => {
+                const total = batch.payment_entries.reduce(
+                  (sum, entry) => sum + entry.amount_cents,
+                  0,
+                );
+                const subscription = batch.subscriptions;
+                return (
+                  <li key={batch.id}>
+                    <Link
+                      href={`/clientes/${subscription.customer_id}/historial`}
+                    >
+                      <div className="daily-entry-main">
+                        <strong>
+                          {subscription.customers?.name ?? "Cliente"}
+                        </strong>
+                        <span>
+                          {subscription.activity_name} · cuota{" "}
+                          {dateLabel(subscription.starts_on)}–
+                          {subscription.ends_on
+                            ? dateLabel(subscription.ends_on)
+                            : "sin vencimiento"}
+                          {batch.import_batch_id
+                            ? " · histórico importado"
+                            : ""}
+                        </span>
+                        <small>
+                          {batch.payment_entries
+                            .map(
+                              (entry) =>
+                                `${paymentMethods[entry.method as keyof typeof paymentMethods] ?? entry.method}: ${money(entry.amount_cents, subscription.currency)}`,
+                            )
+                            .join(" · ")}
+                        </small>
+                      </div>
+                      <strong className="daily-entry-amount">
+                        + {money(total, subscription.currency)}
+                      </strong>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ol>
+          ) : (
+            <div className="daily-empty">
+              <ReceiptText size={22} aria-hidden="true" />
+              <p>No hay abonos registrados este día.</p>
+            </div>
+          )}
+        </section>
+        <section className="daily-section">
+          <h2>Gastos pagados y correcciones</h2>
+          {expenseData.payments.filter((p) => p.occurred_on === selectedDay)
+            .length ? (
+            expenseData.payments
+              .filter((p) => p.occurred_on === selectedDay)
+              .map((p) => (
+                <div key={p.id} className="operation-entry">
+                  <span>
+                    {p.expenses?.title} ·{" "}
+                    {p.reversal_of ? "Corrección" : "Pago"}
+                    {p.reason ? ` · ${p.reason}` : ""}
+                  </span>
+                  <strong>
+                    {p.reversal_of ? "+" : "−"}{" "}
+                    {money(p.amount_cents, settings.currency)}
+                  </strong>
+                </div>
+              ))
+          ) : (
+            <p className="daily-empty">No hay salidas registradas este día.</p>
+          )}
+        </section>
+        <section className="daily-section">
+          <h2>Clases realizadas y correcciones</h2>
+          {sessions.filter((s) => s.occurred_on === selectedDay).length ? (
+            sessions
+              .filter((s) => s.occurred_on === selectedDay)
+              .map((s) => (
+                <div className="operation-entry" key={s.id}>
+                  <Link href={`/clientes/${s.subscriptions?.customer_id}`}>
+                    <strong>{s.subscriptions?.customers?.name}</strong>
+                    <small>
+                      {s.subscriptions?.activity_name} ·{" "}
+                      {s.delta === 1 ? "Clase realizada" : "Clase devuelta"}
+                      {s.reason ? ` · ${s.reason}` : ""}
+                    </small>
+                  </Link>
+                </div>
+              ))
+          ) : (
+            <p className="daily-empty">No hay clases registradas este día.</p>
+          )}
+        </section>
+        <section className="daily-section" aria-labelledby="daily-periods">
+          <div className="daily-section-heading">
+            <div>
+              <span className="eyebrow">ACTIVIDAD, NO INGRESOS</span>
+              <h2 id="daily-periods">Cuotas y packs registrados</h2>
+            </div>
+            <span>{dailyPeriods.length}</span>
+          </div>
+          <p className="daily-section-note">
+            El precio de la cuota no se suma a caja. Su saldo indica lo que
+            falta cobrar hoy.
+          </p>
+          {dailyPeriods.length ? (
+            <ol className="daily-list">
+              {dailyPeriods.map((period) => (
+                <li key={period.id}>
+                  <Link href={`/clientes/${period.customer_id}`}>
                     <div className="daily-entry-main">
                       <strong>
-                        {subscription.customers?.name ?? "Cliente"}
+                        {names.get(period.customer_id ?? "") ?? "Cliente"}
                       </strong>
                       <span>
-                        {subscription.activity_name} · cuota{" "}
-                        {dateLabel(subscription.starts_on)}–
-                        {subscription.ends_on
-                          ? dateLabel(subscription.ends_on)
-                          : "sin vencimiento"}
-                        {batch.import_batch_id ? " · histórico importado" : ""}
+                        {period.activity_name} · cuota de{" "}
+                        {money(
+                          period.total_cents ?? 0,
+                          period.currency ?? settings.currency,
+                        )}
                       </span>
                       <small>
-                        {batch.payment_entries
-                          .map(
-                            (entry) =>
-                              `${paymentMethods[entry.method as keyof typeof paymentMethods] ?? entry.method}: ${money(entry.amount_cents, subscription.currency)}`,
-                          )
-                          .join(" · ")}
+                        Vigencia: {dateLabel(period.starts_on!)} al{" "}
+                        {period.ends_on
+                          ? dateLabel(period.ends_on)
+                          : "sin vencimiento"}
                       </small>
                     </div>
-                    <strong className="daily-entry-amount">
-                      + {money(total, subscription.currency)}
-                    </strong>
+                    <span className="daily-period-balance">
+                      Saldo actual
+                      <br />
+                      <strong>
+                        {money(
+                          period.balance_cents ?? 0,
+                          period.currency ?? settings.currency,
+                        )}
+                      </strong>
+                    </span>
                   </Link>
                 </li>
-              );
-            })}
-          </ol>
-        ) : (
-          <div className="daily-empty">
-            <ReceiptText size={22} aria-hidden="true" />
-            <p>No hay abonos registrados este día.</p>
+              ))}
+            </ol>
+          ) : (
+            <div className="daily-empty">
+              <p>No se registraron cuotas este día.</p>
+            </div>
+          )}
+        </section>
+        <section className="daily-section" aria-labelledby="daily-profiles">
+          <div className="daily-section-heading">
+            <div>
+              <span className="eyebrow">CAMBIOS DEL PADRÓN</span>
+              <h2 id="daily-profiles">Perfiles</h2>
+            </div>
+            <span>{dailyCustomers.length + dailyEvents.length}</span>
           </div>
-        )}
-      </section>
-      <section className="daily-section">
-        <h2>Gastos pagados y correcciones</h2>
-        {expenseData.payments.filter((p) => p.occurred_on === selectedDay)
-          .length ? (
-          expenseData.payments
-            .filter((p) => p.occurred_on === selectedDay)
-            .map((p) => (
-              <div key={p.id} className="operation-entry">
-                <span>
-                  {p.expenses?.title} · {p.reversal_of ? "Corrección" : "Pago"}
-                  {p.reason ? ` · ${p.reason}` : ""}
-                </span>
-                <strong>
-                  {p.reversal_of ? "+" : "−"}{" "}
-                  {money(p.amount_cents, settings.currency)}
-                </strong>
-              </div>
-            ))
-        ) : (
-          <p className="daily-empty">No hay salidas registradas este día.</p>
-        )}
-      </section>
-      <section className="daily-section">
-        <h2>Clases realizadas y correcciones</h2>
-        {sessions.filter((s) => s.occurred_on === selectedDay).length ? (
-          sessions
-            .filter((s) => s.occurred_on === selectedDay)
-            .map((s) => (
-              <div className="operation-entry" key={s.id}>
-                <Link href={`/clientes/${s.subscriptions?.customer_id}`}>
-                  <strong>{s.subscriptions?.customers?.name}</strong>
-                  <small>
-                    {s.subscriptions?.activity_name} ·{" "}
-                    {s.delta === 1 ? "Clase realizada" : "Clase devuelta"}
-                    {s.reason ? ` · ${s.reason}` : ""}
-                  </small>
-                </Link>
-              </div>
-            ))
-        ) : (
-          <p className="daily-empty">No hay clases registradas este día.</p>
-        )}
-      </section>
-      <section className="daily-section" aria-labelledby="daily-periods">
-        <div className="daily-section-heading">
-          <div>
-            <span className="eyebrow">ACTIVIDAD, NO INGRESOS</span>
-            <h2 id="daily-periods">Cuotas y packs registrados</h2>
-          </div>
-          <span>{dailyPeriods.length}</span>
-        </div>
-        <p className="daily-section-note">
-          El precio de la cuota no se suma a caja. Su saldo indica lo que falta
-          cobrar hoy.
-        </p>
-        {dailyPeriods.length ? (
-          <ol className="daily-list">
-            {dailyPeriods.map((period) => (
-              <li key={period.id}>
-                <Link href={`/clientes/${period.customer_id}`}>
-                  <div className="daily-entry-main">
-                    <strong>
-                      {names.get(period.customer_id ?? "") ?? "Cliente"}
-                    </strong>
-                    <span>
-                      {period.activity_name} · cuota de{" "}
-                      {money(
-                        period.total_cents ?? 0,
-                        period.currency ?? settings.currency,
-                      )}
-                    </span>
-                    <small>
-                      Vigencia: {dateLabel(period.starts_on!)} al{" "}
-                      {period.ends_on
-                        ? dateLabel(period.ends_on)
-                        : "sin vencimiento"}
-                    </small>
-                  </div>
-                  <span className="daily-period-balance">
-                    Saldo actual
-                    <br />
-                    <strong>
-                      {money(
-                        period.balance_cents ?? 0,
-                        period.currency ?? settings.currency,
-                      )}
-                    </strong>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <div className="daily-empty">
-            <p>No se registraron cuotas este día.</p>
-          </div>
-        )}
-      </section>
-      <section className="daily-section" aria-labelledby="daily-profiles">
-        <div className="daily-section-heading">
-          <div>
-            <span className="eyebrow">CAMBIOS DEL PADRÓN</span>
-            <h2 id="daily-profiles">Perfiles</h2>
-          </div>
-          <span>{dailyCustomers.length + dailyEvents.length}</span>
-        </div>
-        {dailyCustomers.length || dailyEvents.length ? (
-          <ol className="daily-list">
-            {dailyCustomers.map((customer) => (
-              <li key={customer.id}>
-                <Link href={`/clientes/${customer.id}/historial`}>
-                  <div className="daily-entry-main">
-                    <strong>{customer.name}</strong>
-                    <span>Perfil creado</span>
-                  </div>
-                </Link>
-              </li>
-            ))}
-            {dailyEvents.map((event) => (
-              <li key={event.id}>
-                <Link href={`/clientes/${event.customer_id}/historial`}>
-                  <div className="daily-entry-main">
-                    <strong>{event.customers?.name ?? "Cliente"}</strong>
-                    <span>
-                      {event.event === "retired"
-                        ? "Perfil retirado"
-                        : event.event === "inactive"
-                          ? "Baja registrada"
-                          : "Cliente reactivado"}
-                    </span>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <div className="daily-empty">
-            <p>No hubo cambios de perfiles este día.</p>
-          </div>
-        )}
-      </section>
+          {dailyCustomers.length || dailyEvents.length ? (
+            <ol className="daily-list">
+              {dailyCustomers.map((customer) => (
+                <li key={customer.id}>
+                  <Link href={`/clientes/${customer.id}/historial`}>
+                    <div className="daily-entry-main">
+                      <strong>{customer.name}</strong>
+                      <span>Perfil creado</span>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+              {dailyEvents.map((event) => (
+                <li key={event.id}>
+                  <Link href={`/clientes/${event.customer_id}/historial`}>
+                    <div className="daily-entry-main">
+                      <strong>{event.customers?.name ?? "Cliente"}</strong>
+                      <span>
+                        {event.event === "retired"
+                          ? "Perfil retirado"
+                          : event.event === "inactive"
+                            ? "Baja registrada"
+                            : "Cliente reactivado"}
+                      </span>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <div className="daily-empty">
+              <p>No hubo cambios de perfiles este día.</p>
+            </div>
+          )}
+        </section>
+      </details>
     </>
   );
 }

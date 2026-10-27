@@ -235,3 +235,13 @@ Consequences: las consultas de vigencia deben distinguir fecha y sesiones. Los s
 - **Chosen solution:** JWT verificado por `getClaims`, staff/sesión vigentes por RLS, cliente y contexto deduplicados por render, lecturas independientes en paralelo, nombres unidos al historial, datos limitados a la sección de Mensajes y logo del tamaño necesario. Dos rutas frecuentes se preparan al iniciar; las demás, con intención táctil/teclado/puntero. Sin nuevas dependencias ni migraciones.
 - **Reason:** mejora esperas sin ampliar el coste fijo ni retirar controles de acceso o conciliación.
 - **Consequences:** se mantiene la necesidad de internet y de comprobar equipos físicos. La precarga es volátil y se invalida; no garantiza tiempos constantes ni elimina el arranque del motor de la PWA. La prueba controlada con JWT simétrico no cuantifica el ahorro adicional de Auth con ES256 en producción.
+
+## ADR 023 — Simplificar mensajes y finanzas
+
+- Date: 2026-10-27
+- Decision: priorizar tareas frecuentes y una selección de alto contraste.
+- Context: la configuración de canales y gastos se confundía con envíos o pagos; el tipo de alta no se distinguía.
+- Options: añadir pantallas nuevas; reagrupar las existentes.
+- Chosen solution: tres accesos de Mensajes con WhatsApp como canal operativo, ajustes secundarios, Resumen con historial diario desplegable, Gastos con filtros y configuración de fijos apartada; selección blanca con texto oscuro y semántica aria-current.
+- Reason: reducir decisiones y conservar los recorridos y enlaces actuales.
+- Consequences: no cambia datos, permisos ni contabilidad; los avisos al dueño siguen por Web Push y bandeja. Instagram no se ofrece como envío conectado. iPhone necesita instalación y permiso, con prueba física pendiente.

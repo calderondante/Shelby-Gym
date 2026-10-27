@@ -4,19 +4,19 @@ Disponible para el dueño en la app de gestión. Usa los enlaces oficiales **Cli
 
 ## Uso
 
-1. Abrir **Mensajes → Campañas** y elegir WhatsApp.
+1. Abrir **Mensajes → Preparar mensaje**.
 2. Elegir una plantilla, ajustar el texto/oferta y seleccionar los clientes habilitados. Los nombres y las variables se personalizan por destinatario. Para contactar hace falta celular internacional válido y autorización vigente para las ofertas del canal.
 3. Pulsar **Preparar mensajes privados**. Se conserva una copia por persona y se abre la lista filtrada de esa campaña, con todos sus destinatarios (hasta 500). Las campañas anteriores tienen el enlace **Revisar mensajes de esta campaña**. La vista general muestra los últimos 200 avisos.
-4. En **Preparados**, tocar **Abrir WhatsApp** en la fila correspondiente. El chat se abre con el número y texto cargados. Confirmar el envío dentro de WhatsApp.
+4. En **Listos para abrir**, tocar **Abrir WhatsApp** en la fila correspondiente. El chat se abre con el número y texto cargados. Confirmar el envío dentro de WhatsApp.
 5. Volver a Shelby y usar **Ya revisé este mensaje** para recorrer la lista. El filtro **Solo WhatsApp por revisar** oculta las filas marcadas. Las marcas corresponden a esta visita a la pantalla, no son un historial compartido y no se conservan al recargar por completo.
 
 **Copiar texto** permite pegar el contenido manualmente si el dispositivo no abre el chat como se espera. Los mensajes cancelados no se abren; los previstos para otra fecha quedan bloqueados hasta entonces.
 
-Para las boletas de los dueños: configurar contactos y reglas, pulsar **Revisar avisos de hoy** y abrir cada aviso preparado de la misma manera. Las reglas preparan propuestas; no ejecutan envíos en segundo plano.
+Los avisos de cuotas, facturas y servicios para el dueño están en **Avisos**, con notificaciones Web Push incluso con la app cerrada, tras instalar y habilitar permisos en cada dispositivo. No se envían por WhatsApp. En iPhone requieren iOS 16.4 o posterior y abrir desde el icono de la pantalla de inicio.
 
 ## Qué cuenta envía
 
-En el celular se utiliza la cuenta de WhatsApp que abra el sistema; en PC se puede usar WhatsApp Web o la aplicación disponible. Si se quiere enviar desde el número del gimnasio, iniciar WhatsApp/WhatsApp Business o Web con esa cuenta y comprobarla antes de confirmar. El número guardado en **Canales** es una referencia: no cambia el remitente del dispositivo.
+En el celular se utiliza la cuenta de WhatsApp que abra el sistema; en PC se puede usar WhatsApp Web o la aplicación disponible. Si se quiere enviar desde el número del gimnasio, iniciar WhatsApp/WhatsApp Business o Web con esa cuenta y comprobarla antes de confirmar. El número guardado en **Mensajes → Ajustes → Datos del gimnasio** es una referencia: no cambia el remitente del dispositivo.
 
 No hace falta crear una integración Cloud API, aportar tokens ni tener a los destinatarios guardados en la agenda para usar Click to Chat. Cada cliente debe tener WhatsApp activo en el número indicado. Un enlace lleva a un destinatario: la selección múltiple se recorre chat por chat, sin crear grupos ni enviar un lote automático.
 

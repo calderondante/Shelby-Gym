@@ -178,7 +178,7 @@ export function RecipientPicker({
                       : c.instagram || "Sin Instagram"}{" "}
                     ·{" "}
                     {c.lastEnd
-                      ? `Venció ${dateLabel(c.lastEnd)}`
+                      ? `${c.lastEnd < today ? "Venció" : "Vence"} ${dateLabel(c.lastEnd)}`
                       : "Sin cuota mensual"}
                   </small>
                   <small>
@@ -211,12 +211,13 @@ export function CampaignComposer({
   business: string;
   requestId: string;
 }) {
-  const [channel, setChannel] = useState<Channel>("whatsapp"),
-    [segment, setSegment] = useState<"selected" | "recovery">("recovery");
+  const channel: Channel = "whatsapp";
+  const [segment, setSegment] = useState<"selected" | "recovery">("selected");
   const first =
     templates.find(
-      (t) => t.channel === "whatsapp" && t.purpose === "recovery",
-    ) ?? templates[0];
+      (t) => t.channel === "whatsapp" && t.purpose === "general",
+    ) ??
+    templates.find((t) => t.channel === "whatsapp" && t.purpose === "recovery");
   const [templateId, setTemplateId] = useState(first?.id ?? ""),
     [body, setBody] = useState(first?.body ?? ""),
     [offer, setOffer] = useState(""),
@@ -234,15 +235,6 @@ export function CampaignComposer({
         t.purpose === "general" ||
         (segment === "selected" && t.purpose === "recovery")),
   );
-  function changeChannel(value: Channel) {
-    setChannel(value);
-    setSelected([]);
-    const next =
-      templates.find((t) => t.channel === value && t.purpose === "recovery") ??
-      templates.find((t) => t.channel === value && t.purpose !== "expense");
-    setTemplateId(next?.id ?? "");
-    setBody(next?.body ?? "");
-  }
   return (
     <CommunicationForm
       operation="campaign"
@@ -251,26 +243,16 @@ export function CampaignComposer({
     >
       <div className="operation-grid">
         <label>
-          Nombre de campaña
+          Nombre de la lista
           <input
             name="title"
             required
             minLength={2}
             maxLength={100}
-            defaultValue="Volvé a Shelby"
+            defaultValue="Mensaje a clientes"
           />
         </label>
-        <label>
-          Canal
-          <select
-            name="channel"
-            value={channel}
-            onChange={(e) => changeChannel(e.target.value as Channel)}
-          >
-            <option value="whatsapp">WhatsApp</option>
-            <option value="instagram">Instagram</option>
-          </select>
-        </label>
+        <input type="hidden" name="channel" value="whatsapp" />
       </div>
       <label>
         ¿A quién querés escribirle?
@@ -287,8 +269,10 @@ export function CampaignComposer({
         </select>
       </label>
       <p className="muted">
-        Los dos meses se cuentan desde el vencimiento de la última cuota, con
-        autorización del cliente para ese canal. La deuda anterior se conserva.
+        {segment === "recovery"
+          ? "Los dos meses se cuentan desde el vencimiento de la última cuota. La deuda anterior se conserva."
+          : "Elegí uno o varios clientes de la lista. Cada persona recibe un mensaje privado."}{" "}
+        Para ofertas hace falta autorización del cliente por WhatsApp.
       </p>
       <label>
         Plantilla
@@ -332,22 +316,29 @@ export function CampaignComposer({
       <p className="muted">
         Variables: {purposeVariables.general.map((v) => `{${v}}`).join(" · ")}
       </p>
-      <div className="operation-grid">
-        <label>
-          Fecha prevista (opcional, hora Argentina)
+      <details className="operation-panel">
+        <summary>Preparar para otra fecha (opcional)</summary>
+        <p>
+          Se habilita la apertura desde esa fecha. El envío se confirma en
+          WhatsApp.
+        </p>
+        <div className="operation-grid">
+          <label>
+            Fecha prevista (opcional, hora Argentina)
+            <input
+              type="datetime-local"
+              value={schedule}
+              onChange={(e) => setSchedule(e.target.value)}
+              min={`${today}T00:00`}
+            />
+          </label>
           <input
-            type="datetime-local"
-            value={schedule}
-            onChange={(e) => setSchedule(e.target.value)}
-            min={`${today}T00:00`}
+            type="hidden"
+            name="scheduledFor"
+            value={schedule ? `${schedule}:00-03:00` : ""}
           />
-        </label>
-        <input
-          type="hidden"
-          name="scheduledFor"
-          value={schedule ? `${schedule}:00-03:00` : ""}
-        />
-      </div>
+        </div>
+      </details>
       <RecipientPicker
         recipients={recipients}
         today={today}
@@ -387,17 +378,9 @@ export function CampaignComposer({
         offer={offer}
         business={business}
       />
-      {channel === "instagram" ? (
-        <p className="notice">
-          El @ permite preparar el mensaje. La integración oficial requerirá una
-          cuenta profesional y una conversación iniciada por el cliente; conocer
-          su @ no habilita un envío automático.
-        </p>
-      ) : null}
       <p className="muted">
         Preparar guarda una copia por destinatario. En WhatsApp podés abrir cada
-        chat desde Preparados y confirmar el envío. Instagram sigue pendiente de
-        conexión.
+        chat desde Listos para abrir y confirmar el envío.
       </p>
     </CommunicationForm>
   );

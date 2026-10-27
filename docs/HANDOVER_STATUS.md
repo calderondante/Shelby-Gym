@@ -4,6 +4,14 @@
 
 URL de gestión: https://darling-smakager-792ffe.netlify.app
 
+## Simplificación de uso — 27/10/2026
+
+- Mensajes: preparar WhatsApp, lista para abrir y ajustes secundarios. Envío confirmado por persona; Instagram no se ofrece como canal conectado.
+- Resumen sustituye Historial en la navegación; conserva cifras del mes, historial diario desplegable e informes/descarga en las rutas existentes.
+- Gastos: Por pagar / Pagados / Todos; guía carga frente a pago, gastos fijos e historial separados. Los totales conservan su definición contable.
+- Selección blanca y texto oscuro en pestañas, filtros y tipo de registro; guía de instalación y permisos de avisos en iPhone.
+- Sin cambios de schema, importes históricos, credenciales o permisos. La recepción push con la app cerrada requiere aceptación en iPhone físico; la emulación solo comprueba las instrucciones y condiciones de instalación.
+
 ## Disponible
 
 - Una base compartida en Supabase, accesible desde PC y celular. PWA instalable con logo e icono propios; requiere internet.

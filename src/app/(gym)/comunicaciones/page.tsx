@@ -1,10 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { uuid } from "@/features/gym/validation/contracts";
-import {
-  communicationSections as sections,
-  communicationSection,
-} from "@/features/communications/domain/sections";
+import { communicationSection } from "@/features/communications/domain/sections";
 import { PageHeading } from "@/components/shared/page-heading";
 import { getCommunications } from "@/features/communications/server/data";
 import {
@@ -15,7 +12,7 @@ import {
 } from "@/features/communications/components/forms";
 import { PreparedMessages } from "@/features/communications/components/prepared-messages";
 import { todayIn } from "@/features/gym/domain/dates";
-export const metadata = { title: "Comunicaciones" };
+export const metadata = { title: "Mensajes" };
 export default async function CommunicationsPage({
   searchParams,
 }: {
@@ -43,32 +40,68 @@ export default async function CommunicationsPage({
   return (
     <>
       <PageHeading
-        eyebrow="RELACIÓN CON EL GIMNASIO"
-        title="Comunicaciones"
-        description="Mensajes personales, ofertas para volver y boletas en orden."
+        eyebrow="WHATSAPP DEL GIMNASIO"
+        title="Mensajes"
+        description="Elegí los clientes, prepará el texto y confirmá cada envío en WhatsApp."
       />
-      <p className="notice">
-        WhatsApp manual disponible: prepará una lista y confirmá cada envío en
-        WhatsApp. Los envíos automáticos y la conexión de Instagram siguen
-        pendientes.
-      </p>
-      <nav
-        className="communication-tabs"
-        aria-label="Secciones de comunicaciones"
-      >
-        <Link href="/avisos">Avisos del gimnasio</Link>
-        {sections
-          .filter((s) => s.id !== "duenos")
-          .map((s) => (
-            <Link
-              key={s.id}
-              href={`/comunicaciones?seccion=${s.id}`}
-              aria-current={section === s.id ? "page" : undefined}
-            >
-              {s.label}
-            </Link>
-          ))}
+      <div className="workflow-guide">
+        <strong>
+          1. Elegí clientes → 2. Prepará el mensaje → 3. Abrí WhatsApp
+        </strong>
+        <p>
+          Se usa la cuenta de WhatsApp iniciada en este celular o PC. Vos
+          confirmás cada envío; no hace falta conectar una API.
+        </p>
+        <Link href="/avisos">
+          Avisos para vos, incluso con la app cerrada →
+        </Link>
+      </div>
+      <nav className="communication-tabs" aria-label="Secciones de mensajes">
+        <Link
+          href="/comunicaciones?seccion=campanas"
+          aria-current={section === "campanas" ? "page" : undefined}
+        >
+          Preparar mensaje
+        </Link>
+        <Link
+          href="/comunicaciones?seccion=historial"
+          aria-current={section === "historial" ? "page" : undefined}
+        >
+          Listos para abrir
+        </Link>
+        <Link
+          href="/comunicaciones?seccion=plantillas"
+          aria-current={
+            ["plantillas", "automatizaciones", "canales"].includes(section)
+              ? "page"
+              : undefined
+          }
+        >
+          Ajustes
+        </Link>
       </nav>
+      {["plantillas", "automatizaciones", "canales"].includes(section) ? (
+        <nav className="operation-tabs" aria-label="Ajustes de mensajes">
+          <Link
+            href="/comunicaciones?seccion=plantillas"
+            aria-current={section === "plantillas" ? "page" : undefined}
+          >
+            Textos guardados
+          </Link>
+          <Link
+            href="/comunicaciones?seccion=automatizaciones"
+            aria-current={section === "automatizaciones" ? "page" : undefined}
+          >
+            Ofertas de regreso
+          </Link>
+          <Link
+            href="/comunicaciones?seccion=canales"
+            aria-current={section === "canales" ? "page" : undefined}
+          >
+            Datos del gimnasio
+          </Link>
+        </nav>
+      ) : null}
       {params.aviso ? (
         <p className="notice" role="alert">
           {params.aviso === "fecha"
@@ -96,8 +129,8 @@ export default async function CommunicationsPage({
             today={today}
             requestId={crypto.randomUUID()}
           />
-          <section className="operation-section">
-            <h2>Campañas guardadas</h2>
+          <details className="operation-panel">
+            <summary>Listas de mensajes anteriores</summary>
             {data.campaigns.length ? (
               data.campaigns.map((c) => (
                 <article className="operation-panel" key={c.id}>
@@ -129,12 +162,12 @@ export default async function CommunicationsPage({
                 Tu primera campaña empieza eligiendo a quién querés escribirle.
               </p>
             )}
-          </section>
+          </details>
         </>
       ) : null}
       {section === "plantillas" ? (
         <section className="operation-section">
-          <h2>Mensajes con la voz de Shelby</h2>
+          <h2>Textos guardados</h2>
           <p>
             Se personalizan al preparar cada mensaje. Editar una plantilla
             conserva las copias ya preparadas.
@@ -160,10 +193,11 @@ export default async function CommunicationsPage({
       ) : null}
       {section === "automatizaciones" ? (
         <section className="operation-section">
-          <h2>Reglas de preparación</h2>
+          <h2>Ofertas para volver al gimnasio</h2>
           <p>
-            Usá «Revisar avisos de hoy» para preparar los recordatorios. Después
-            abrí cada chat desde Preparados y confirmá el envío en WhatsApp.
+            Usá «Preparar ofertas de hoy» para preparar los recordatorios.
+            Después abrí cada chat desde Listos para abrir y confirmá el envío
+            en WhatsApp.
           </p>
           <p>
             Los vencimientos de facturas y cuotas se administran en{" "}
@@ -190,9 +224,12 @@ export default async function CommunicationsPage({
                 />
               </section>
             ))}
-          <CommunicationForm operation="preview" label="Revisar avisos de hoy">
+          <CommunicationForm
+            operation="preview"
+            label="Preparar ofertas de hoy"
+          >
             <p>
-              Revisa vencimientos, autorizaciones, contactos activos y saldos.
+              Revisa los clientes elegidos, sus contactos y autorizaciones.
               Repetir la revisión no duplica el mismo aviso.
             </p>
             <input name="day" type="hidden" value={today} />
@@ -201,26 +238,10 @@ export default async function CommunicationsPage({
       ) : null}
       {section === "canales" && data.config ? (
         <>
-          <div className="operation-grid">
-            <article className="operation-panel">
-              <h2>WhatsApp</h2>
-              <p>Apertura manual disponible</p>
-              <small>
-                Abrí los mensajes preparados con la cuenta de WhatsApp que
-                tengas iniciada en el dispositivo. El envío manual no utiliza la
-                API de Meta.
-              </small>
-            </article>
-            <article className="operation-panel">
-              <h2>Instagram</h2>
-              <p>Pendiente de vincular</p>
-              <small>
-                Requiere cuenta profesional y conversación iniciada por el
-                cliente. Su @ por sí solo no permite enviar mensajes mediante la
-                API oficial.
-              </small>
-            </article>
-          </div>
+          <p className="workflow-guide">
+            WhatsApp funciona con la cuenta abierta en tu dispositivo. Estos
+            datos son de referencia; no cambian la cuenta que envía.
+          </p>
           <CommunicationForm
             operation="config"
             revision={data.config.revision}
@@ -237,7 +258,7 @@ export default async function CommunicationsPage({
               />
             </label>
             <label>
-              Número exclusivo de WhatsApp (opcional)
+              Número exclusivo de WhatsApp (referencia, opcional)
               <input
                 name="whatsappPhone"
                 type="tel"
@@ -260,6 +281,13 @@ export default async function CommunicationsPage({
               confirmar. No pegues contraseñas ni tokens aquí.
             </p>
           </CommunicationForm>
+          <details className="operation-panel">
+            <summary>¿Y los mensajes de Instagram?</summary>
+            <p>
+              Podés guardar el @ del gimnasio y de cada cliente. La conexión
+              para enviar desde Instagram todavía no está disponible.
+            </p>
+          </details>
         </>
       ) : null}
       {section === "historial" ? (

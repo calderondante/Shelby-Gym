@@ -1,3 +1,4 @@
+import { SummaryNavigation } from "@/components/shared/summary-navigation";
 import Link from "next/link";
 import { PageHeading } from "@/components/shared/page-heading";
 import {
@@ -42,8 +43,9 @@ export default async function SummaryPage({
               ? "Resumen parcial del mes. Los pendientes muestran el saldo actual."
               : "Consulta actualizada. Los pendientes reflejan pagos posteriores del cliente."
         }
-        back={{ href: `/historial?mes=${month}`, label: "Historial" }}
+        back={{ href: `/historial?mes=${month}`, label: "Resumen" }}
       />
+      <SummaryNavigation month={month} active="report" />
       <nav className="operation-tabs" aria-label="Versión del resumen">
         <Link
           href={`/historial/resumen?mes=${month}&version=actual`}

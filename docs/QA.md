@@ -251,3 +251,11 @@ Supabase remoto: `password_min_length = 8` confirmado por lectura tras actualiza
 50 tests unitarios, `pnpm test:integration` completo y **23/23 E2E** correctos. `pnpm test:access` comprueba contraseña de ocho caracteres, cierre global, rechazo de JWT revocado en DB y rechazo de una página protegida al reutilizar las cookies anteriores. La prueba de navegación verifica feedback con red demorada, precarga completa real, modificación desde otra sesión antes de abrir la pantalla y logout/back sin recuperar una vista autorizada. Se mantienen las pruebas responsive, axe, pérdida de respuesta, pagos mixtos, concurrencia, historiales, boletas y PWA. No se envían mensajes reales ni se escriben datos de clientes en producción.
 
 Mediciones y protocolo en [PERFORMANCE_2026-10-27.md](PERFORMANCE_2026-10-27.md); estado de cierre en [HANDOVER_STATUS.md](HANDOVER_STATUS.md). La consulta remota encontró 18 migraciones, 26/26 tablas públicas con RLS y 0 clientes/actividades/cobros; el proveedor no mostró backups disponibles y PITR está desactivado. Son lecturas de configuración/contadores, no un ensayo de restauración. Falta aceptar fluidez y workflows de esta versión en equipos físicos.
+
+## Simplificación de Mensajes, Resumen y Gastos — 27/10/2026
+
+- `pnpm test`: 90 pruebas / 12 archivos correctos.
+- `pnpm lint`, `pnpm typecheck`, `pnpm build`, `node scripts/verify-workspace.mjs` y `git diff --check`: correctos.
+- Navegador local: 9 recorridos correctos de comunicaciones, selección de alto contraste, cinco tamaños, axe, aviso de instalación iPhone, pagos parciales/gastos, factura por OCR y permisos de avisos. Tras el ajuste final de texto/selección se verificaron otros 4 recorridos: cambio de día sin cerrar historial y tres escenarios WhatsApp (incluye revisión visual del filtro activo).
+- Evidencia local ignorada en `qa-artifacts/interface-clarity/`; revisadas capturas de alta desde papel, Mensajes, Resumen y Gastos a 390px. Sin cambios en schema ni datos de producción.
+- Los mensajes reales no se envían en estas pruebas. La simulación de iPhone comprueba instrucciones/instalación requerida; no acredita recepción Web Push en hardware Apple. Sigue pendiente activar permiso y recibir un aviso con app cerrada en el teléfono del comprador.

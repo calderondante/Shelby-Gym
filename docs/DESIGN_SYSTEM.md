@@ -160,3 +160,7 @@ Tokens: `--ease-out: cubic-bezier(0.23, 1, 0.32, 1)`, `--ease-in-out: cubic-bezi
 Teclado no dispara movimientos; reduced motion elimina transformaciones y la señal animada de espera. Hover decorativo limitado a puntero fino con hover real. No stagger en clientes, conteos que giran, animaciones al refrescar saldos, gradientes ni fondos en movimiento.
 
 La bienvenida a Excel usa dos columnas en PC y composición compacta en celular; la tabla de correspondencias se convierte en campos verticales. Vista previa de clientes paginada, detalle de pagos desplegable y saldos tabulares. Capturas: `docs/design/screenshots/import/`.
+
+## Selección y orientación — 27/10/2026
+
+Las pestañas, filtros, tipo de alta y día seleccionado usan fondo #fafafa con texto #171717 y `aria-current`. No depender de una diferencia mínima entre grises oscuros. Los controles mantienen foco visible y al menos 44px de alto. Mensajes se organiza en Preparar mensaje, Listos para abrir y Ajustes; Resumen presenta cifras mensuales antes del historial desplegable. Gastos distingue carga de factura, pago y configuración de gastos fijos.

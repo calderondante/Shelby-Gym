@@ -6,7 +6,7 @@ Abrir **Avisos** (campana de la cabecera). La bandeja reúne cuotas de clientes 
 
 En **Preferencias de vencimiento** configurar anticipación, día del vencimiento, repetición posterior y hora argentina. Inicialmente: 3 días antes, ese día y cada día vencido, desde las 9. La bandeja funciona sin permiso de notificaciones.
 
-Para avisos con la app cerrada: **Avisos en este dispositivo → Activar notificaciones**, aceptar el permiso y pulsar **Probar notificación**. En iPhone/iPad se necesita iOS/iPadOS 16.4 o posterior y abrir la app instalada desde su icono (Safari → Compartir → Añadir a pantalla de inicio). Repetir en cada equipo deseado. No requiere cuenta Apple Developer.
+Para avisos con la app cerrada: **Notificaciones con la app cerrada → Activar notificaciones**, aceptar el permiso y pulsar **Probar notificación**. En iPhone/iPad se necesita iOS/iPadOS 16.4 o posterior y abrir la app instalada desde su icono (Safari → Compartir → Añadir a pantalla de inicio). Repetir en cada equipo deseado. No requiere cuenta Apple Developer.
 
 El programador revisa cada hora; envía como máximo un resumen diario por dispositivo, a partir de la hora elegida, si hay asuntos que corresponda avisar. El aviso previo no se repite para la misma situación. El sistema operativo puede demorar/silenciar avisos; la bandeja es la referencia actual y muestra la última revisión automática. Cerrar sesión/cambiar contraseña invalida la vinculación anterior; volver a entrar reactiva una suscripción existente y autorizada.
 
@@ -14,7 +14,7 @@ El texto de la pantalla bloqueada es genérico, sin nombres, saldos ni datos de 
 
 ## Registrar una factura
 
-1. **Historial → Gastos → Nuevo gasto → Registrar una factura con foto**. También desde **Ajustar concepto o importe** de un gasto existente, para no duplicar la obligación recurrente.
+1. **Resumen → Gastos → Nuevo gasto → Registrar una factura con foto**. También desde **Ajustar concepto o importe** de un gasto existente, para no duplicar la obligación recurrente.
 2. Tomar/elegir foto. Se procesa en el dispositivo, con un modelo español descargado desde el mismo sitio. La primera lectura descarga recursos; no es instantánea ni infalible.
 3. Revisar/corregir **proveedor o servicio, número de factura, importe total y vencimiento**. Importes/fechas ambiguos quedan para completar. No se infiere vencimiento desde emisión/CAE ni se convierten dólares/euros.
 4. Confirmar revisión y pulsar **Usar estos datos y descartar foto**. Después **Registrar gasto** (o guardar ajuste). Registra la obligación, no su pago; éste se registra por separado.

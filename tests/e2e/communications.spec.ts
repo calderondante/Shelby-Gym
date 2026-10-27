@@ -17,7 +17,7 @@ test("comunicaciones: navegación responsive, privacidad, revisión y permisos",
   await expect(page).toHaveURL(/\/clientes$/);
   await page.getByRole("link", { name: "Mensajes", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Comunicaciones", exact: true }),
+    page.getByRole("heading", { name: "Mensajes", exact: true }),
   ).toBeVisible();
   const seedName = await page
     .locator(".campaign-person strong")
@@ -77,7 +77,7 @@ test("comunicaciones: navegación responsive, privacidad, revisión y permisos",
       "historial",
     ]) {
       await page.goto(`/comunicaciones?seccion=${section}`);
-      await expect(page.locator("h1")).toHaveText("Comunicaciones");
+      await expect(page.locator("h1")).toHaveText("Mensajes");
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth,

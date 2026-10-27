@@ -69,7 +69,7 @@ export function Navigation({ owner }: { owner: boolean }) {
   const links = [
     { href: "/clientes", label: "Clientes", Icon: Users },
     { href: "/actividades", label: "Actividades", Icon: Dumbbell },
-    { href: "/historial", label: "Historial", Icon: History },
+    { href: "/historial", label: "Resumen", Icon: History },
     ...(owner
       ? [
           { href: "/comunicaciones", label: "Mensajes", Icon: MessagesSquare },

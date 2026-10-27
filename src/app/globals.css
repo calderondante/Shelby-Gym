@@ -2867,3 +2867,69 @@ html:not([data-input="keyboard"]) details[open] > :not(summary) {
     padding-inline: 8px;
   }
 }
+
+/* One unmistakable selected state across navigation, filters and form modes. */
+.communication-tools button[aria-pressed="true"],
+.primary-nav > a[aria-current="page"],
+.operation-tabs a[aria-current="page"],
+.communication-tabs a[aria-current="page"],
+.filter-links > a[aria-current="page"],
+.ledger-day-rail > a[aria-current="date"] {
+  background: #fafafa;
+  color: #171717;
+  border-color: #fafafa;
+  font-weight: 650;
+  box-shadow: none;
+}
+.primary-nav > a[aria-current="page"] svg {
+  color: #b21b28;
+}
+.operation-tabs a[aria-current="page"]:hover,
+.communication-tabs a[aria-current="page"]:hover {
+  background: #fff;
+  color: #171717;
+}
+.workflow-guide {
+  margin: 20px 0;
+  padding: 18px 20px;
+  border-left: 3px solid #e5373f;
+  background: var(--secondary);
+  border-radius: 0 12px 12px 0;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.workflow-guide p {
+  margin: 6px 0 10px;
+  color: var(--muted-foreground);
+}
+.workflow-guide a {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.operation-panel > summary {
+  min-height: 44px;
+  cursor: pointer;
+  padding-block: 10px;
+  font-weight: 600;
+}
+.operation-panel[open] > summary {
+  color: #fafafa;
+  margin-bottom: 16px;
+}
+.operation-panel + .operation-panel {
+  margin-top: 16px;
+}
+.summary-history > summary {
+  font-size: 18px;
+}
+.campaign-person:has(input:checked) {
+  background: var(--secondary);
+  box-shadow: inset 3px 0 #fafafa;
+}
+
+.ledger-day-rail > a[aria-current="date"] small {
+  color: #9d1727;
+}
+.operation-grid > .operation-panel {
+  margin-top: 0;
+}
