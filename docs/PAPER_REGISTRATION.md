@@ -2,6 +2,8 @@
 
 Actualización del 26/10/2026. El gimnasio lleva principalmente registros en papel: no hace falta preparar un Excel. La importación existente sigue disponible como alternativa.
 
+27/10/2026: la [camarita del formulario](REGISTRATION_PHOTO.md) permite proponer datos desde una ficha individual sin nuevas pestañas. Revisión obligatoria y campos históricos seleccionados/confirmados aparte; conserva la carga manual y reglas de caja.
+
 ## Uso por el dueño
 
 1. Crear las actividades que figuran en el cuaderno. Si un pack antiguo tenía otra cantidad de clases, usar una plantilla con esa cantidad; también se pueden elegir actividades inactivas al cargar historia.

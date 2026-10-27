@@ -57,7 +57,7 @@ export function EnrollmentForm({
               <span>01</span>
               <h2>Datos del cliente</h2>
             </div>
-            <CustomerFields errors={state.fieldErrors} />
+            <CustomerFields errors={state.fieldErrors} photoRegistration={{}} />
           </section>
         ) : null}
         <section className="form-section">

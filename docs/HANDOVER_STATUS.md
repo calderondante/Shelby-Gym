@@ -9,6 +9,7 @@ URL de gestión: https://darling-smakager-792ffe.netlify.app
 - Una base compartida en Supabase, accesible desde PC y celular. PWA instalable con logo e icono propios; requiere internet.
 - Entrada del dueño con contraseña y cambio desde Ajustes; mínimo 8 caracteres. Registro público deshabilitado y sesiones anteriores revocadas al cambiar la clave.
 - Clientes, teléfono, Instagram, cumpleaños, alta de hoy y carga histórica desde papel.
+- Camarita en el formulario de alta/carga desde papel: propone datos para revisión sin crear registros hasta guardar. [Guía](REGISTRATION_PHOTO.md); falta muestra real anonimizada para calibrar escritura y probar en celular físico.
 - Actividades y combinaciones, precios, ofertas, vigencia en meses o packs de clases, con importes históricos conservados.
 - Cobros registrados manualmente en ARS, medios combinados, saldo parcial y deuda anterior visible al regresar.
 - Baja/archivo y recuperación de perfiles; movimientos y caja por mes/día, pendientes mensuales, gastos y correcciones auditadas.

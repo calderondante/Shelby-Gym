@@ -1,5 +1,15 @@
 # Decisiones (ADR simplificado)
 
+## ADR-022 — Foto integrada en el formulario de inscripción
+
+- **Date:** 2026-10-27.
+- **Decision:** añadir camarita al registro existente, sin nuevas pestañas/estados persistentes.
+- **Context:** trasladar fichas de papel reduciendo transcripción, con revisión y posibilidad de completar manualmente.
+- **Options:** OCR externo, nueva sección de importación, o reutilizar OCR local dentro de los dos modos actuales.
+- **Chosen solution:** lector local compartido con facturas, campos etiquetados y parche seleccionado; estado personal controlado sin resetear notas. Historia requiere actividad existente y revisión independiente; no infiere cobros.
+- **Reason:** conserva privacidad, costes e infraestructura; evita duplicar worker y lógica de negocio.
+- **Consequences:** sin nuevas dependencias/API/schema. Cursiva y planillas desconocidas pueden no reconocerse. Falta muestra anonimizada del formulario real; se valida con fichas impresas sintéticas. Procesar la imagen no persiste nada y descarta foto al aplicar/cancelar/salir.
+
 ## ADR-021 — Avisos propios y factura sin conservar foto
 
 - **Date:** 2026-10-27.

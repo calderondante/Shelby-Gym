@@ -1,5 +1,15 @@
 # QA y criterio de entrega
 
+## Cámara en inscripción — 27/10/2026
+
+- `pnpm lint` sin advertencias, `pnpm typecheck`, `pnpm test` (**90 tests**), `pnpm build` y `node scripts/verify-workspace.mjs`: correctos.
+- `pnpm test:integration`, `pnpm test:paper` y `node scripts/test-owner-alerts.mjs`: correctos contra Supabase local con datos sintéticos. Sin schema nuevo ni escrituras/pruebas contra clientes reales en producción.
+- **28/28 E2E** correctos. Nuevos: OCR español real de una ficha PNG, corrección manual, protección de datos escritos incluso durante la lectura, reemplazo sólo por selección, consentimientos desmarcados, notas preservadas y ausencia de POST durante escaneo/aplicación. Carga histórica conserva importe original/crédito/saldo y no crea recibos de hoy; actividad confirmada y revisión financiera aparte. Monitor usa cámara de alta normal y no entra a historia; cancelar conserva formulario. Factura con foto y avisos mantienen su regresión.
+- Inscripción revisada en 375, 390, 768, 1024 y 1440 px, sin overflow; axe sin infracciones de los criterios incluidos. Evidencia local ignorada en `qa-artifacts/registration-photo/`. No se exportaron fotos ni fichas reales.
+- En la ficha sintética el OCR confundió el carácter @ y dejó un correo sin reconocer; se verificó su corrección/selección antes de aplicar. No se corrigió silenciosamente ni se declara precisión garantizada. Falta muestra anonimizada de la planilla real, escritura manuscrita y prueba física de cámara en iPhone/Android.
+
+Uso y límites en [REGISTRATION_PHOTO.md](REGISTRATION_PHOTO.md). No se añadieron dependencias, credenciales, rutas ni pestañas.
+
 ## Avisos y factura local — 27/10/2026
 
 - `pnpm lint`, `pnpm typecheck`, `pnpm test` (**74 tests**), `pnpm build`, `node scripts/verify-workspace.mjs`: correctos.

@@ -1,5 +1,7 @@
 # Estado actual y reglas aprobadas
 
+27/10/2026: [camarita en el registro existente](REGISTRATION_PHOTO.md) para prellenar desde una ficha individual, revisar y corregir. Sólo guardado explícito crea el perfil. Datos escritos protegidos y revisión financiera separada en carga histórica; sin nuevas pestañas ni reconocimiento manuscrito garantizado.
+
 27/10/2026: WhatsApp semiautomático para clientes; avisos al dueño por bandeja/Web Push con permiso, también con app cerrada. Factura por foto: lectura local de proveedor/servicio, número, importe y vencimiento, revisión obligatoria y descarte. No cobra ni paga automáticamente. [Guía y límites](OWNER_NOTIFICATIONS.md).
 
 La actualización del 2026-10-20 está autorizada para implementación y publicación directa, sin video. Ver [detalle de la actualización](UPDATES_2026-10-20.md). Sus reglas prevalecen sobre las propuestas o preguntas históricas que se conservan debajo.

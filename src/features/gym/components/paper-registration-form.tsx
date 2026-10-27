@@ -124,7 +124,23 @@ export function PaperRegistrationForm({
             <span>01</span>
             <h2>Datos del cliente</h2>
           </div>
-          <CustomerFields errors={state.fieldErrors} />
+          <CustomerFields
+            errors={state.fieldErrors}
+            photoRegistration={{
+              history: {
+                values: { activityId, startsOn, endsOn, total, paid },
+                activities,
+                onApply: (patch) => {
+                  if (patch.activityId !== undefined)
+                    setActivityId(patch.activityId);
+                  if (patch.startsOn !== undefined) setStartsOn(patch.startsOn);
+                  if (patch.endsOn !== undefined) setEndsOverride(patch.endsOn);
+                  if (patch.total !== undefined) setTotal(patch.total);
+                  if (patch.paid !== undefined) setPaid(patch.paid);
+                },
+              },
+            }}
+          />
         </section>
         <section className="form-section">
           <div className="section-heading">

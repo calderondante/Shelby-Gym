@@ -8,9 +8,15 @@ import {
 } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { TextField } from "@/components/shared/form-parts";
+import {
+  RegistrationPhoto,
+  type HistoricalPhotoContext,
+} from "@/features/registration/components/registration-photo";
+import type { PersonalValues } from "@/features/registration/domain/photo-draft";
 export function CustomerFields({
   customer,
   errors = {},
+  photoRegistration,
 }: {
   customer?: {
     name: string;
@@ -23,10 +29,27 @@ export function CustomerFields({
     instagram_marketing_opt_in?: boolean;
   };
   errors?: Record<string, string>;
+  photoRegistration?: { history?: HistoricalPhotoContext };
 }) {
   const [notes, setNotes] = useState(customer?.notes ?? "");
+  const [personal, setPersonal] = useState<PersonalValues>(() => ({
+    name: customer?.name ?? "",
+    phone: customer?.phone ?? "",
+    instagram: customer?.instagram ?? "",
+    email: customer?.email ?? "",
+    birthMonth: customer?.birth_month ? String(customer.birth_month) : "",
+  }));
   return (
     <FieldGroup>
+      {photoRegistration ? (
+        <RegistrationPhoto
+          current={personal}
+          history={photoRegistration.history}
+          onApply={(patch) =>
+            setPersonal((previous) => ({ ...previous, ...patch }))
+          }
+        />
+      ) : null}
       <TextField
         name="name"
         label="Nombre y apellido"
@@ -34,7 +57,10 @@ export function CustomerFields({
         minLength={2}
         maxLength={120}
         autoComplete="name"
-        defaultValue={customer?.name}
+        value={personal.name}
+        onChange={(e) =>
+          setPersonal((previous) => ({ ...previous, name: e.target.value }))
+        }
         error={errors.name}
         placeholder="¿Cómo se llama el cliente?"
       />
@@ -45,7 +71,10 @@ export function CustomerFields({
           type="tel"
           autoComplete="tel"
           maxLength={40}
-          defaultValue={customer?.phone}
+          value={personal.phone}
+          onChange={(e) =>
+            setPersonal((previous) => ({ ...previous, phone: e.target.value }))
+          }
           error={errors.phone}
         />
       </FieldGroup>
@@ -56,7 +85,13 @@ export function CustomerFields({
         maxLength={31}
         autoCapitalize="none"
         autoCorrect="off"
-        defaultValue={customer?.instagram}
+        value={personal.instagram}
+        onChange={(e) =>
+          setPersonal((previous) => ({
+            ...previous,
+            instagram: e.target.value,
+          }))
+        }
         error={errors.instagram}
       />
       <Field orientation="horizontal">
@@ -88,7 +123,13 @@ export function CustomerFields({
         <select
           id="birthMonth"
           name="birthMonth"
-          defaultValue={customer?.birth_month ?? ""}
+          value={personal.birthMonth}
+          onChange={(e) =>
+            setPersonal((previous) => ({
+              ...previous,
+              birthMonth: e.target.value,
+            }))
+          }
           aria-describedby="birthday-help"
         >
           <option value="">Elegir mes</option>
@@ -112,7 +153,13 @@ export function CustomerFields({
             type="email"
             autoComplete="email"
             maxLength={254}
-            defaultValue={customer?.email}
+            value={personal.email}
+            onChange={(e) =>
+              setPersonal((previous) => ({
+                ...previous,
+                email: e.target.value,
+              }))
+            }
             error={errors.email}
           />
           <Field>

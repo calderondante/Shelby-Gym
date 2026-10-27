@@ -4,6 +4,8 @@ App operativa en Netlify/Supabase; QA separado con datos sintéticos. No hay cob
 
 ## Avisos y facturas — 27/10/2026
 
+El lector de inscripción comparte el OCR local. Whitelist de datos de contacto/mes de cumpleaños y campos históricos explícitos; no copia firmas, datos médicos, notas libres ni consentimientos. Foto y controles de revisión sin name para no enviarse con FormData. Borrador sólo memoria, permisos de registro existentes y confirmación aparte de historia; nunca genera pagos desde la imagen. Sin nuevos endpoints ni migraciones. [Guía](REGISTRATION_PHOTO.md).
+
 La foto se procesa localmente; no se sube a servidor/Storage ni se guarda en cachés persistentes. Campos revisados validados en servidor/DB, proveedor+número duplicados rechazados. Recursos OCR propios, sin CDN tercero; cámara mismo origen. No registrar imagen ni texto OCR en logs.
 
 Web Push genérico sin nombres/saldos; destino fijo `/avisos` autenticado. Preferencias/lecturas/dispositivos exigen dueño actual, vinculación a sesión viva. VAPID/worker sólo servidor, sin service role en runtime. Auth técnico sin staff, autorización con app metadata administrada actual, no user_metadata/JWT obsoleto. Cola/endpoints privados, proveedores HTTPS limitados, prueba una vez/minuto. Red acotada, leases/unicidad diaria y no reintentar a ciegas un envío incierto. [Operación y aceptación física](OWNER_NOTIFICATIONS.md).

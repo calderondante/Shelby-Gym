@@ -2799,6 +2799,69 @@ html:not([data-input="keyboard"]) details[open] > :not(summary) {
   border: 1px solid var(--border);
   border-radius: 12px;
 }
+.registration-photo > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  list-style: none;
+}
+.registration-photo > summary::-webkit-details-marker {
+  display: none;
+}
+.registration-photo-body {
+  padding-block: 16px;
+}
+.registration-photo-body > p {
+  margin-bottom: 12px;
+}
+.registration-photo-review {
+  min-width: 0;
+  margin-block: 20px;
+}
+.registration-photo-review legend {
+  font-weight: 600;
+  padding-bottom: 12px;
+}
+.registration-photo-field {
+  display: grid;
+  gap: 8px;
+  padding-block: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.registration-photo-field input:not([type="checkbox"]),
+.registration-photo-field select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--background);
+  font-size: 16px;
+}
+.registration-photo-review > .operation-check {
+  display: flex;
+  align-items: start;
+  gap: 12px;
+  margin-block: 16px;
+}
+.registration-photo-field .operation-check {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+}
+.registration-photo-field small {
+  overflow-wrap: anywhere;
+}
 @media (max-width: 767px) {
   .notification-bell {
     padding-inline: 8px;

@@ -19,6 +19,8 @@ Estado: aplicación Next.js/Supabase operativa en Netlify, una base responsive. 
 
 ## Avisos y captura de comprobantes
 
+La inscripción usa el mismo OCR mediante `src/features/ocr/client/use-photo-reader.ts`: un único worker local bajo demanda, recursos propios y limpieza/cancelación compartidas con facturas. El parser de inscripción entrega propuestas explícitas; CustomerFields aplica un parche seleccionado en su estado sin remontar/resetear el formulario. La carga histórica recibe sólo campos confirmados y mantiene Server Actions/RLS actuales. Sin API ni schema nuevo. [Uso y límites](REGISTRATION_PHOTO.md).
+
 `src/features/notifications` separa contratos, bandeja y operaciones autorizadas. `/avisos` y su API exigen dueño; Realtime/refresco actualizan información sin persistir datos privados en el service worker. Una función programada Netlify usa Auth dedicado sin acceso financiero y cola privada para Web Push. `src/features/invoices` carga OCR español local bajo demanda; sólo campos revisados llegan al backend. No usa Meta ni OCR externo. [Guía y límites](OWNER_NOTIFICATIONS.md).
 
 Node 22 o 24; pnpm 11.19.0; lockfile único. ESLint 9 por compatibilidad declarada con plugins de Next; actualizar junto con esos plugins cuando soporten la versión mayor siguiente. No instalar React Native/Expo, ORM, store global ni librería de motion sin necesidad concreta.
