@@ -14,13 +14,15 @@ URL de gestión: https://darling-smakager-792ffe.netlify.app
 - Baja/archivo y recuperación de perfiles; movimientos y caja por mes/día, pendientes mensuales, gastos y correcciones auditadas.
 - Filtros de cumpleaños y elegibilidad del sorteo con estados de cuota. Reglas detalladas en PRODUCT.md.
 - WhatsApp manual: selección de clientes, texto individual preparado, apertura de cada chat y confirmación humana en WhatsApp. Las marcas de revisión no acreditan entrega.
+- Avisos al dueño: bandeja, filtros/marcas de revisión y Web Push con permiso de cada equipo; preferencias de cuotas/facturas, revisión horaria y resumen diario. Sin Meta. [Activación y límites](OWNER_NOTIFICATIONS.md).
+- Factura por foto: lectura local de proveedor/servicio, número, importe y vencimiento; revisión obligatoria, descarte de foto y guardado de datos. Puede ajustar un gasto existente sin duplicarlo.
 
 Las funciones enumeradas están implementadas y tienen pruebas locales con datos sintéticos; la aceptación comercial del comprador es un paso distinto.
 
 ## Comprobación del entorno real
 
 - Netlify despliega `main` con el adaptador oficial de Next.js. La app utiliza Supabase de la organización Shelby Gym (`smgxymlfjcdxabgippby`).
-- 18 migraciones y **26/26 tablas públicas con RLS**. Un dueño activo; registro público deshabilitado y mínimo de contraseña de 8 verificado por lectura de configuración.
+- 19 migraciones y **28/28 tablas públicas con RLS**, verificado tras aplicar la actualización de avisos. Un dueño activo; registro público deshabilitado y mínimo de contraseña de 8. La identidad programadora carece de fila staff/acceso a gestión; claves sólo en configuración privada.
 - En la consulta de esta revisión: **0 actividades, 0 clientes y 0 cobros**. No se cargaron datos ficticios en producción; falta incorporar el trabajo del gimnasio.
 - La instalación y el acceso desde Android se observaron en el video del usuario. La fluidez de la nueva versión y los recorridos completos en dispositivos físicos todavía deben aceptarse.
 - La API de backups devolvió **0 copias disponibles** y `pitr_enabled = false`. No hay una recuperación de datos de producción comprobada. Drive y GitHub contienen entregables/código, no una copia actual de la base.
@@ -29,12 +31,12 @@ Las funciones enumeradas están implementadas y tienen pruebas locales con datos
 
 1. **Asegurar los datos:** definir responsable, frecuencia y destino privado de las copias, y comprobar una restauración en un entorno separado. Conservar un procedimiento para recuperar el acceso si se olvida la clave.
 2. **Cargar la operación real:** confirmar actividades, precios, packs, saldos y vencimientos desde papel; conciliar los totales iniciales con el dueño.
-3. **Aceptar en equipos reales:** probar iPhone/Safari, Android/Chrome y PC. Recorrer alta, pago completo/mixto/parcial, deuda anterior, vencido, regreso, boleta, historial y WhatsApp manual. Comprobar reconexión y nueva apertura desde el icono.
+3. **Aceptar en equipos reales:** probar iPhone/Safari, Android/Chrome y PC. Recorrer alta, pagos, deuda, regreso, boleta, historial y WhatsApp manual. Comprobar foto real/revisión y notificación recibida con app cerrada tras activar permiso; reconexión y apertura desde icono.
 4. **Entregar instrucciones y soporte:** acordar alcance, responsable de cuentas/backups, cobertura de mantenimiento y registro de aceptación. No compartir contraseñas por Git ni documentos públicos.
 
 ## Funciones que siguen pendientes
 
-- WhatsApp automático, programador de avisos, estados de entrega y conexión oficial de Meta.
+- WhatsApp automático y conexión oficial de Meta/estados de entrega. El programador Web Push para el dueño es independiente y está implementado; la recepción física necesita su permiso y aceptación.
 - Conexión/bandeja de Instagram. Guardar el @ no conecta su API.
 - Operaciones sin internet y aplicación nativa de tienda: la solución actual es una PWA.
 

@@ -39,6 +39,8 @@ Copiar URL y **Publishable key** desde **Connect** o **Settings → API Keys** d
 
 Los secretos de una futura integración Meta tendrán su propio almacenamiento de servidor; no forman parte de este primer despliegue.
 
+Actualización 27/10/2026: [avisos propios](OWNER_NOTIFICATIONS.md) usa cinco variables `SHELBY_NOTIFICATION_WORKER_*`/`SHELBY_VAPID_*` enumeradas vacías en `.env.example`. Sólo Production, sin prefijo público. En este plan Netlify Free no admite scopes granulares; usan scopes estándar, incluidos build/functions, sin incluir secretos en JS cliente. El programador Auth no tiene staff ni permisos financieros; no se publica service role. Hay 19 migraciones aplicadas y 28 tablas públicas con RLS.
+
 No dar a deploy previews o ramas de prueba las variables de la base de producción. Usar un proyecto de pruebas independiente si se desea verificar cambios con datos.
 
 ## 3. Desplegar

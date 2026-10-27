@@ -5,6 +5,44 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    /* Always show a safe notification. */
+  }
+  event.waitUntil(
+    self.registration.showNotification("Shelby Gym", {
+      body:
+        data && typeof data.body === "string"
+          ? data.body.slice(0, 180)
+          : "Tenés avisos para revisar en el gimnasio.",
+      icon: "/brand/app-192.png",
+      badge: "/brand/app-192.png",
+      tag: "shelby-owner-alerts",
+      data: { url: "/avisos" },
+    }),
+  );
+});
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = new URL("/avisos", self.location.origin).href;
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then(async (windows) => {
+        const client = windows.find(
+          (w) => new URL(w.url).origin === self.location.origin,
+        );
+        if (client) {
+          await client.navigate(target);
+          return client.focus();
+        }
+        return self.clients.openWindow(target);
+      }),
+  );
+});
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET" || event.request.mode !== "navigate")
     return;

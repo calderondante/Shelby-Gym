@@ -1,21 +1,23 @@
 # Comunicaciones de Shelby Gym
 
-Estado al 2026-10-26: centro de preparación implementado y aplicación Next/Supabase desplegada en Netlify. El gimnasio todavía no dispone de número exclusivo ni cuenta profesional lista para conectar. **WhatsApp manual disponible mediante Click to Chat; no hay envíos automáticos, credenciales Meta, webhook ni programador activo.** GitHub Pages es una demo local al navegador, sin backend; la implementación Next/Supabase guarda la configuración de forma persistente y restringida al dueño en su base de datos remota.
+Estado al 2026-10-27: WhatsApp manual a clientes mediante Click to Chat; sin API Meta ni envíos automáticos a clientes. **Los avisos al dueño pasan a Avisos (bandeja y Web Push con programador horario)**; ver [OWNER_NOTIFICATIONS.md](OWNER_NOTIFICATIONS.md). Instagram sigue sin conexión. Next/Supabase está en Netlify; GitHub Pages conserva una demo anterior sin backend.
 
 Ver [WhatsApp manual](WHATSAPP_MANUAL.md) para abrir cada chat con destinatario y texto ya preparados, sin usar la API.
 
 ## Uso
 
-En **Mensajes** hay seis secciones:
+En **Mensajes**:
 
 - **Campañas:** elegir WhatsApp o Instagram, clientes concretos o socios con dos meses calendario desde el vencimiento de su última cuota, plantilla, oferta y fecha prevista opcional. Buscar y seleccionar hasta 500 personas habilitadas; revisar la personalización. Preparar conserva un mensaje privado por persona, sin crear grupos, enviar ni modificar cuotas o deudas.
 - **Plantillas:** crear o editar mensajes por canal y uso: novedades, regreso y boletas. Las variables se sustituyen una sola vez; un nombre con llaves no se interpreta como instrucciones. Editar conserva las copias ya preparadas. Una plantilla usada por una regla mantiene canal/uso compatibles.
-- **Automatizaciones:** configurar la preparación de regreso para clientes seleccionados o todos los elegibles; configurar boletas antes del vencimiento (3 días iniciales), ese día y repetición mientras haya saldo (cada día inicialmente). Los plazos y la hora son editables; el horario es Argentina. «Habilitar» habilita la regla de preparación, no un envío. «Revisar avisos de hoy» evalúa las reglas manualmente.
-- **Dueños:** nombre y celular internacional de cada receptor de boletas; desactivar preserva el historial. El aviso es privado a cada dueño activo.
+- **Regreso:** configurar la preparación de regreso para clientes seleccionados o todos los elegibles. Habilitar permite preparar, no enviar; la evaluación es manual.
+- **Avisos al dueño:** enlace a la nueva bandeja/preferencias. La antigua sección Dueños redirige allí; no requiere celulares para facturas. La migración deshabilita la regla anterior y cancela sus boletas sin enviar; conserva historial/contactos y RPCs por compatibilidad.
 - **Canales:** guardar nombre del gimnasio, futuro número e Instagram. Los campos son opcionales hasta conseguir las cuentas. Guardar no conecta nada; no introducir contraseñas ni tokens.
 - **Preparados:** últimas 200 copias personalizadas, destino, canal, fecha prevista y origen. WhatsApp permite abrir cada chat y copiar el texto; las marcas de revisión organizan esta visita, sin registrar entrega. Estados posibles: Preparado / Sin enviar y Cancelado. Se puede cancelar una copia antes de enviarla. Las campañas previas se conservan como borradores anteriores.
 
 ## Destinatarios y reglas
+
+Las referencias a reglas/copias de boletas de esta sección describen el mecanismo anterior conservado para compatibilidad; la UI vigente usa Avisos y no reactiva esos envíos.
 
 Celulares con formato internacional explícito (+ y código de país). No se adivina que un número incompleto sea argentino. El campo Instagram se normaliza a @usuario. Cada perfil tiene **autorizaciones separadas** para ofertas por WhatsApp e Instagram, inicialmente falsas. No se importan ni activan autorizaciones masivamente por suposición.
 

@@ -6,6 +6,8 @@ import { operationAction, sessionAction } from "../server/operation-actions";
 import { blankPayments, PaymentFields } from "./payment-fields";
 import { amountInput } from "../domain/money";
 import type { Tables } from "@/lib/supabase/database.types";
+import { InvoiceCapture } from "@/features/invoices/components/invoice-capture";
+import type { InvoiceDraft } from "@/features/invoices/domain/invoice";
 
 export function OperationForm({
   operation,
@@ -67,109 +69,142 @@ export function ExpenseEditor({
   template?: Tables<"expense_templates">;
 }) {
   const isTemplate = !!template || requestId === "template-new";
+  const [invoice, setInvoice] = useState<
+    (InvoiceDraft & { key: string }) | null
+  >(null);
   return (
-    <OperationForm
-      operation={isTemplate ? "template" : "expense"}
-      month={month}
-      requestId={requestId}
-      id={expense?.id ?? template?.id}
-      revision={expense?.revision ?? template?.revision}
-      label={
-        expense || template
-          ? "Guardar cambios"
-          : isTemplate
-            ? "Crear gasto recurrente"
-            : "Registrar gasto"
-      }
-    >
-      <label>
-        Concepto
-        <input
-          name="title"
-          required
-          minLength={2}
-          maxLength={100}
-          defaultValue={expense?.title ?? template?.title}
-          placeholder="Ej.: Electricidad"
+    <>
+      {!isTemplate ? (
+        <InvoiceCapture
+          onUse={(data) => setInvoice({ ...data, key: crypto.randomUUID() })}
         />
-      </label>
-      <div className="operation-grid">
+      ) : null}
+      <OperationForm
+        key={invoice?.key ?? "manual"}
+        operation={isTemplate ? "template" : "expense"}
+        month={month}
+        requestId={requestId}
+        id={expense?.id ?? template?.id}
+        revision={expense?.revision ?? template?.revision}
+        label={
+          expense || template
+            ? "Guardar cambios"
+            : isTemplate
+              ? "Crear gasto recurrente"
+              : "Registrar gasto"
+        }
+      >
         <label>
-          Categoría
+          Concepto
           <input
-            name="category"
+            name="title"
             required
-            maxLength={60}
+            minLength={2}
+            maxLength={100}
             defaultValue={
-              expense?.category ?? template?.category ?? "Servicios"
+              expense?.title ||
+              invoice?.supplier.slice(0, 100) ||
+              template?.title
             }
+            placeholder="Ej.: Electricidad"
           />
         </label>
-        <label>
-          Importe (ARS)
-          <input
-            name="amount"
-            required
-            inputMode="decimal"
-            defaultValue={amountInput(
-              expense?.total_cents ?? template?.amount_cents ?? 0,
-            )}
-          />
-        </label>
-      </div>
-      {isTemplate ? (
-        <>
+        <div className="operation-grid">
           <label>
-            Día de vencimiento
+            Categoría
             <input
-              name="dueDay"
-              type="number"
-              min={1}
-              max={31}
+              name="category"
               required
-              defaultValue={template?.due_day ?? 10}
-            />
-          </label>
-          <label className="operation-check">
-            <input
-              type="checkbox"
-              name="active"
-              defaultChecked={template?.active ?? true}
-            />
-            Generar en los próximos meses
-          </label>
-          <p className="muted">
-            El importe es una sugerencia editable. Los meses ya generados
-            conservan su valor.
-          </p>
-        </>
-      ) : (
-        <>
-          <label>
-            Vencimiento
-            <input
-              name="dueOn"
-              type="date"
-              required
+              maxLength={60}
               defaultValue={
-                expense?.due_on ??
-                (today.startsWith(month) ? today : `${month}-01`)
+                expense?.category ?? template?.category ?? "Servicios"
               }
             />
           </label>
           <label>
-            Nota (opcional)
-            <textarea
-              name="notes"
-              maxLength={500}
-              defaultValue={expense?.notes}
-              rows={2}
+            Importe (ARS)
+            <input
+              name="amount"
+              required
+              inputMode="decimal"
+              defaultValue={
+                invoice?.amount ??
+                amountInput(expense?.total_cents ?? template?.amount_cents ?? 0)
+              }
             />
           </label>
-          <p className="muted">Registrar el gasto no lo marca como pagado.</p>
-        </>
-      )}
-    </OperationForm>
+        </div>
+        {isTemplate ? (
+          <>
+            <label>
+              Día de vencimiento
+              <input
+                name="dueDay"
+                type="number"
+                min={1}
+                max={31}
+                required
+                defaultValue={template?.due_day ?? 10}
+              />
+            </label>
+            <label className="operation-check">
+              <input
+                type="checkbox"
+                name="active"
+                defaultChecked={template?.active ?? true}
+              />
+              Generar en los próximos meses
+            </label>
+            <p className="muted">
+              El importe es una sugerencia editable. Los meses ya generados
+              conservan su valor.
+            </p>
+          </>
+        ) : (
+          <>
+            <label>
+              Proveedor o servicio (opcional)
+              <input
+                name="supplier"
+                maxLength={160}
+                defaultValue={invoice?.supplier ?? expense?.supplier}
+              />
+            </label>
+            <label>
+              Número de factura (opcional)
+              <input
+                name="invoiceNumber"
+                maxLength={80}
+                defaultValue={invoice?.invoiceNumber ?? expense?.invoice_number}
+              />
+            </label>
+            <label>
+              Vencimiento
+              <input
+                name="dueOn"
+                type="date"
+                required
+                defaultValue={
+                  invoice?.dueOn ||
+                  expense?.due_on ||
+                  (today.startsWith(month) ? today : `${month}-01`)
+                }
+              />
+            </label>
+            <label>
+              Nota (opcional)
+              <textarea
+                name="notes"
+                maxLength={500}
+                defaultValue={expense?.notes}
+                rows={2}
+              />
+            </label>
+            <p className="muted">Registrar el gasto no lo marca como pagado.</p>
+          </>
+        )}
+      </OperationForm>
+    </>
   );
 }
 export function ExpensePaymentForm({

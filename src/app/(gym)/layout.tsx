@@ -5,6 +5,7 @@ import { Navigation } from "@/components/shared/navigation";
 import { LiveSync } from "@/components/shared/live-sync";
 import { logoutAction } from "@/features/auth/actions";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
 export const dynamic = "force-dynamic";
 export default async function GymLayout({
   children,
@@ -43,6 +44,7 @@ export default async function GymLayout({
             Shelby Gym <span className="muted">/ Recepción</span>
           </span>
           <LiveSync />
+          {staff.role === "owner" ? <NotificationBell /> : null}
         </div>
         <main id="main" tabIndex={-1}>
           {children}

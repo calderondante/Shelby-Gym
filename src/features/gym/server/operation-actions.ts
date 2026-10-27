@@ -18,8 +18,12 @@ const expenseSchema = z.object({
   amount: amount.refine((n) => n > 0, "Ingresá un importe mayor a cero."),
   dueOn: z.iso.date(),
   notes: z.string().trim().max(500),
+  supplier: z.string().trim().max(160),
+  invoiceNumber: z.string().trim().max(80),
 });
 const errors: Record<string, string> = {
+  DUPLICATE_INVOICE:
+    "Ya hay una factura con ese proveedor y número. Revisá Gastos antes de registrarla de nuevo.",
   OVERPAYMENT:
     "El importe supera el saldo actual. Actualizá antes de registrar el pago.",
   BELOW_PAID: "El gasto no puede quedar por debajo de lo que ya se pagó.",
@@ -84,10 +88,15 @@ export async function operationAction(
   if (op === "expense") {
     const parsed = expenseSchema.safeParse(
       Object.fromEntries(
-        ["title", "category", "amount", "dueOn", "notes"].map((key) => [
-          key,
-          value(form, key),
-        ]),
+        [
+          "title",
+          "category",
+          "amount",
+          "dueOn",
+          "notes",
+          "supplier",
+          "invoiceNumber",
+        ].map((key) => [key, value(form, key)]),
       ),
     );
     if (!parsed.success)

@@ -1,12 +1,12 @@
 # Arquitectura
 
-Estado: primera implementación local de Shelby Gym, autorizada el 2026-10-03. Aplicación responsive de una sola base de código. Existe una muestra estática con datos ficticios en GitHub Pages. El despliegue operativo de Next.js y Supabase sigue pendiente.
+Estado: aplicación Next.js/Supabase operativa en Netlify, una base responsive. GitHub Pages conserva la demo anterior. Aceptación en [HANDOVER_STATUS.md](HANDOVER_STATUS.md).
 
 ## Stack implementado
 
 | Capa             | Elección                                            | Motivo                                                                             |
 | ---------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| App              | Next.js 16.3.8 App Router, React 19.3               | Rutas y backend ligero en el mismo proyecto; versiones estables verificadas en npm |
+| App              | Next.js 16.4.1 App Router, React 19.3               | Rutas y backend ligero en el mismo proyecto; versiones fijadas en lockfile |
 | Tipado           | TypeScript 5.9 strict                               | Compatible con tooling actual; sin `any` en código propio                          |
 | Estilo           | Tailwind 4, tokens Shelby, fuente de sistema        | Negro/grafito, rojo y blanco; sin descargar fuentes                                |
 | Primitivas       | shadcn/ui, base Base UI, registro oficial `@shadcn` | Código local y controles semánticos; targets adaptados a 44–48px                   |
@@ -15,7 +15,11 @@ Estado: primera implementación local de Shelby Gym, autorizada el 2026-10-03. A
 | Actualización    | Supabase Realtime + refresh servidor                | Cambios entre equipos; fallback cada 30 s y al volver a la pestaña                 |
 | Validación       | Zod + constraints/RPC                               | Feedback servidor e integridad también fuera de la UI                              |
 | QA               | Vitest, Playwright, pruebas directas Auth/REST      | Reglas de negocio, responsive, workflows y controles negativos                     |
-| Hosting previsto | Vercel + Supabase                                   | Deploy sencillo; cuentas, región y presupuesto pendientes                          |
+| Hosting actual | Netlify + Supabase                                   | Adaptador oficial Next y deploy desde main; Supabase de Shelby Gym |
+
+## Avisos y captura de comprobantes
+
+`src/features/notifications` separa contratos, bandeja y operaciones autorizadas. `/avisos` y su API exigen dueño; Realtime/refresco actualizan información sin persistir datos privados en el service worker. Una función programada Netlify usa Auth dedicado sin acceso financiero y cola privada para Web Push. `src/features/invoices` carga OCR español local bajo demanda; sólo campos revisados llegan al backend. No usa Meta ni OCR externo. [Guía y límites](OWNER_NOTIFICATIONS.md).
 
 Node 22 o 24; pnpm 11.19.0; lockfile único. ESLint 9 por compatibilidad declarada con plugins de Next; actualizar junto con esos plugins cuando soporten la versión mayor siguiente. No instalar React Native/Expo, ORM, store global ni librería de motion sin necesidad concreta.
 

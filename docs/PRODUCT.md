@@ -1,5 +1,7 @@
 # Estado actual y reglas aprobadas
 
+27/10/2026: WhatsApp semiautomático para clientes; avisos al dueño por bandeja/Web Push con permiso, también con app cerrada. Factura por foto: lectura local de proveedor/servicio, número, importe y vencimiento, revisión obligatoria y descarte. No cobra ni paga automáticamente. [Guía y límites](OWNER_NOTIFICATIONS.md).
+
 La actualización del 2026-10-20 está autorizada para implementación y publicación directa, sin video. Ver [detalle de la actualización](UPDATES_2026-10-20.md). Sus reglas prevalecen sobre las propuestas o preguntas históricas que se conservan debajo.
 
 - Sorteo: solo socios con cuota; los packs de clases no otorgan participación. Se conserva el límite de más de 30 días desde el vencimiento y el alta anterior al cierre.

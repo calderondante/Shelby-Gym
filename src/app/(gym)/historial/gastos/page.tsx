@@ -107,10 +107,22 @@ export default async function ExpensesPage({
           </p>
         ) : (
           data.expenses.map((expense) => (
-            <article key={expense.id} className="operation-panel">
+            <article
+              key={expense.id}
+              className="operation-panel"
+              id={`gasto-${expense.id}`}
+            >
               <div className="operation-entry">
                 <div>
                   <h3>{expense.title}</h3>
+                  {expense.supplier || expense.invoice_number ? (
+                    <p>
+                      {expense.supplier}
+                      {expense.invoice_number
+                        ? ` · Factura ${expense.invoice_number}`
+                        : ""}
+                    </p>
+                  ) : null}
                   <p>
                     {expense.category} · vence {dateLabel(expense.due_on!)}
                   </p>
@@ -161,6 +173,8 @@ export default async function ExpensesPage({
                       request_id: expense.request_id!,
                       created_at: expense.created_at!,
                       created_by: expense.created_by!,
+                      supplier: expense.supplier ?? "",
+                      invoice_number: expense.invoice_number ?? "",
                     }}
                   />
                 </details>

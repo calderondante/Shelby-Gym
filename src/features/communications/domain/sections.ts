@@ -1,7 +1,7 @@
 export const communicationSections = [
   { id: "campanas", label: "Campañas" },
   { id: "plantillas", label: "Plantillas" },
-  { id: "automatizaciones", label: "Automatizaciones" },
+  { id: "automatizaciones", label: "Regreso al gym" },
   { id: "duenos", label: "Dueños" },
   { id: "canales", label: "Canales" },
   { id: "historial", label: "Preparados" },

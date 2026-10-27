@@ -7,6 +7,7 @@ export default defineConfig([
   globalIgnores([
     ".next/**",
     "node_modules/**",
+    "public/ocr/**",
     ".agents/**",
     "docs/design/**",
     "library-files/**",

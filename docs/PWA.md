@@ -30,7 +30,7 @@ En Chrome o Edge, utilizar el icono de instalación de la barra de direcciones o
 - `/sw.js` declara `no-store` y alcance raíz tanto en Next como en `netlify.toml`: los archivos públicos servidos por la CDN no heredan los headers del servidor Next.
 - No se registran pagos ni otras operaciones sin conexión. La pantalla de desconexión permite volver a intentar, sin afirmar que una operación se guardó.
 - El worker no almacena clientes, historiales, respuestas de Auth ni sesiones en una caché offline. Mantener los controles `no-store` y revisar este límite antes de ampliar funcionalidades.
-- No se piden permisos de notificaciones ni se activan WhatsApp automático, push o procesos en segundo plano por instalarla.
+- Instalar no pide permisos ni activa mensajes por sí solo. El dueño puede activar voluntariamente Web Push desde **Avisos**, también con la app cerrada; ver [guía](OWNER_NOTIFICATIONS.md). No activa WhatsApp automático.
 - El icono conserva el logo del perro provisto por el usuario. Sus tamaños normal, Apple y maskable son derivados para empaquetado del mismo recurso, sin rediseño de marca.
 
 ## Verificación

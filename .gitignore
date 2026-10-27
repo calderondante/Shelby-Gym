@@ -45,3 +45,6 @@ Desktop.ini
 
 # Generated local browser evidence
 /qa-artifacts/
+
+# Generated OCR code/models; recreated from pinned packages before build.
+/public/ocr/

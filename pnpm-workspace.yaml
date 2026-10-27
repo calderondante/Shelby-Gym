@@ -1,2 +1,4 @@
 allowBuilds:
+  # Its optional postinstall only displays OpenCollective funding information.
+  tesseract.js: false
   unrs-resolver: true

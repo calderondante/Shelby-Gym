@@ -1,6 +1,12 @@
 # Seguridad de Shelby Gym
 
-Primera implementación local, 2026-10-03. Datos de QA sintéticos. No se ha configurado producción, SMTP externo, cobros online ni acceso público al gimnasio.
+App operativa en Netlify/Supabase; QA separado con datos sintéticos. No hay cobros online ni acceso público al gimnasio. Recuperación/backups y aceptación en HANDOVER_STATUS.md.
+
+## Avisos y facturas — 27/10/2026
+
+La foto se procesa localmente; no se sube a servidor/Storage ni se guarda en cachés persistentes. Campos revisados validados en servidor/DB, proveedor+número duplicados rechazados. Recursos OCR propios, sin CDN tercero; cámara mismo origen. No registrar imagen ni texto OCR en logs.
+
+Web Push genérico sin nombres/saldos; destino fijo `/avisos` autenticado. Preferencias/lecturas/dispositivos exigen dueño actual, vinculación a sesión viva. VAPID/worker sólo servidor, sin service role en runtime. Auth técnico sin staff, autorización con app metadata administrada actual, no user_metadata/JWT obsoleto. Cola/endpoints privados, proveedores HTTPS limitados, prueba una vez/minuto. Red acotada, leases/unicidad diaria y no reintentar a ciegas un envío incierto. [Operación y aceptación física](OWNER_NOTIFICATIONS.md).
 
 ## Threat model
 

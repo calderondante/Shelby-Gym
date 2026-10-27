@@ -73,7 +73,6 @@ test("comunicaciones: navegación responsive, privacidad, revisión y permisos",
       "campanas",
       "plantillas",
       "automatizaciones",
-      "duenos",
       "canales",
       "historial",
     ]) {

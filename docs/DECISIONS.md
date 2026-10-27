@@ -1,5 +1,15 @@
 # Decisiones (ADR simplificado)
 
+## ADR-021 — Avisos propios y factura sin conservar foto
+
+- **Date:** 2026-10-27.
+- **Decision:** WhatsApp manual a clientes separado de avisos al dueño; captura de factura con foto temporal.
+- **Context:** evitar cargos Meta; avisos con app cerrada+bandeja; revisar proveedor/número/importe/vencimiento sin conservar imagen.
+- **Options:** Meta Cloud API; sólo bandeja; Web Push/programador existente. OCR externo o local bajo demanda.
+- **Chosen solution:** Web Push, tarea horaria Netlify, Auth técnico de mínimo privilegio/cola privada con sesiones vigentes; Tesseract español local con revisión. Persistir cuatro campos en gastos existentes.
+- **Reason:** mantiene infraestructura web y control humano sin nuevas cuentas de OCR ni exposición de fotos.
+- **Consequences:** dependencias justificadas web-push/tesseract.js y modelo español de build. Descarga/CPU al usar foto. Permiso por dispositivo e instalación iOS 16.4+, entrega dependiente del sistema. Sin borrar galería, sin WhatsApp automático, sin OCR infalible ni offline. Reglas WhatsApp de boletas se cancelan conservando historial. Aceptación física pendiente.
+
 Registrar decisiones arquitectónicas importantes; no usar ADR para todo cambio de estilo. Estados: propuesta, aceptada, reemplazada. Una decisión nueva puede reemplazar otra sin borrar su contexto.
 
 ## Plantilla

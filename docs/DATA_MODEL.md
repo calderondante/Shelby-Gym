@@ -1,5 +1,13 @@
 # Modelo de datos
 
+## Avisos y factura — 27/10/2026
+
+Migración `20261027125308_owner_notifications_and_invoice_data.sql`. `expenses` incorpora `supplier` (160 caracteres) e `invoice_number` (80); proveedor+número no vacíos son únicos tras normalización. `save_expense` mantiene revisión, idempotencia y controles financieros; actualizaciones antiguas sin campos nuevos conservan esos valores. Sin imagen/texto OCR.
+
+`owner_notification_settings`: reglas globales con revisión; `owner_notification_reads`: marcas por dueño y clave de situación. Ambas con RLS. `owner_alerts`: vista `security_invoker` de cuotas activas/facturas y saldos actuales. Cambiar saldo/fase genera clave nueva; pagar/renovar retira situación anterior. Revisar no registra pagos.
+
+En `private`: `owner_push_subscriptions` (sesión/dispositivo/claves), `owner_push_deliveries` (dispositivo/día único, leases, intentos, estados), `owner_notification_health` (última revisión). Sin lectura directa de clientes. RPCs con search_path vacío verifican dueño o Auth técnico actual/sesiones vivas. El técnico no pertenece a staff. [Guía](OWNER_NOTIFICATIONS.md).
+
 ## Ciclo de vida del cliente (2026-10-19)
 
 - `customers.status`: `active`, `inactive` o `retired`. La expiración de una cuota no cambia este campo.

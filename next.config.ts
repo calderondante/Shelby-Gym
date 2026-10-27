@@ -7,6 +7,18 @@ const config: NextConfig = {
   async headers() {
     return [
       {
+        source: "/ocr/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=86400" },
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; worker-src 'self'",
+          },
+          { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+        ],
+      },
+      {
         source: "/sw.js",
         headers: [
           {
@@ -24,7 +36,7 @@ const config: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()",
+            value: "camera=(self), microphone=(), geolocation=()",
           },
         ],
       },

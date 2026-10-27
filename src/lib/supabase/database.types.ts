@@ -760,9 +760,11 @@ export type Database = {
           created_by: string;
           due_on: string;
           id: string;
+          invoice_number: string;
           notes: string;
           request_id: string;
           revision: number;
+          supplier: string;
           template_id: string | null;
           template_month: string | null;
           title: string;
@@ -774,9 +776,11 @@ export type Database = {
           created_by: string;
           due_on: string;
           id?: string;
+          invoice_number?: string;
           notes?: string;
           request_id: string;
           revision?: number;
+          supplier?: string;
           template_id?: string | null;
           template_month?: string | null;
           title: string;
@@ -788,9 +792,11 @@ export type Database = {
           created_by?: string;
           due_on?: string;
           id?: string;
+          invoice_number?: string;
           notes?: string;
           request_id?: string;
           revision?: number;
+          supplier?: string;
           template_id?: string | null;
           template_month?: string | null;
           title?: string;
@@ -952,6 +958,77 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      owner_notification_reads: {
+        Row: {
+          alert_key: string;
+          read_at: string;
+          staff_id: string;
+        };
+        Insert: {
+          alert_key: string;
+          read_at?: string;
+          staff_id?: string;
+        };
+        Update: {
+          alert_key?: string;
+          read_at?: string;
+          staff_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "owner_notification_reads_staff_id_fkey";
+            columns: ["staff_id"];
+            isOneToOne: false;
+            referencedRelation: "staff";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      owner_notification_settings: {
+        Row: {
+          customers_enabled: boolean;
+          days_before: number;
+          enabled: boolean;
+          expenses_enabled: boolean;
+          id: boolean;
+          notify_before: boolean;
+          notify_on_due: boolean;
+          notify_overdue: boolean;
+          overdue_every: number;
+          revision: number;
+          send_hour: number;
+          updated_at: string;
+        };
+        Insert: {
+          customers_enabled?: boolean;
+          days_before?: number;
+          enabled?: boolean;
+          expenses_enabled?: boolean;
+          id?: boolean;
+          notify_before?: boolean;
+          notify_on_due?: boolean;
+          notify_overdue?: boolean;
+          overdue_every?: number;
+          revision?: number;
+          send_hour?: number;
+          updated_at?: string;
+        };
+        Update: {
+          customers_enabled?: boolean;
+          days_before?: number;
+          enabled?: boolean;
+          expenses_enabled?: boolean;
+          id?: boolean;
+          notify_before?: boolean;
+          notify_on_due?: boolean;
+          notify_overdue?: boolean;
+          overdue_every?: number;
+          revision?: number;
+          send_hour?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       paper_enrollments: {
         Row: {
@@ -1436,10 +1513,12 @@ export type Database = {
           created_by: string | null;
           due_on: string | null;
           id: string | null;
+          invoice_number: string | null;
           notes: string | null;
           paid_cents: number | null;
           request_id: string | null;
           revision: number | null;
+          supplier: string | null;
           template_id: string | null;
           template_month: string | null;
           title: string | null;
@@ -1461,6 +1540,21 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      owner_alerts: {
+        Row: {
+          alert_key: string | null;
+          balance_cents: number | null;
+          due_on: string | null;
+          href: string | null;
+          is_read: boolean | null;
+          kind: string | null;
+          phase: string | null;
+          push_today: boolean | null;
+          reference_id: string | null;
+          title: string | null;
+        };
+        Relationships: [];
       };
       subscription_balances: {
         Row: {
@@ -1532,9 +1626,14 @@ export type Database = {
         Args: { p_id: string; p_revision: number; p_status: string };
         Returns: undefined;
       };
+      claim_owner_push_jobs: { Args: { p_limit?: number }; Returns: Json };
       close_gym_month: { Args: { p_month: string }; Returns: undefined };
       configure_gym: {
         Args: { p_currency: string; p_time_zone: string };
+        Returns: undefined;
+      };
+      configure_owner_notifications: {
+        Args: { p_data: Json; p_revision: number };
         Returns: undefined;
       };
       enroll_customer: {
@@ -1550,6 +1649,15 @@ export type Database = {
         };
         Returns: string;
       };
+      finish_owner_push_job: {
+        Args: {
+          p_code?: number;
+          p_id: string;
+          p_lease: string;
+          p_status: string;
+        };
+        Returns: undefined;
+      };
       generate_monthly_expenses: { Args: { p_month: string }; Returns: number };
       import_gym_history: {
         Args: {
@@ -1561,6 +1669,11 @@ export type Database = {
         };
         Returns: Json;
       };
+      owner_notification_health: {
+        Args: Record<PropertyKey, never>;
+        Returns: string;
+      };
+      owner_push_status: { Args: { p_endpoint: string }; Returns: boolean };
       pay_expense: {
         Args: {
           p_entries: Json;
@@ -1597,9 +1710,14 @@ export type Database = {
         };
         Returns: string;
       };
+      register_owner_push: { Args: { p_data: Json }; Returns: undefined };
       register_paper_customer: {
         Args: { p_profile: Json; p_record: Json; p_request: string };
         Returns: string;
+      };
+      reserve_owner_push_test: {
+        Args: { p_endpoint: string };
+        Returns: boolean;
       };
       save_activity: {
         Args: { p_data: Json; p_id: string; p_revision: number };
@@ -1648,6 +1766,10 @@ export type Database = {
           p_title: string;
         };
         Returns: string;
+      };
+      unregister_owner_push: {
+        Args: { p_endpoint: string };
+        Returns: undefined;
       };
       update_customer: {
         Args: { p_data: Json; p_id: string; p_revision: number };

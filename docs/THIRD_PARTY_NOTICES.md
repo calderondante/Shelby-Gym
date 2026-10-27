@@ -1,5 +1,13 @@
 # Third-party notices
 
+## OCR local y Web Push — 27/10/2026
+
+- `tesseract.js` 7.0.0 / `tesseract.js-core` 7.0.0: [naptha/tesseract.js](https://github.com/naptha/tesseract.js), Apache-2.0, distribuciones oficiales. Worker y variantes WASM se preparan localmente; sus licencias se copian a `/ocr/` junto a los assets. No se modificó upstream.
+- `@tesseract.js-data/spa` 1.0.0: [naptha/tessdata](https://github.com/naptha/tessdata), paquete del modelo español para build, wrapper declarado MIT. Los pesos upstream están bajo Apache-2.0: [licencia preservada](licenses/tessdata-APACHE-2.0.txt), también publicada con los recursos. Sólo se incorpora el modelo español, sin clonar repositorios.
+- `web-push` 3.6.7: [web-push-libs/web-push](https://github.com/web-push-libs/web-push), MPL-2.0, código sin modificar usado sólo en servidor; licencia en el paquete. Repositorio no archivado y con actividad comprobada el 27/10/2026. `@types/web-push` 3.6.4 (MIT) sólo tipado de desarrollo.
+
+Dependencias justificadas por lectura real local y protocolo Web Push. Versiones fijadas en lockfile; `pnpm audit --prod` sin vulnerabilidades informadas al comprobar esta actualización. No hay CDN OCR, servicio externo de reconocimiento ni SDK de Meta.
+
 Las skills seleccionadas conservan su autoría y contenido upstream. Estos son los textos de licencia oficiales consultados para las copias incluidas. Fuentes y commits exactos en SKILLS.md y skills-provenance.json.
 
 ## emilkowalski/skills

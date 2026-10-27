@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { uuid } from "@/features/gym/validation/contracts";
 import {
   communicationSections as sections,
@@ -30,6 +31,7 @@ export default async function CommunicationsPage({
     ? params.campana
     : undefined;
   const section = communicationSection(params.seccion);
+  if (section === "duenos") redirect("/avisos");
   const data = await getCommunications(section, campaignId);
   const today = todayIn(data.gym.time_zone);
   const timestamp = (value: string) =>
@@ -54,15 +56,18 @@ export default async function CommunicationsPage({
         className="communication-tabs"
         aria-label="Secciones de comunicaciones"
       >
-        {sections.map((s) => (
-          <Link
-            key={s.id}
-            href={`/comunicaciones?seccion=${s.id}`}
-            aria-current={section === s.id ? "page" : undefined}
-          >
-            {s.label}
-          </Link>
-        ))}
+        <Link href="/avisos">Avisos del gimnasio</Link>
+        {sections
+          .filter((s) => s.id !== "duenos")
+          .map((s) => (
+            <Link
+              key={s.id}
+              href={`/comunicaciones?seccion=${s.id}`}
+              aria-current={section === s.id ? "page" : undefined}
+            >
+              {s.label}
+            </Link>
+          ))}
       </nav>
       {params.aviso ? (
         <p className="notice" role="alert">
@@ -134,17 +139,19 @@ export default async function CommunicationsPage({
             Se personalizan al preparar cada mensaje. Editar una plantilla
             conserva las copias ya preparadas.
           </p>
-          {data.templates.map((t) => (
-            <details className="communication-details" key={t.id}>
-              <summary>
-                {t.title}
-                <small>
-                  {t.channel === "whatsapp" ? "WhatsApp" : "Instagram"}
-                </small>
-              </summary>
-              <TemplateEditor template={t} />
-            </details>
-          ))}
+          {data.templates
+            .filter((t) => t.purpose !== "expense")
+            .map((t) => (
+              <details className="communication-details" key={t.id}>
+                <summary>
+                  {t.title}
+                  <small>
+                    {t.channel === "whatsapp" ? "WhatsApp" : "Instagram"}
+                  </small>
+                </summary>
+                <TemplateEditor template={t} />
+              </details>
+            ))}
           <details className="communication-details">
             <summary>Crear una plantilla</summary>
             <TemplateEditor />
@@ -158,97 +165,37 @@ export default async function CommunicationsPage({
             Usá «Revisar avisos de hoy» para preparar los recordatorios. Después
             abrí cada chat desde Preparados y confirmá el envío en WhatsApp.
           </p>
-          {data.rules.map((r) => (
-            <section className="operation-panel" key={r.kind}>
-              <h3>
-                {r.kind === "recovery"
-                  ? "Regreso después de dos meses"
-                  : "Boletas para los dueños"}
-              </h3>
-              <RuleEditor
-                rule={r}
-                templates={data.templates}
-                recipients={data.recipients}
-                today={today}
-                selectedIds={data.selections
-                  .filter((s) => s.rule_kind === r.kind)
-                  .map((s) => s.customer_id)}
-              />
-            </section>
-          ))}
+          <p>
+            Los vencimientos de facturas y cuotas se administran en{" "}
+            <Link href="/avisos">Avisos del gimnasio</Link>. Las ofertas a
+            clientes se confirman una por una en WhatsApp.
+          </p>
+          {data.rules
+            .filter((r) => r.kind === "recovery")
+            .map((r) => (
+              <section className="operation-panel" key={r.kind}>
+                <h3>
+                  {r.kind === "recovery"
+                    ? "Regreso después de dos meses"
+                    : "Boletas para los dueños"}
+                </h3>
+                <RuleEditor
+                  rule={r}
+                  templates={data.templates}
+                  recipients={data.recipients}
+                  today={today}
+                  selectedIds={data.selections
+                    .filter((s) => s.rule_kind === r.kind)
+                    .map((s) => s.customer_id)}
+                />
+              </section>
+            ))}
           <CommunicationForm operation="preview" label="Revisar avisos de hoy">
             <p>
               Revisa vencimientos, autorizaciones, contactos activos y saldos.
               Repetir la revisión no duplica el mismo aviso.
             </p>
             <input name="day" type="hidden" value={today} />
-          </CommunicationForm>
-        </section>
-      ) : null}
-      {section === "duenos" ? (
-        <section className="operation-section">
-          <h2>¿Quién recibe las boletas?</h2>
-          <p>
-            Prepará sus avisos y abrí cada chat en WhatsApp para confirmar el
-            envío. No se usan para contactar clientes.
-          </p>
-          {data.owners.map((o) => (
-            <details className="communication-details" key={o.id}>
-              <summary>
-                {o.name}
-                <small>
-                  {o.active ? "Activo" : "Desactivado"} · {o.phone}
-                </small>
-              </summary>
-              <CommunicationForm
-                operation="owner"
-                id={o.id}
-                revision={o.revision}
-                label="Guardar contacto"
-              >
-                <label>
-                  Nombre
-                  <input
-                    name="name"
-                    required
-                    minLength={2}
-                    maxLength={100}
-                    defaultValue={o.name}
-                  />
-                </label>
-                <label>
-                  Celular internacional
-                  <input
-                    name="phone"
-                    type="tel"
-                    required
-                    defaultValue={o.phone}
-                  />
-                </label>
-                <label className="operation-check">
-                  <input
-                    name="active"
-                    type="checkbox"
-                    defaultChecked={o.active}
-                  />
-                  Recibir avisos
-                </label>
-              </CommunicationForm>
-            </details>
-          ))}
-          <CommunicationForm operation="owner" label="Agregar dueño">
-            <label>
-              Nombre
-              <input name="name" required minLength={2} maxLength={100} />
-            </label>
-            <label>
-              Celular internacional
-              <input name="phone" type="tel" placeholder="+54…" required />
-            </label>
-            <label className="operation-check">
-              <input type="checkbox" name="active" defaultChecked />
-              Recibir avisos
-            </label>
           </CommunicationForm>
         </section>
       ) : null}

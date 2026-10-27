@@ -1,5 +1,18 @@
 # QA y criterio de entrega
 
+## Avisos y factura local — 27/10/2026
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm test` (**74 tests**), `pnpm build`, `node scripts/verify-workspace.mjs`: correctos.
+- `pnpm test:integration`: Auth/RLS, pagos mixtos, idempotencia, conflictos, importación histórica, packs y caja correctos. `SUPABASE_TEST_DB_CONTAINER=shelby-qa-db pnpm test:communications`: correcto; sin envíos.
+- `node scripts/test-owner-alerts.mjs`: factura duplicada/idempotente, marcas, pagos parciales/completos, permisos dueño/monitor/worker, claims concurrentes/leases, deduplicación diaria y revocación de sesiones. No contacta proveedores de push.
+- **25/25 E2E** contra Next/Supabase locales, datos sintéticos. Nuevos: bandeja persistente y preferencias, cinco anchos (375/390/768/1024/1440), axe sin infracciones de los criterios incluidos, monitor rechazado; OCR español real con PNG de prueba, revisión obligatoria, descarte, campos guardados sin foto en requests/CacheStorage/IndexedDB. Se detectaron/corrigieron un recurso SIMD faltante, feedback de preferencias que se perdía al refrescar y contraste del contador.
+- Las **19 migraciones** se reconstruyeron desde cero en una DB descartable. La función programada se empaquetó con CLI Netlify; manifest reconoce `0 * * * *` y API runtime v2.
+- Migración remota exacta aplicada de forma transaccional preservando versión/historial. Preflight con copia privada de datos públicos y definiciones reemplazadas; no sustituye backup recurrente/ensayo de restauración. Verificados **19 migraciones, 28/28 tablas públicas con RLS, 0 clientes/gastos/cobros**. No se insertaron fixtures en producción ni se cambió la contraseña del dueño.
+- Identidad técnica remota aprovisionada sin staff y cinco variables Production configuradas/verificadas sin imprimir valores. Login técnico y RPC de cola vacía comprobados contra producción, sin envíos a proveedores. Netlify Free rechaza scopes granulares: se conservan los estándar del plan. Búsqueda de secretos conocidos sin coincidencias en assets cliente ni archivos versionables; no es un análisis universal de secretos.
+- `pnpm audit --prod`: 0 vulnerabilidades reportadas. Dependencias nuevas documentadas con licencias.
+
+Evidencia sintética en `qa-artifacts/owner-alerts/` (ignorada por Git). Pendiente permiso y recepción Web Push en teléfono físico con app cerrada, foto de factura real y aceptación comercial. No afirmar que Chromium emulado prueba Safari físico ni que aceptación del proveedor prueba entrega. Guía de operación: [OWNER_NOTIFICATIONS.md](OWNER_NOTIFICATIONS.md).
+
 ## Regresos y bajas
 
 - [ ] Cuota vencida hace más de 30 días: aparece en el filtro correspondiente y no desaparece sola.
