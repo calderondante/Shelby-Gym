@@ -164,3 +164,7 @@ La bienvenida a Excel usa dos columnas en PC y composición compacta en celular;
 ## Selección y orientación — 27/10/2026
 
 Las pestañas, filtros, tipo de alta y día seleccionado usan fondo #fafafa con texto #171717 y `aria-current`. No depender de una diferencia mínima entre grises oscuros. Los controles mantienen foco visible y al menos 44px de alto. Mensajes se organiza en Preparar mensaje, Listos para abrir y Ajustes; Resumen presenta cifras mensuales antes del historial desplegable. Gastos distingue carga de factura, pago y configuración de gastos fijos.
+
+## Revisión del 04/11/2026
+
+La intervención de administración, cambios implementados, pruebas, métricas y límites están en [OPTIMIZATION_2026-11-04.md](OPTIMIZATION_2026-11-04.md). Las secciones de fechas anteriores conservan el contexto histórico; Netlify/Supabase es el despliegue operativo. Sin cambios SQL, políticas de acceso ni transacciones en esta intervención.

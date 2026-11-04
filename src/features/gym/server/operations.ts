@@ -24,27 +24,48 @@ export async function allPages<T>(
     if (result.data.length < 1000) return rows;
   }
 }
-export async function getExpenseData(month: string) {
+export async function getMonthlyClosing(month: string) {
   const { db } = await requireStaff();
-  const [expenses, templates, payments, pending, close] = await Promise.all([
-    allPages((n) =>
-      db
-        .from("expense_balances")
-        .select("*")
-        .gte("due_on", `${month}-01`)
-        .lt("due_on", `${shiftMonth(month, 1)}-01`)
-        .order("due_on")
-        .order("id")
-        .range(n, n + 999),
-    ),
-    allPages((n) =>
-      db
-        .from("expense_templates")
-        .select("*")
-        .order("title")
-        .order("id")
-        .range(n, n + 999),
-    ),
+  const result = await db
+    .from("monthly_closings")
+    .select("*")
+    .eq("month", `${month}-01`)
+    .maybeSingle();
+  if (result.error) throw new Error("No pudimos cargar el cierre mensual.");
+  return result.data
+    ? { ...result.data, totals: closingSchema.parse(result.data.snapshot) }
+    : null;
+}
+
+/** Financial summaries need paid movements and balances, not editing data. */
+export async function getExpenseData(
+  month: string,
+  { detail = true }: { detail?: boolean } = {},
+) {
+  const { db } = await requireStaff();
+  const [expenses, templates, payments, pending, closing] = await Promise.all([
+    detail
+      ? allPages((n) =>
+          db
+            .from("expense_balances")
+            .select("*")
+            .gte("due_on", `${month}-01`)
+            .lt("due_on", `${shiftMonth(month, 1)}-01`)
+            .order("due_on")
+            .order("id")
+            .range(n, n + 999),
+        )
+      : Promise.resolve([]),
+    detail
+      ? allPages((n) =>
+          db
+            .from("expense_templates")
+            .select("*")
+            .order("title")
+            .order("id")
+            .range(n, n + 999),
+        )
+      : Promise.resolve([]),
     allPages((n) =>
       db
         .from("expense_payments")
@@ -63,28 +84,36 @@ export async function getExpenseData(month: string) {
         .order("id")
         .range(n, n + 999),
     ),
-    db
-      .from("monthly_closings")
-      .select("*")
-      .eq("month", `${month}-01`)
-      .maybeSingle(),
+    detail ? getMonthlyClosing(month) : Promise.resolve(null),
   ]);
   const reversed = new Set<string>();
-  for (let n = 0; n < payments.length; n += 100) {
-    const rows = await allPages((offset) =>
-      db
-        .from("expense_payments")
-        .select("id,reversal_of")
-        .in(
-          "reversal_of",
-          payments.slice(n, n + 100).map((p) => p.id),
-        )
-        .order("id")
-        .range(offset, offset + 999),
-    );
-    for (const row of rows) if (row.reversal_of) reversed.add(row.reversal_of);
+  if (detail) {
+    // Only original payments can be reversed. Limit concurrent lookups to four
+    // batches so large ledgers do not turn into serial HTTP round trips.
+    const originalIds = payments.filter((p) => !p.reversal_of).map((p) => p.id);
+    for (let start = 0; start < originalIds.length; start += 400) {
+      const batches = [];
+      for (
+        let n = start;
+        n < Math.min(start + 400, originalIds.length);
+        n += 100
+      ) {
+        batches.push(
+          allPages((offset) =>
+            db
+              .from("expense_payments")
+              .select("id,reversal_of")
+              .in("reversal_of", originalIds.slice(n, n + 100))
+              .order("id")
+              .range(offset, offset + 999),
+          ),
+        );
+      }
+      for (const rows of await Promise.all(batches))
+        for (const row of rows)
+          if (row.reversal_of) reversed.add(row.reversal_of);
+    }
   }
-  if (close.error) throw new Error("No pudimos cargar el cierre mensual.");
   return {
     expenses,
     templates,
@@ -98,9 +127,7 @@ export async function getExpenseData(month: string) {
       0,
     ),
     pending: pending.reduce((sum, p) => sum + (p.balance_cents ?? 0), 0),
-    closing: close.data
-      ? { ...close.data, totals: closingSchema.parse(close.data.snapshot) }
-      : null,
+    closing,
   };
 }
 export async function getSessionEvents(customerId: string) {

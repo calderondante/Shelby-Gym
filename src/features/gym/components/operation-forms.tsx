@@ -27,6 +27,7 @@ export function OperationForm({
   requestId?: string;
 }) {
   const keepDraft = useRef(false);
+  const [operationId] = useState(requestId ?? "");
   const [state, action] = useActionState(
     async (previous: ActionResult, form: FormData) => {
       keepDraft.current = false;
@@ -48,7 +49,7 @@ export function OperationForm({
       <input type="hidden" name="month" value={month} />
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="revision" value={revision} />
-      <input type="hidden" name="requestId" value={requestId ?? ""} />
+      <input type="hidden" name="requestId" value={operationId} />
       {children}
       <FormFeedback state={state} />
       <SubmitButton>{label}</SubmitButton>

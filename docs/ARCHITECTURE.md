@@ -135,3 +135,7 @@ Una identidad técnica de Auth se resuelve en servidor con `GYM_OWNER_LOGIN_EMAI
 ## Navegación — 27/10/2026
 
 La identidad de las páginas se valida con `getClaims`, seguida de lectura vigente de staff/sesión por RLS. Cliente y contexto se deduplican por render con `React.cache`, sin compartir sesiones entre solicitudes. Mensajes carga únicamente datos de su sección; Historial une nombres y paraleliza cobros/gastos. La navegación prepara como máximo dos rutas al iniciar y utiliza intención touch/teclado/puntero para el resto; se omite con ahorro de datos/2G o sin conexión. La precarga reside en memoria del router, con invalidación por mutaciones/Realtime/refresco, y no es una base de datos offline. Next permanece fijado en 16.4.1; revisar el enum de precarga completa y sus tests al actualizar. Ver [medición](PERFORMANCE_2026-10-27.md).
+
+## Revisión del 04/11/2026
+
+La intervención de administración, cambios implementados, pruebas, métricas y límites están en [OPTIMIZATION_2026-11-04.md](OPTIMIZATION_2026-11-04.md). Las secciones de fechas anteriores conservan el contexto histórico; Netlify/Supabase es el despliegue operativo. Sin cambios SQL, políticas de acceso ni transacciones en esta intervención.

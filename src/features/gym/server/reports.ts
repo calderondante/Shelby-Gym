@@ -1,7 +1,8 @@
 import "server-only";
 import { getMonthlyLedger } from "./monthly-ledger";
-import { getExpenseData } from "./operations";
+import { getExpenseData, getMonthlyClosing } from "./operations";
 import type { Closing } from "../domain/operations";
+import { todayIn } from "../domain/dates";
 import { paymentDay } from "../domain/ledger-calendar";
 export async function getReport(
   month: string,
@@ -9,9 +10,17 @@ export async function getReport(
   currency: string,
   frozen: boolean,
 ) {
-  const [ledger, costs] = await Promise.all([
-    getMonthlyLedger(month, timeZone, currency),
-    getExpenseData(month),
+  // Closed reports are immutable snapshots. Do not reconstruct today's ledger
+  // just to return yesterday's snapshot. Only past months can have a closing.
+  const closingPromise = getMonthlyClosing(month);
+  if (frozen && month < todayIn(timeZone).slice(0, 7)) {
+    const closing = await closingPromise;
+    if (closing) return { totals: closing.totals, closing, frozen: true };
+  }
+  const [ledger, costs, closing] = await Promise.all([
+    getMonthlyLedger(month, timeZone, currency, { reportOnly: true }),
+    getExpenseData(month, { detail: false }),
+    closingPromise,
   ]);
   const current: Closing = {
     month,
@@ -60,8 +69,8 @@ export async function getReport(
       })),
   };
   return {
-    totals: frozen && costs.closing ? costs.closing.totals : current,
-    closing: costs.closing,
-    frozen: frozen && !!costs.closing,
+    totals: frozen && closing ? closing.totals : current,
+    closing,
+    frozen: frozen && !!closing,
   };
 }

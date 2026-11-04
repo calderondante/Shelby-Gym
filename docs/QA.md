@@ -259,3 +259,7 @@ Mediciones y protocolo en [PERFORMANCE_2026-10-27.md](PERFORMANCE_2026-10-27.md)
 - Navegador local: 9 recorridos correctos de comunicaciones, selección de alto contraste, cinco tamaños, axe, aviso de instalación iPhone, pagos parciales/gastos, factura por OCR y permisos de avisos. Tras el ajuste final de texto/selección se verificaron otros 4 recorridos: cambio de día sin cerrar historial y tres escenarios WhatsApp (incluye revisión visual del filtro activo).
 - Evidencia local ignorada en `qa-artifacts/interface-clarity/`; revisadas capturas de alta desde papel, Mensajes, Resumen y Gastos a 390px. Sin cambios en schema ni datos de producción.
 - Los mensajes reales no se envían en estas pruebas. La simulación de iPhone comprueba instrucciones/instalación requerida; no acredita recepción Web Push en hardware Apple. Sigue pendiente activar permiso y recibir un aviso con app cerrada en el teléfono del comprador.
+
+## Revisión del 04/11/2026
+
+La intervención de administración, cambios implementados, pruebas, métricas y límites están en [OPTIMIZATION_2026-11-04.md](OPTIMIZATION_2026-11-04.md). Las secciones de fechas anteriores conservan el contexto histórico; Netlify/Supabase es el despliegue operativo. Sin cambios SQL, políticas de acceso ni transacciones en esta intervención.

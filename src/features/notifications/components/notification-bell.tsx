@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/browser";
+import { createRefreshScheduler } from "@/lib/client/refresh-scheduler";
 import { registerOwnerPush } from "../server/actions";
 import { subscriptionPayload } from "../domain/browser-push";
 export function NotificationBell() {
@@ -24,14 +24,11 @@ export function NotificationBell() {
         .catch(() => {
           /* The device panel offers an explicit retry. */
         });
-    const abort = new AbortController();
-    let timer: ReturnType<typeof setTimeout>;
-    const load = async () => {
-      if (document.visibilityState !== "visible") return;
+    const load = async (signal: AbortSignal) => {
       try {
         const r = await fetch("/api/owner-alerts?summary=1", {
           cache: "no-store",
-          signal: abort.signal,
+          signal,
         });
         if (
           !r.ok ||
@@ -46,47 +43,29 @@ export function NotificationBell() {
           typeof result.unread !== "number"
         )
           throw new Error("payload");
+        if (signal.aborted) return;
         setUnread(result.unread);
         setFailed(false);
-        window.dispatchEvent(new Event("shelby:alerts-changed"));
       } catch {
-        if (!abort.signal.aborted) setFailed(true);
+        if (!signal.aborted) setFailed(true);
       }
     };
-    const refresh = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => void load(), 600);
-    };
-    const initial = setTimeout(() => void load(), 1200),
-      poll = setInterval(() => void load(), 60_000);
-    const db = createClient(),
-      channel = db.channel("owner-alerts-updates");
-    for (const table of [
-      "expenses",
-      "expense_payments",
-      "customers",
-      "subscriptions",
-      "payment_batches",
-      "owner_notification_reads",
-      "owner_notification_settings",
-    ])
-      channel.on(
-        "postgres_changes",
-        { event: "*", schema: "public", table },
-        refresh,
-      );
-    channel.subscribe();
-    document.addEventListener("visibilitychange", refresh);
-    window.addEventListener("online", refresh);
+    const queue = createRefreshScheduler(
+      load,
+      () => navigator.onLine && document.visibilityState === "visible",
+      600,
+    );
+    const refresh = () => queue.schedule();
+    const initial = setTimeout(() => queue.flush(), 1200);
+    const poll = setInterval(() => {
+      if (navigator.onLine && document.visibilityState === "visible")
+        window.dispatchEvent(new Event("shelby:alerts-refresh"));
+    }, 60_000);
     window.addEventListener("shelby:alerts-refresh", refresh);
     return () => {
-      abort.abort();
+      queue.dispose();
       clearTimeout(initial);
-      clearTimeout(timer);
       clearInterval(poll);
-      void db.removeChannel(channel);
-      document.removeEventListener("visibilitychange", refresh);
-      window.removeEventListener("online", refresh);
       window.removeEventListener("shelby:alerts-refresh", refresh);
     };
   }, []);
