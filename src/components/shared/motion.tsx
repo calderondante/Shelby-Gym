@@ -9,9 +9,31 @@ export function InteractionMotion() {
     const keyboard = () => {
       document.documentElement.dataset.input = "keyboard";
     };
+    // The mobile tab bar should not compete with the on-screen keyboard.
+    // Pinch zoom is explicitly excluded; no layout reads or React renders on scroll.
+    const viewport = window.visualViewport;
+    const updateKeyboard = () => {
+      const editing = document.activeElement?.matches(
+        'input:not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]), textarea, [contenteditable="true"]',
+      );
+      const open = Boolean(
+        editing &&
+        viewport &&
+        viewport.scale === 1 &&
+        window.innerHeight - viewport.height > 150,
+      );
+      document.documentElement.toggleAttribute("data-keyboard-open", open);
+    };
+    viewport?.addEventListener("resize", updateKeyboard);
+    window.addEventListener("focusin", updateKeyboard);
+    window.addEventListener("focusout", updateKeyboard);
     window.addEventListener("pointerdown", pointer, { passive: true });
     window.addEventListener("keydown", keyboard);
     return () => {
+      viewport?.removeEventListener("resize", updateKeyboard);
+      window.removeEventListener("focusin", updateKeyboard);
+      window.removeEventListener("focusout", updateKeyboard);
+      document.documentElement.removeAttribute("data-keyboard-open");
       window.removeEventListener("pointerdown", pointer);
       window.removeEventListener("keydown", keyboard);
     };

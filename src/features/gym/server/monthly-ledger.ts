@@ -15,6 +15,7 @@ export async function getMonthlyLedger(
   month: string,
   timeZone: string,
   currency: string,
+  { reportOnly = false }: { reportOnly?: boolean } = {},
 ) {
   const { db } = await requireStaff();
   const [year, number] = month.split("-").map(Number);
@@ -100,6 +101,7 @@ export async function getMonthlyLedger(
         "id,customer_id,balance_cents,starts_on,duration_unit,activity_name,customers(name)",
       )
       .eq("currency", currency)
+      .gt("balance_cents", 0)
       .order("id")
       .range(offset, offset + 999);
 
@@ -122,11 +124,11 @@ export async function getMonthlyLedger(
     await Promise.all([
       allPages(livePaymentPage),
       allPages(importedPaymentPage),
-      allPages(periodPage),
-      allPages(customerPage),
-      allPages(eventPage),
+      reportOnly ? Promise.resolve([]) : allPages(periodPage),
+      reportOnly ? Promise.resolve([]) : allPages(customerPage),
+      reportOnly ? Promise.resolve([]) : allPages(eventPage),
       allPages(balancePage),
-      allPages(sessionPage),
+      reportOnly ? Promise.resolve([]) : allPages(sessionPage),
     ]);
   const payments = [
     ...live.filter((row) => inMonth(row.created_at)),

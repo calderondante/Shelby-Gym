@@ -20,17 +20,42 @@ export default async function CustomerPage({
   searchParams: Promise<{ guardado?: string }>;
 }) {
   const { id } = await params;
-  const [{ customer, subscriptions }, settings, query, { staff }] =
-    await Promise.all([
-      getCustomer(id),
-      requireSettings(),
-      searchParams,
-      requireStaff(),
-    ]);
-  const [payments, sessionEvents] = await Promise.all([
+  const [
+    { customer, subscriptions },
+    settings,
+    query,
+    { staff },
+    payments,
+    sessionEvents,
+  ] = await Promise.all([
+    getCustomer(id),
+    requireSettings(),
+    searchParams,
+    requireStaff(),
     getPayments(id),
     getSessionEvents(id),
   ]);
+  const paymentsBySubscription = new Map<string, typeof payments>();
+  for (const payment of payments) {
+    const rows = paymentsBySubscription.get(payment.subscription_id) ?? [];
+    rows.push(payment);
+    paymentsBySubscription.set(payment.subscription_id, rows);
+  }
+  for (const rows of paymentsBySubscription.values())
+    rows.sort((a, b) =>
+      (b.occurred_on ?? b.created_at.slice(0, 10)).localeCompare(
+        a.occurred_on ?? a.created_at.slice(0, 10),
+      ),
+    );
+  const sessionsBySubscription = new Map<string, typeof sessionEvents>();
+  const reversedSessions = new Set(
+    sessionEvents.map((event) => event.reversal_of).filter(Boolean),
+  );
+  for (const event of sessionEvents) {
+    const rows = sessionsBySubscription.get(event.subscription_id) ?? [];
+    rows.push(event);
+    sessionsBySubscription.set(event.subscription_id, rows);
+  }
   const balance = subscriptions.reduce(
     (sum, s) => sum + (s.balance_cents ?? 0),
     0,
@@ -239,43 +264,39 @@ export default async function CustomerPage({
                 />
                 <details className="payment-history">
                   <summary>Clases y correcciones registradas</summary>
-                  {sessionEvents
-                    .filter((event) => event.subscription_id === s.id)
-                    .map((event) => (
-                      <div className="operation-panel" key={event.id}>
-                        <strong>
-                          {dateLabel(event.occurred_on)} ·{" "}
-                          {event.delta === 1
-                            ? "Clase realizada"
-                            : "Clase devuelta"}
-                        </strong>
-                        <p>
-                          {event.staff?.name ?? "Personal"}
-                          {event.debt_acknowledged
-                            ? " · asistencia con saldo pendiente confirmada"
-                            : ""}
-                          {event.reason ? ` · ${event.reason}` : ""}
-                        </p>
-                        {event.delta === 1 &&
-                        !sessionEvents.some(
-                          (other) => other.reversal_of === event.id,
-                        ) &&
-                        staff.role === "owner" ? (
-                          <details>
-                            <summary>Corregir asistencia</summary>
-                            <SessionForm
-                              owner
-                              customerId={id}
-                              subscriptionId={s.id!}
-                              balance={0}
-                              remaining={0}
-                              requestId={crypto.randomUUID()}
-                              reverseId={event.id}
-                            />
-                          </details>
-                        ) : null}
-                      </div>
-                    ))}
+                  {(sessionsBySubscription.get(s.id!) ?? []).map((event) => (
+                    <div className="operation-panel" key={event.id}>
+                      <strong>
+                        {dateLabel(event.occurred_on)} ·{" "}
+                        {event.delta === 1
+                          ? "Clase realizada"
+                          : "Clase devuelta"}
+                      </strong>
+                      <p>
+                        {event.staff?.name ?? "Personal"}
+                        {event.debt_acknowledged
+                          ? " · asistencia con saldo pendiente confirmada"
+                          : ""}
+                        {event.reason ? ` · ${event.reason}` : ""}
+                      </p>
+                      {event.delta === 1 &&
+                      !reversedSessions.has(event.id) &&
+                      staff.role === "owner" ? (
+                        <details>
+                          <summary>Corregir asistencia</summary>
+                          <SessionForm
+                            owner
+                            customerId={id}
+                            subscriptionId={s.id!}
+                            balance={0}
+                            remaining={0}
+                            requestId={crypto.randomUUID()}
+                            reverseId={event.id}
+                          />
+                        </details>
+                      ) : null}
+                    </div>
+                  ))}
                 </details>
               </div>
             ) : null}
@@ -289,56 +310,47 @@ export default async function CustomerPage({
             ) : null}
             <details className="payment-history">
               <summary>Historial de abonos</summary>
-              {!payments.some((p) => p.subscription_id === s.id) ? (
+              {!paymentsBySubscription.has(s.id!) ? (
                 <p className="muted">
                   No hay abonos detallados para este período.
                 </p>
               ) : null}
               <ol>
-                {payments
-                  .filter((p) => p.subscription_id === s.id)
-                  .sort((a, b) =>
-                    (b.occurred_on ?? b.created_at.slice(0, 10)).localeCompare(
-                      a.occurred_on ?? a.created_at.slice(0, 10),
-                    ),
-                  )
-                  .map((p) => (
-                    <li key={p.id}>
-                      <div>
-                        <strong>
-                          {p.occurred_on
-                            ? dateLabel(p.occurred_on)
-                            : new Intl.DateTimeFormat("es-AR", {
-                                dateStyle: "medium",
-                                timeStyle: "short",
-                                timeZone: settings.time_zone,
-                              }).format(new Date(p.created_at))}
-                        </strong>
-                        <small>
-                          {p.import_batch_id
-                            ? "Pago histórico · registrado por "
-                            : "Registrado por "}
-                          {p.staff?.name ?? "Personal"}
-                        </small>
-                      </div>
-                      <ul>
-                        {p.payment_entries.map((e, i) => (
-                          <li key={i}>
-                            <span>
-                              {
-                                paymentMethods[
-                                  e.method as keyof typeof paymentMethods
-                                ]
-                              }
-                            </span>
-                            <strong>
-                              {money(e.amount_cents, s.currency!)}
-                            </strong>
-                          </li>
-                        ))}
-                      </ul>
-                    </li>
-                  ))}
+                {(paymentsBySubscription.get(s.id!) ?? []).map((p) => (
+                  <li key={p.id}>
+                    <div>
+                      <strong>
+                        {p.occurred_on
+                          ? dateLabel(p.occurred_on)
+                          : new Intl.DateTimeFormat("es-AR", {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                              timeZone: settings.time_zone,
+                            }).format(new Date(p.created_at))}
+                      </strong>
+                      <small>
+                        {p.import_batch_id
+                          ? "Pago histórico · registrado por "
+                          : "Registrado por "}
+                        {p.staff?.name ?? "Personal"}
+                      </small>
+                    </div>
+                    <ul>
+                      {p.payment_entries.map((e, i) => (
+                        <li key={i}>
+                          <span>
+                            {
+                              paymentMethods[
+                                e.method as keyof typeof paymentMethods
+                              ]
+                            }
+                          </span>
+                          <strong>{money(e.amount_cents, s.currency!)}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
               </ol>
             </details>
           </article>

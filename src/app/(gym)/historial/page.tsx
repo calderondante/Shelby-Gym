@@ -47,7 +47,7 @@ export default async function GymHistoryPage({
       : today.slice(0, 7);
   const [ledger, expenseData] = await Promise.all([
     getMonthlyLedger(month, settings.time_zone, settings.currency),
-    getExpenseData(month),
+    getExpenseData(month, { detail: false }),
   ]);
   const {
     payments,

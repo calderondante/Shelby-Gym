@@ -2,7 +2,7 @@
 
 Aplicación de gestión de clientes, actividades, suscripciones y cuotas para PC, tablet y celular. Identidad negra, roja y blanca, basada en el diseño revisado con el usuario.
 
-Primera versión implementada en Next.js, React, TypeScript strict, Tailwind, shadcn/ui y Supabase. La aplicación con datos reales requiere configurar Supabase y hosting; todavía no está conectada a producción. No cobra dinero: registra abonos externos por transferencia, Mercado Pago y efectivo, también parciales o repartidos. La [demo móvil en GitHub Pages](https://calderondante.github.io/Shelby-Gym/gestion/) usa únicamente datos ficticios guardados en el navegador.
+Primera versión implementada en Next.js, React, TypeScript strict, Tailwind, shadcn/ui y Supabase. La aplicación operativa está publicada en Netlify con Supabase; ver [estado de entrega](docs/HANDOVER_STATUS.md) para límites y pendientes. No cobra dinero: registra abonos externos por transferencia, Mercado Pago y efectivo, también parciales o repartidos. La [demo móvil en GitHub Pages](https://calderondante.github.io/Shelby-Gym/gestion/) usa únicamente datos ficticios guardados en el navegador.
 
 ## Empezar
 
@@ -76,3 +76,5 @@ Ver [actualización del 20 de octubre](docs/UPDATES_2026-10-20.md) para las regl
 El repositorio GitHub guarda el código. Drive conserva copias exportadas; la demo pública y la aplicación con base de datos tienen despliegues separados.
 
 Desde el 2026-10-04: [importación de Excel](docs/IMPORTS.md) desde Clientes → Importar Excel (dueño), incluyendo edad, precios históricos y pagos anteriores. Motion refinado con las skills locales de Emil; sin framework de animación adicional.
+
+Informe de la optimización de administración: [04/11/2026](docs/OPTIMIZATION_2026-11-04.md). El trabajo se revisa en una rama separada; no se despliega automáticamente a producción.

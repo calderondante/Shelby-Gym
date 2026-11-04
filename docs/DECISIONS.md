@@ -245,3 +245,13 @@ Consequences: las consultas de vigencia deben distinguir fecha y sesiones. Los s
 - Chosen solution: tres accesos de Mensajes con WhatsApp como canal operativo, ajustes secundarios, Resumen con historial diario desplegable, Gastos con filtros y configuración de fijos apartada; selección blanca con texto oscuro y semántica aria-current.
 - Reason: reducir decisiones y conservar los recorridos y enlaces actuales.
 - Consequences: no cambia datos, permisos ni contabilidad; los avisos al dueño siguen por Web Push y bandeja. Instagram no se ofrece como envío conectado. iPhone necesita instalación y permiso, con prueba física pendiente.
+
+## ADR 024 — Reducir trabajo y estabilizar experiencia móvil
+
+- Date: 2026-11-04.
+- Decision: lecturas específicas por caso, perfil paralelo y actualización en vivo compartida; navegación móvil inferior y OCR cancelable.
+- Context: esperas encadenadas, trabajo repetido y lector que podía bloquearse al fallar el inicio.
+- Options: infraestructura o caché privada nueva; eliminar trabajo evitable con el stack actual.
+- Chosen solution: selección de consultas, una suscripción Realtime y colas por componente, safe-areas, feedback estable y worker local con cancelación real.
+- Reason: reducir espera/errores sin nuevos costes ni relajar autorización o integridad financiera.
+- Consequences: mantener contrato del worker Tesseract7 al actualizar; no prometer mejora móvil de rendimiento sin evidencia. Antes/después y límites en OPTIMIZATION_2026-11-04.md. Despliegue requiere revisión y recuperación adecuada.

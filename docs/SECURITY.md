@@ -123,3 +123,7 @@ La precarga de navegación usa exclusivamente la memoria del router de ese naveg
 ## Apertura manual de WhatsApp
 
 `/comunicaciones/whatsapp/[id]` exige dueño activo y revalida en servidor destinatario, autorización, estado/fecha y contenido con el contexto vigente antes de redirigir. El navegador no suministra teléfono, cuerpo ni URL de destino; se usa únicamente `https://wa.me/` con número validado y texto codificado. Respuestas privadas `no-store`, enlaces sin prefetch y sin referente. Los tests no navegan a WhatsApp ni contactan números reales; comprueban Location y atributos del enlace. No se registra entrega ni se cambia el ledger al abrir.
+
+## Revisión del 04/11/2026
+
+La intervención de administración, cambios implementados, pruebas, métricas y límites están en [OPTIMIZATION_2026-11-04.md](OPTIMIZATION_2026-11-04.md). Las secciones de fechas anteriores conservan el contexto histórico; Netlify/Supabase es el despliegue operativo. Sin cambios SQL, políticas de acceso ni transacciones en esta intervención.

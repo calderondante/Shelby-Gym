@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import type { Worker } from "tesseract.js";
+import { abortable } from "./abortable";
 
 // One local OCR worker across invoice and registration readers.
 let activeCapture: symbol | null = null;
-type Job = { cancelled: boolean; worker?: Worker; cancel?: () => void };
+type Job = { cancelled: boolean; controller: AbortController };
 export function usePhotoReader({
   onText,
   onStart,
@@ -30,8 +30,7 @@ export function usePhotoReader({
     () => () => {
       if (job.current) {
         job.current.cancelled = true;
-        job.current.cancel?.();
-        void job.current.worker?.terminate().catch(() => {});
+        job.current.controller.abort();
         job.current = null;
       }
       if (url.current) URL.revokeObjectURL(url.current);
@@ -54,20 +53,32 @@ export function usePhotoReader({
       return;
     }
     const token = Symbol("photo-capture"),
-      current: Job = { cancelled: false };
+      current: Job = { cancelled: false, controller: new AbortController() };
     activeCapture = token;
     job.current = current;
     clearImage();
-    onStart();
     setBusy(true);
     setMessage("Preparando foto…");
     let canvas: HTMLCanvasElement | undefined;
+    let decodedImage: HTMLImageElement | undefined;
+    // A lost resource or decoder must not retain the photo or block later scans.
+    const deadline = setTimeout(
+      () =>
+        current.controller.abort(
+          new Error(
+            "No pudimos completar la lectura a tiempo. Revisá la conexión y volvé a intentar, o cargá los datos a mano.",
+          ),
+        ),
+      120_000,
+    );
+    const { signal } = current.controller;
     try {
+      onStart();
       url.current = URL.createObjectURL(file);
       setPreview(url.current);
-      const image = new Image();
+      const image = (decodedImage = new Image());
       image.src = url.current;
-      await image.decode();
+      await abortable(image.decode(), signal);
       if (image.naturalWidth * image.naturalHeight > 24_000_000)
         throw new Error(
           "La foto es demasiado grande. Tomá otra con menor resolución.",
@@ -86,24 +97,27 @@ export function usePhotoReader({
       context.fillStyle = "white";
       context.fillRect(0, 0, canvas.width, canvas.height);
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      const blob = await new Promise<Blob>((resolve, reject) =>
-        canvas!.toBlob(
-          (b) =>
-            b ? resolve(b) : reject(new Error("No pudimos leer esta imagen.")),
-          "image/png",
+      const blob = await abortable(
+        new Promise<Blob>((resolve, reject) =>
+          canvas!.toBlob(
+            (b) =>
+              b
+                ? resolve(b)
+                : reject(new Error("No pudimos leer esta imagen.")),
+            "image/png",
+          ),
         ),
+        signal,
       );
       if (current.cancelled) return;
-      const { createWorker } = await import("tesseract.js");
-      if (current.cancelled) return;
-      const worker = await createWorker("spa", 1, {
-        workerPath: "/ocr/worker.min.js",
-        corePath: "/ocr",
-        langPath: "/ocr",
-        workerBlobURL: false,
-        cacheMethod: "none",
-        logger: (event) => {
-          if (!current.cancelled)
+      const { recognizePhoto } = await abortable(
+        import("./recognize-photo"),
+        signal,
+      );
+      const text = await recognizePhoto(blob, {
+        signal,
+        onProgress: (event) => {
+          if (!current.cancelled && job.current === current)
             setMessage(
               event.status === "recognizing text"
                 ? `${readingLabel}… ${Math.round(event.progress * 100)} %`
@@ -111,20 +125,12 @@ export function usePhotoReader({
             );
         },
       });
-      current.worker = worker;
-      if (current.cancelled) return;
-      const result = await Promise.race([
-        worker.recognize(blob),
-        new Promise<never>((_, reject) => {
-          current.cancel = () => reject(new Error("Lectura cancelada"));
-        }),
-      ]);
-      if (!current.cancelled) {
-        onText(result.data.text);
+      if (!current.cancelled && job.current === current) {
+        onText(text);
         setMessage(readyMessage);
       }
     } catch (error) {
-      if (!current.cancelled) {
+      if (!current.cancelled && job.current === current) {
         setMessage(
           error instanceof Error && /^(La foto|No pudimos)/.test(error.message)
             ? error.message
@@ -133,14 +139,11 @@ export function usePhotoReader({
         clearImage();
       }
     } finally {
+      clearTimeout(deadline);
+      if (decodedImage) decodedImage.src = "";
       if (canvas) {
         canvas.width = 0;
         canvas.height = 0;
-      }
-      try {
-        await current.worker?.terminate();
-      } catch {
-        /* Cancel may already have terminated it. */
       }
       if (activeCapture === token) activeCapture = null;
       if (job.current === current) {
@@ -156,8 +159,7 @@ export function usePhotoReader({
   const cancel = () => {
     if (job.current) {
       job.current.cancelled = true;
-      job.current.cancel?.();
-      void job.current.worker?.terminate().catch(() => {});
+      job.current.controller.abort();
     }
     clearImage();
     setMessage("Cancelando lectura…");

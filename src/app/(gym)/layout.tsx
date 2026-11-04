@@ -43,7 +43,7 @@ export default async function GymLayout({
           <span>
             Shelby Gym <span className="muted">/ Recepción</span>
           </span>
-          <LiveSync />
+          <LiveSync owner={staff.role === "owner"} />
           {staff.role === "owner" ? <NotificationBell /> : null}
         </div>
         <main id="main" tabIndex={-1}>

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { createRefreshScheduler } from "@/lib/client/refresh-scheduler";
 import { useActionState, useCallback, useEffect, useState } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
 import { FormFeedback, SubmitButton } from "@/components/shared/form-parts";
@@ -138,9 +139,9 @@ export function NotificationCenter({ initialData }: { initialData: Data }) {
     [filter, setFilter] = useState("pending"),
     [kind, setKind] = useState("all"),
     [busy, setBusy] = useState("");
-  const load = useCallback(async () => {
+  const load = useCallback(async (signal: AbortSignal) => {
     try {
-      const r = await fetch("/api/owner-alerts", { cache: "no-store" });
+      const r = await fetch("/api/owner-alerts", { cache: "no-store", signal });
       if (!r.ok || !r.headers.get("content-type")?.includes("application/json"))
         throw new Error("access");
       const result: Data = await r.json();
@@ -150,22 +151,30 @@ export function NotificationCenter({ initialData }: { initialData: Data }) {
         typeof result.publicKey !== "string"
       )
         throw new Error("payload");
+      if (signal.aborted) return;
       setData(result);
       setError("");
     } catch {
+      if (signal.aborted) return;
       setError(
         "No pudimos actualizar la bandeja. Revisá la conexión y tu sesión antes de volver a intentar.",
       );
     }
   }, []);
   useEffect(() => {
-    const refresh = () => void load();
-    window.addEventListener("shelby:alerts-changed", refresh);
-    return () => window.removeEventListener("shelby:alerts-changed", refresh);
+    const queue = createRefreshScheduler(
+      load,
+      () => navigator.onLine && document.visibilityState === "visible",
+    );
+    const refresh = () => queue.schedule();
+    window.addEventListener("shelby:alerts-refresh", refresh);
+    return () => {
+      queue.dispose();
+      window.removeEventListener("shelby:alerts-refresh", refresh);
+    };
   }, [load]);
   const saved = (message?: string) => {
     if (message) setNotice(message);
-    void load();
     window.dispatchEvent(new Event("shelby:alerts-refresh"));
   };
   const alerts =
@@ -179,7 +188,13 @@ export function NotificationCenter({ initialData }: { initialData: Data }) {
       <div className="operation-tabs">
         <Link href="/comunicaciones">Mensajes a clientes</Link>
         <Link href="/historial/gastos">Facturas y gastos</Link>
-        <button className="text-link" type="button" onClick={() => void load()}>
+        <button
+          className="text-link"
+          type="button"
+          onClick={() =>
+            window.dispatchEvent(new Event("shelby:alerts-refresh"))
+          }
+        >
           Actualizar avisos
         </button>
       </div>

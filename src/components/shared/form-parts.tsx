@@ -15,8 +15,21 @@ export function SubmitButton({
 }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" size="lg" disabled={pending} aria-busy={pending}>
-      {pending ? pendingLabel : children}
+    <Button
+      type="submit"
+      size="lg"
+      className="submit-button"
+      disabled={pending}
+      aria-busy={pending}
+      data-pending={pending}
+    >
+      <span className="submit-idle" aria-hidden={pending}>
+        {children}
+      </span>
+      <span className="submit-pending" aria-hidden={!pending}>
+        <span className="submit-spinner" aria-hidden="true" />
+        {pendingLabel}
+      </span>
     </Button>
   );
 }
@@ -27,14 +40,20 @@ export function FormFeedback({ state }: { state: ActionResult }) {
     const field = feedback.current
       ?.closest("form")
       ?.querySelector<HTMLElement>("[aria-invalid=true]");
-    const details = field?.closest("details");
-    if (details) details.open = true;
+    // A nested optional group can be inside another collapsed group.
+    // Reveal every ancestor before focusing so the error is actually reachable.
+    let details = (field ?? feedback.current)?.closest("details");
+    while (details) {
+      details.open = true;
+      details = details.parentElement?.closest("details");
+    }
     (field ?? feedback.current)?.focus();
   }, [state]);
   if (!state.error && !state.success) return null;
   return (
     <Alert
       ref={feedback}
+      className="form-feedback"
       tabIndex={-1}
       variant={state.error ? "destructive" : "default"}
       role={state.error ? "alert" : "status"}

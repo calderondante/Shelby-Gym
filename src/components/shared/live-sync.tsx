@@ -3,7 +3,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
-export function LiveSync() {
+export function LiveSync({ owner = false }: { owner?: boolean }) {
   const router = useRouter();
   const [status, setStatus] = useState<
     "connecting" | "live" | "offline" | "retry"
@@ -12,9 +12,17 @@ export function LiveSync() {
   useEffect(() => {
     const db = createClient();
     let timeout: ReturnType<typeof setTimeout>;
+    const alert = () => {
+      if (owner && navigator.onLine && document.visibilityState === "visible")
+        window.dispatchEvent(new Event("shelby:alerts-refresh"));
+    };
     const refresh = () => {
       clearTimeout(timeout);
-      timeout = setTimeout(() => startTransition(() => router.refresh()), 250);
+      timeout = setTimeout(() => {
+        if (navigator.onLine && document.visibilityState === "visible") {
+          startTransition(() => router.refresh());
+        }
+      }, 250);
     };
     const channel = db.channel("gym-updates");
     for (const table of [
@@ -31,8 +39,21 @@ export function LiveSync() {
       channel.on(
         "postgres_changes",
         { event: "*", schema: "public", table },
-        refresh,
+        () => {
+          refresh();
+          alert();
+        },
       );
+    if (owner)
+      for (const table of [
+        "owner_notification_reads",
+        "owner_notification_settings",
+      ])
+        channel.on(
+          "postgres_changes",
+          { event: "*", schema: "public", table },
+          alert,
+        );
     channel.subscribe((s) =>
       setStatus(
         !navigator.onLine
@@ -47,12 +68,18 @@ export function LiveSync() {
     const online = () => {
       setStatus("connecting");
       refresh();
+      alert();
     };
     const offline = () => setStatus("offline");
     const focus = () => {
-      if (document.visibilityState === "visible" && navigator.onLine) refresh();
+      if (document.visibilityState === "visible" && navigator.onLine) {
+        refresh();
+        alert();
+      }
     };
-    const poll = setInterval(focus, 30_000);
+    const poll = setInterval(() => {
+      if (navigator.onLine && document.visibilityState === "visible") refresh();
+    }, 30_000);
     window.addEventListener("online", online);
     window.addEventListener("offline", offline);
     document.addEventListener("visibilitychange", focus);
@@ -64,7 +91,7 @@ export function LiveSync() {
       window.removeEventListener("offline", offline);
       document.removeEventListener("visibilitychange", focus);
     };
-  }, [router]);
+  }, [router, owner]);
   return (
     <div className="live-sync">
       <span role="status">
