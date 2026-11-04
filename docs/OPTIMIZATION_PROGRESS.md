@@ -11,3 +11,5 @@ Mediciones: tres muestras por ruta, misma DB26 clientes antes de prueba grande, 
 Límites: navegación preparada del harness quedó inconclusa, timeout acotado; E2Eprecarga pasa. No fieldINP, latencia comparativa del pago, cold start autenticado remoto ni iPhone/cámara/push físicos. Sin mensajes reales ni modificaciones remotas. No se aprueba producción sin recuperación y revisión adecuadas. Estado exacto de commit/PR se informa al entregar.
 
 QA recuperado: DB/Auth/REST/proxy y Realtime/wal2json locales, no imagen idéntica al hosting remoto. Guardar secreto solo en .env.local/.env.test.local ignorados. Antes de benchmarks congelar fixtures y evitar E2Een paralelo (colisionan traces y alteran datos). No volver a construir arquitectura ni reinstalar servicios ya operativos.
+
+Entrega revisable: commit de implementación59310f0, rama publicada y PR borrador https://github.com/calderondante/Shelby-Gym/pull/1. Git limpio tras commits. No merge ni despliegue de producción. La documentación de cierre se conserva en commit posterior de esta misma rama.
